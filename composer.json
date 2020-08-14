@@ -1,0 +1,21 @@
+{
+    "name": "linkunyuan/es-utility",
+    "description": "utility for easyswoole",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "lamson",
+            "email": "171004297@qq.com"
+        }
+    ],
+    "minimum-stability": "dev",
+	"require": {
+		"php": ">=7.0"
+	  },
+	"autoload": {
+		"psr-4": {
+			"Traits\\": "src/Traits"
+		}
+	}
+}
