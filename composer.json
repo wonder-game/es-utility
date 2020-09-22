@@ -9,13 +9,18 @@
             "email": "171004297@qq.com"
         }
     ],
-    "minimum-stability": "dev",
 	"require": {
-		"php": ">=7.0"
-	  },
+		"php": ">=7.0",
+        "easyswoole/jwt": "^1.1",
+        "easyswoole/config": "^1.0",
+        "easyswoole/easyswoole": "^3.3"
+    },
 	"autoload": {
-		"psr-4": {
-			"Traits\\": "src/Traits"
-		}
+       "psr-4": {
+            "Linkunyuan\\EsUtility\\": "src",
+            "Traits\\": "src/Traits",
+            "Classes\\": "src/Classes"
+		},
+        "files": ["src/function.php"]
 	}
 }
