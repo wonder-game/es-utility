@@ -41,7 +41,7 @@ trait LamModel
 	{
 		return $this->_error;
 	}
-	
+
 	/*-------------------------- 字段获取器 --------------------------*/
 
 	protected function getExtensionAttr($extension = '', $alldata = [])
