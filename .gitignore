@@ -2,3 +2,4 @@
 .vscode
 .tgitconfig
 vendor
+composer.lock
