@@ -3,13 +3,22 @@
  * 通用模型组件
  *
  * @author 林坤源
- * @version 1.0.0 最后修改时间 2020年08月14日
+ * @version 1.0.1 最后修改时间 2020年09月23日
  */
 namespace Linkunyuan\EsUtility\Traits;
 
 trait LamModel
 {
 	protected  $_error = [];
+	public $pkType = 'int'; // 主键值的数据类型 int|string
+
+	/**
+	 * 单条记录write操作之后是否自动缓存
+	 * @var bool
+	 */
+	public $awaCache = false; // after write and cache
+	public $awaCacheExpire = 7 * 24* 3600; // 单条记录的默认缓存时间
+
 
 	public function __construct()
 	{
@@ -41,6 +50,150 @@ trait LamModel
 	{
 		return $this->_error;
 	}
+
+
+	/**
+	 * 更新缓存
+	 */
+	public function resetCache()
+	{
+		$this->_resetCache();
+	}
+
+	/**
+	 * 通过主键值从缓存中删除信息
+	 * @param mixed $id 唯一标识值 或者 [字段名=>值]
+	 * @param string $prefix key的前缀，默认为取本模型的tableName属性的值，最终key的格式类似 game-66 或 game->lamson
+	 * @return array
+	 */
+	protected function _resetCache($id = 0, $prefix = null)
+	{
+		// 对某一条记录进行 删、改的操作时，默认只删除该记录的缓存
+		$this->cacheInfo($id, null);
+		// 自动生成新缓存
+		$this->awaCache && $this->cacheInfo($id);
+	}
+
+	/**
+	 * 通过唯一健值从缓存中获取或设置信息
+	 * @param mixed $id 唯一标识值 或者 [字段名=>值]
+	 * @param mixed $data 传空代表读取数据（默认）；null代表删除数据;其他有值代表写入
+	 * @return array
+	 */
+	public function cacheInfo($id = 0, $data = '')
+	{
+		return $this->_cacheInfo($id, null, $data);
+	}
+
+	/**
+	 * 通过唯一健值从缓存中获取或设置信息
+	 * @param mixed $id 唯一标识值 或者 [字段名=>值]
+	 * @param array $options redis其它配置
+	 * @param string $prefix key的前缀，默认为取本模型的tableName属性的值，最终key的格式类似 game-66 或 game->lamson
+	 * @param mixed $data 传空代表读取数据（默认）；null代表删除数据;其他有值代表写入
+	 * @return array|bool|number
+	 */
+	protected function _cacheInfo($id = 0,  $prefix = null, $data = '')
+	{
+		$isarray = is_array($id);
+		list($Redis, $key, $pk, $id) = $this->redisAndKey($id, $prefix);
+
+		$con = true;
+
+		// 删除缓存
+		if(is_null($data))
+		{
+			return $Redis->del($key); // 返回删除缓存的条数
+		}
+		// 读取
+		elseif($data === '')
+		{
+			// 先从缓存取
+			$con = $Redis->get($key);
+
+			//如果取出的数据是字符串 QUOTE:数字 该数字为表主键
+			if (is_string($con) && strpos($con, 'QUOTE:') === 0)
+			{
+				//将$key替换为表主键重新获取
+				$con = $this->cacheInfo(explode(":",$con)[1]);
+			}
+
+			// 没有记录，则尝试从数据表里读取
+			if( ! $con)
+			{
+				$con = $this->_getByUnique($pk, $id);
+				$data = & $con; // 随后会写入缓存
+			}
+
+			isset($con['extend']) && ! is_array($con['extend']) && $con['extend'] = json_decode($con['extend'], true);
+		}
+
+		// 存入缓存
+		if ($data !== '' && $data)
+		{
+			if ($isarray)
+			{
+				$realKey = $this->schemaInfo()->getPkFiledName();
+				//将值设为 QUOTE:表主键
+				$Redis->set($key, 'QUOTE:' . $data[$realKey], $this->awaCacheExpire);
+				$this->cacheInfo($data[$realKey], $data);
+			}
+			else
+			{
+				$Redis->set($key, is_scalar($data) ? $data : json_encode($data, JSON_UNESCAPED_UNICODE), $this->awaCacheExpire);
+			}
+		}
+
+		return is_scalar($con) ? json_decode($con, true) : $con;
+	}
+
+	/**
+	 * 通过唯一键返回数据
+	 * @return array
+	 */
+	protected function _getByUnique($pk = 'id', $id = 0)
+	{
+		$data = $this->where([$pk=>$id])->get();
+		return $data ? $data->toArray() : [];
+	}
+
+	/**
+	 * 返回redis对象和某条数据的key
+	 * @param mixed $id 唯一标识值 或者 [字段名=>唯一值]
+	 * @param string $prefix key的前缀，默认为取本模型的tableName属性的值，最终key的格式类似 game-66 或 game->lamson
+	 * @return array [redis对象, 某条数据的key]
+	 */
+	public function redisAndKey($id = 0, $prefix = null)
+	{
+		$isarray = is_array($id);
+
+		$pk = $isarray ? key($id) : $this->schemaInfo()->getPkFiledName(); // 唯一字段名
+		is_array($pk) && $pk = $pk[0];
+
+		// [字段名=>唯一值]
+		if($isarray)
+		{
+			$id = current($id); // 唯一值
+		}
+		// 直接传主键值
+		else
+		{
+			('int' == $this->pkType) && ($id = (int)$id);
+		}
+
+		$id or $id = $this->data[$pk] ?? 0; // 无值则尝试从$this->data中取
+
+		// defer方式获取连接
+		$Redis  = \EasySwoole\RedisPool\Redis::defer(config('app.redis.name'));
+
+		// 缓存前缀
+		$key = (is_null($prefix) ? $this->getTableName() : $prefix) . '-' . ($isarray ? '>' : ''). $id;
+
+		return [$Redis, $key, $pk, $id];
+	}
+
+
+
 
 	/*-------------------------- 字段获取器 --------------------------*/
 
