@@ -9,7 +9,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 	 * @param string    $name Model名称
 	 * @return \App\Model\$model
 	 */
-	function model($name = '')
+	function model($name = '', $data = [])
 	{
 		//static $instance = [];
 		$guid = $name = parse_name($name, 1);
@@ -30,8 +30,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 
 		if (class_exists($class)) {
 			try{
-				$model = new $class();
-				$gameid != '' && $model->tableName(parse_name($name,0, false) . "_$gameid");
+				$model = new $class($data, $gameid != '' ? parse_name($name,0, false) . "_$gameid" : '');
 			}
 			catch (\Exception $e)
 			{
@@ -93,9 +92,8 @@ if ( ! function_exists('Linkunyuan\EsUtility\array_merge_multi')) {
 	 * 多维数组合并（支持多数组）
 	 * @return array
 	 */
-	function array_merge_multi ()
+	function array_merge_multi (...$args)
 	{
-		$args = func_get_args();
 		$array = [];
 		foreach ( $args as $arg )
 		{

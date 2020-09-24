@@ -12,6 +12,9 @@ trait LamModel
 	protected  $_error = [];
 	public $pkType = 'int'; // 主键值的数据类型 int|string
 
+	/** 提供给修改器的数据 */
+	public $asiData = []; // 解决EasySwoole\ORM\AbstractModel::setAttr的alldata不统一的问题
+
 	/**
 	 * 单条记录write操作之后是否自动缓存
 	 * @var bool
@@ -20,10 +23,11 @@ trait LamModel
 	public $awaCacheExpire = 7 * 24* 3600; // 单条记录的默认缓存时间
 
 
-	public function __construct()
+	public function __construct($data = [], $gameid = '')
 	{
 		$this->_initialize();
-		parent::__construct();
+		$gameid != '' && $this->tableName($gameid);
+		parent::__construct($data);
 	}
 
 	// 初始化
@@ -125,7 +129,7 @@ trait LamModel
 				$data = & $con; // 随后会写入缓存
 			}
 
-			isset($con['extend']) && ! is_array($con['extend']) && $con['extend'] = json_decode($con['extend'], true);
+			isset($con['extension']) && ! is_array($con['extension']) && $con['extension'] = json_decode($con['extension'], true);
 		}
 
 		// 存入缓存
@@ -193,8 +197,6 @@ trait LamModel
 	}
 
 
-
-
 	/*-------------------------- 字段获取器 --------------------------*/
 
 	protected function getExtensionAttr($extension = '', $alldata = [])
@@ -210,7 +212,7 @@ trait LamModel
 	/*-------------------------- 字段修改器 --------------------------*/
 
 	/**
-	 * 数据写入前对extend字段的值进行处理
+	 * 数据写入前对extension字段的值进行处理
 	 *
 	 * @access protected
 	 * @param array $extension 原数据
@@ -236,9 +238,7 @@ trait LamModel
 			$extension = json_decode($extension, true);
 		}
 
-		//$arr = input('extend/a', []);
 		settype($extension, 'array');
-		//$extension = array_merge_multi($extension, $arr);
 
 		// 特殊处理 $extension = ['exp', '.....'];
 		if( ! empty($extension[0]) && $extension[0] == 'exp')
@@ -246,8 +246,7 @@ trait LamModel
 			return $extension;
 		}
 
-
-		//循环判断$_POST['extend']中的各个键值，若为数字键值，则unset掉
+		//循环判断$_POST['extension']中的各个键值，若为数字键值，则unset掉
 		foreach($extension as $keyext => $vext)
 		{
 			if(is_numeric($keyext) && $vext != 'exp') {
@@ -255,16 +254,15 @@ trait LamModel
 			}
 		}
 
-		if(empty($extension) && empty($alldata['__extend']))
+		if(empty($extension) && empty($this->asiData['__extension']))
 		{
 			return false;
 		}
 
-		// print_r($extension);
-		if( ! empty($alldata['__extend']) && $alldata['__extend'] != 'N;')
+		if( ! empty($this->asiData['__extension']) && $this->asiData['__extension'] != 'N;')
 		{
-			$__extend = json_decode($alldata['__extend'], true);
-			is_array($__extend) && $extension = array_merge_multi($__extend, $extension);
+			$__extension = json_decode($this->asiData['__extension'], true);
+			is_array($__extension) && $extension = array_merge_multi($__extension, $extension);
 		}
 		// halt($extension);
 		return $encode ? json_encode($extension) : $extension;
