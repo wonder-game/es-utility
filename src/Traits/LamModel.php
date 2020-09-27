@@ -7,6 +7,8 @@
  */
 namespace Linkunyuan\EsUtility\Traits;
 
+use EasySwoole\ORM\DbManager;
+
 trait LamModel
 {
 	protected  $_error = [];
@@ -21,6 +23,8 @@ trait LamModel
 	 */
 	public $awaCache = false; // after write and cache
 	public $awaCacheExpire = 7 * 24* 3600; // 单条记录的默认缓存时间
+
+	public $destroyWhere = []; // 执行删除数据时的where值
 
 
 	public function __construct($data = [], $gameid = '')
@@ -79,6 +83,19 @@ trait LamModel
 	}
 
 	/**
+	 * 从缓存中取出数据，并将extension中的数据合并到主数据
+	 * @param int $id
+	 * @return array|bool|number
+	 */
+	public function mergeExt($id = 0)
+	{
+		$data = $this->_cacheInfo($id);
+		isset($data['extension']) && is_array($data['extension']) && $data += $data['extension'];
+		unset($data['extension']);
+		return $data;
+	}
+
+	/**
 	 * 通过唯一健值从缓存中获取或设置信息
 	 * @param mixed $id 唯一标识值 或者 [字段名=>值]
 	 * @param mixed $data 传空代表读取数据（默认）；null代表删除数据;其他有值代表写入
@@ -100,7 +117,7 @@ trait LamModel
 	protected function _cacheInfo($id = 0,  $prefix = null, $data = '')
 	{
 		$isarray = is_array($id);
-		list($Redis, $key, $pk, $id) = $this->redisAndKey($id, $prefix);
+		list($Redis, $key, $pk, $id, $condition) = $this->redisAndKey($id, $prefix);
 
 		$con = true;
 
@@ -125,11 +142,13 @@ trait LamModel
 			// 没有记录，则尝试从数据表里读取
 			if( ! $con)
 			{
-				$con = $this->_getByUnique($pk, $id);
+				$con = $this->_getByUnique($pk, $id, $condition);
 				$data = & $con; // 随后会写入缓存
 			}
 
-			isset($con['extension']) && ! is_array($con['extension']) && $con['extension'] = json_decode($con['extension'], true);
+			is_scalar($con) && $con = json_decode($con, true);
+
+			isset($con['extension']) && ! is_array($con['extension']) && ($con['extension'] = json_decode($con['extension'], true));
 		}
 
 		// 存入缓存
@@ -155,7 +174,7 @@ trait LamModel
 	 * 通过唯一键返回数据
 	 * @return array
 	 */
-	protected function _getByUnique($pk = 'id', $id = 0)
+	protected function _getByUnique($pk = 'id', $id = 0, $condition = [])
 	{
 		$data = $this->where([$pk=>$id])->get();
 		return $data ? $data->toArray() : [];
@@ -170,6 +189,7 @@ trait LamModel
 	public function redisAndKey($id = 0, $prefix = null)
 	{
 		$isarray = is_array($id);
+		$condition = [];
 
 		$pk = $isarray ? key($id) : $this->schemaInfo()->getPkFiledName(); // 唯一字段名
 		is_array($pk) && $pk = $pk[0];
@@ -177,6 +197,7 @@ trait LamModel
 		// [字段名=>唯一值]
 		if($isarray)
 		{
+			$condition = $id;
 			$id = current($id); // 唯一值
 		}
 		// 直接传主键值
@@ -190,10 +211,32 @@ trait LamModel
 		// defer方式获取连接
 		$Redis  = \EasySwoole\RedisPool\Redis::defer(config('app.redis.name'));
 
-		// 缓存前缀
-		$key = (is_null($prefix) ? $this->getTableName() : $prefix) . '-' . ($isarray ? '>' : ''). $id;
+		ksort($condition);
 
-		return [$Redis, $key, $pk, $id];
+		// 缓存前缀
+		$key = (is_null($prefix) ? $this->getTableName() : $prefix)
+			. '-'
+			. ($isarray ? '>' : '')
+			. ($isarray && count($condition)>1 ? md5(json_encode($condition)) : $id);
+
+		return [$Redis, $key, $pk, $id, $condition];
+	}
+
+	// 开启事务
+	public function startTrans()
+	{
+		DbManager::getInstance()->startTransaction($this->getQueryConnection());
+	}
+
+	public function commit()
+	{
+		DbManager::getInstance()->commit($this->getQueryConnection());
+
+	}
+
+	public function rollback()
+	{
+		DbManager::getInstance()->rollback($this->getQueryConnection());
 	}
 
 
@@ -271,5 +314,32 @@ trait LamModel
 	protected function setIpAttr($ip = '', $alldata = [])
 	{
 		return is_numeric($ip) ? $ip : ip2long($ip);
+	}
+
+
+	/*-------------------------- overwrite --------------------------*/
+	public function destroy($where = null, $allow = false)
+	{
+		$this->destroyWhere = $where;
+		return parent::destroy($where, $allow);
+	}
+
+
+	/*-------------------------- 模型事件 --------------------------*/
+	public static function onAfterDelete($model, $res)
+	{
+		$where = & $model->destroyWhere;
+		if($where && $res && $model->awaCache)
+		{
+			// 如果条件仅为主键
+			if(is_numeric($where) || (is_array($where) && count($where) == 1 && key($where) == $model->schemaInfo()->getPkFiledName()))
+			{
+				// 直接取出主键值
+				$where = is_numeric($where) ? $where : current($where);
+			}
+			// 删除缓存
+			$model->cacheInfo($where, null);
+		}
+		$where = [];
 	}
 }
