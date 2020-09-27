@@ -227,7 +227,7 @@ trait LamModel
 		{
 			return $extension;
 		}
-		return false;
+		return '{}';
 	}
 
 	protected function _setExtensionAttr($extension = [], $alldata = [], $relation = [], $encode = true)
