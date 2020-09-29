@@ -14,6 +14,7 @@ class LamUnit
 	static public function utilityParam(Request $request)
 	{
 		$method = $request->getMethod();
+		// $_GET or $_POST
 		$params =  $method== 'GET' ?  $request->getQueryParams(): $request->getParsedBody();
 		// $_SERVER
 		$server = $request->getServerParams();
@@ -21,9 +22,9 @@ class LamUnit
 		// 获取IP
 		isset($params['ip']) or $params['ip'] = $server['remote_addr'];
 
-		if($request->getRequestParam($key = '一堆通用参数！！'))
+		if($comval = $request->getRequestParam($key = '一堆通用参数！！'))
 		{
-			unset($params[$key]);
+			$comval = json_decode($comval, true);
 			$utility = [
 				'gameid' => 0,
 				'sdkver' => 'Utility-sdkver',
@@ -35,6 +36,9 @@ class LamUnit
 				'exmodel' => 'Utility-Huawei P40',
 			];
 
+			is_array($comval) && $utility = array_merge($utility, $comval);
+
+			unset($params[$key]);
 			$params += $utility;
 		}
 
