@@ -49,7 +49,7 @@ class LamUnit
 	{
 		$method = $request->getMethod();
 		// $_GET or $_POST
-		$params =  $method== 'GET' ?  $request->getQueryParams(): $request->getParsedBody();
+		$params =  $method == 'GET' ?  $request->getQueryParams(): $request->getParsedBody();
 		if(is_array($array))
 		{
 			if($merge)
@@ -81,7 +81,11 @@ class LamUnit
 		$array = json_decode($envkeydata, true);
 		($array && $envkeydata = $array) or parse_str($envkeydata, $envkeydata);
 
-		self::withParams($request, $envkeydata ? : [], true);
+		$envkeydata = $envkeydata ? : [];
+		// 下文环境中可以通过 $field 这个量的值来判断是否解密成功
+		$envkeydata[$field] = (bool) $envkeydata;
+
+		self::withParams($request, $envkeydata, true);
 
 		return $envkeydata;
 	}
