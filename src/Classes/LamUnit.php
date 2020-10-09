@@ -10,22 +10,19 @@ use EasySwoole\Http\Request;
 
 class LamUnit
 {
+
 	// 将yapi中的通用参数标识符转换为具体的通用参数数组
-	static public function utilityParam(Request $request)
+	static public function utilityParam(Request $request, $key = '一堆通用参数！！')
 	{
-		$method = $request->getMethod();
-		// $_GET or $_POST
-		$params =  $method== 'GET' ?  $request->getQueryParams(): $request->getParsedBody();
 		// $_SERVER
 		$server = $request->getServerParams();
-
 		// 获取IP
-		isset($params['ip']) or $params['ip'] = $server['remote_addr'];
+		$utility['ip'] = $server['remote_addr'];
 
-		if($comval = $request->getRequestParam($key = '一堆通用参数！！'))
+		if($comval = $request->getRequestParam($key))
 		{
 			$comval = json_decode($comval, true);
-			$utility = [
+			$utility += [
 				'gameid' => 0,
 				'sdkver' => 'Utility-sdkver',
 				'devid' => 'Utility-devid',
@@ -37,12 +34,55 @@ class LamUnit
 			];
 
 			is_array($comval) && $utility = array_merge($utility, $comval);
-
-			unset($params[$key]);
-			$params += $utility;
 		}
 
-		$method== 'GET' ? $request->withQueryParams($params) : $request->withParsedBody($params);
+		self::withParams($request, $utility, false, $key);
+	}
 
+	/**
+	 * @param Request $request
+	 * @param array $array 要合并的数据
+	 * @param bool $merge 是否覆盖掉原参数的值
+	 * @param string|array $unset 要删除的量
+	 */
+	static public function withParams(Request $request, $array = [], $merge = true, $unset = '')
+	{
+		$method = $request->getMethod();
+		// $_GET or $_POST
+		$params =  $method== 'GET' ?  $request->getQueryParams(): $request->getParsedBody();
+		if(is_array($array))
+		{
+			if($merge)
+			{
+				$params = $array + $params;
+			}else
+			{
+				$params += $array;
+			}
+		}
+
+		if($unset)
+		{
+			is_array($unset) or $unset = explode(',', $unset);
+			foreach($unset as $v)
+			{
+				unset($params[$v]);
+			}
+		}
+
+		$method == 'GET' ? $request->withQueryParams($params) : $request->withParsedBody($params);
+	}
+
+	// 解密
+	static public function decrypt(Request $request, $field = 'envkeydata')
+	{
+		$cipher = $request->getRequestParam($field);
+		$envkeydata = LamOpenssl::getInstance()->decrypt($cipher);
+		$array = json_decode($envkeydata, true);
+		($array && $envkeydata = $array) or parse_str($envkeydata, $envkeydata);
+
+		self::withParams($request, $envkeydata ? : [], true);
+
+		return $envkeydata;
 	}
 }

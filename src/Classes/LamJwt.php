@@ -1,4 +1,8 @@
 <?php
+/**
+ * jwt生成与解析
+ */
+
 namespace Linkunyuan\EsUtility\Classes;
 
 use EasySwoole\Jwt\Jwt;
