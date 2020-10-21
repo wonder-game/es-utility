@@ -3,7 +3,7 @@
  * 通用模型组件
  *
  * @author 林坤源
- * @version 1.0.1 最后修改时间 2020年09月23日
+ * @version 1.0.2 最后修改时间 2020年10月21日
  */
 namespace Linkunyuan\EsUtility\Traits;
 
@@ -23,6 +23,9 @@ trait LamModel
 	 */
 	public $awaCache = false; // after write and cache
 	public $awaCacheExpire = 7 * 24* 3600; // 单条记录的默认缓存时间
+
+	public $redisPoolname = ''; // redis连接池的标识
+	public $redisDb = null; // 默认redis库
 
 	public $destroyWhere = []; // 执行删除数据时的where值
 
@@ -109,7 +112,6 @@ trait LamModel
 	/**
 	 * 通过唯一健值从缓存中获取或设置信息
 	 * @param mixed $id 唯一标识值 或者 [字段名=>值]
-	 * @param array $options redis其它配置
 	 * @param string $prefix key的前缀，默认为取本模型的tableName属性的值，最终key的格式类似 game-66 或 game->lamson
 	 * @param mixed $data 传空代表读取数据（默认）；null代表删除数据;其他有值代表写入
 	 * @return array|bool|number
@@ -209,7 +211,8 @@ trait LamModel
 		$id or $id = $this->data[$pk] ?? 0; // 无值则尝试从$this->data中取
 
 		// defer方式获取连接
-		$Redis  = \EasySwoole\RedisPool\Redis::defer(config('app.redis.name'));
+		$Redis  = \EasySwoole\RedisPool\Redis::defer($this->redisPoolname ?: config('REDIS.poolname'));
+		$Redis->select(is_numeric($this->redisDb) ? $this->redisDb : config('REDIS.db')); // 切换到指定序号
 
 		ksort($condition);
 
