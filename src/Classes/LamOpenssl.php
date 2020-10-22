@@ -1,6 +1,9 @@
 <?php
 /**
  * openssl加解密
+ *
+ * @author 林坤源
+ * @version 1.0.2 最后修改时间 2020年10月21日
  */
 
 
@@ -95,7 +98,7 @@ class LamOpenssl
 	//解密码时把转换后的符号替换特殊符号
 	public function urlsafeB64decode($string)
 	{
-		$string = str_replace(['-','_'],['+','/'], $string);
+		$string = str_replace(['-','_',' '],['+','/','+'], $string);
 		$mod4 = strlen($string) % 4;
 		if ($mod4)
 		{

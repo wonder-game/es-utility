@@ -1,6 +1,9 @@
 <?php
 /**
  * jwt生成与解析
+ *
+ * @author 林坤源
+ * @version 1.0.2 最后修改时间 2020年10月21日
  */
 
 namespace Linkunyuan\EsUtility\Classes;
