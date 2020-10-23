@@ -2,6 +2,7 @@
 namespace Linkunyuan\EsUtility;
 
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\Logger;
 
 if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 	/**
@@ -62,6 +63,21 @@ if ( ! function_exists('Linkunyuan\EsUtility\config')) {
 		} else {
 			return $Config->setConf($name, $value);
 		}
+	}
+}
+
+if ( ! function_exists('Linkunyuan\EsUtility\trace')) {
+	/**
+	 * 记录日志信息
+	 * @param string|array $log log信息 支持字符串和数组
+	 * @param string $level 日志级别
+	 * @param string $category 日志类型
+	 * @return void
+	 */
+	function trace($log = '', $level = 'info', $category = 'debug')
+	{
+		is_scalar($log) or $log = json_encode($log, JSON_UNESCAPED_UNICODE);
+		Logger::getInstance()->$level($log, $category);//记录error级别日志并输出到控制台
 	}
 }
 
