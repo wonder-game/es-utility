@@ -72,12 +72,12 @@ if ( ! function_exists('Linkunyuan\EsUtility\trace')) {
 	 * @param string|array $log log信息 支持字符串和数组
 	 * @param string $level 日志级别
 	 * @param string $category 日志类型
-	 * @return void
+	 * @return void|bool
 	 */
 	function trace($log = '', $level = 'info', $category = 'debug')
 	{
 		is_scalar($log) or $log = json_encode($log, JSON_UNESCAPED_UNICODE);
-		Logger::getInstance()->$level($log, $category);//记录error级别日志并输出到控制台
+		return Logger::getInstance()->$level($log, $category);//记录error级别日志并输出到控制台
 	}
 }
 
