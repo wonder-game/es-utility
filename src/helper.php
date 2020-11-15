@@ -53,7 +53,6 @@ if ( ! function_exists('parse_name')) {
 	}
 }
 
-
 if ( ! function_exists('array_merge_multi')) {
 	/**
 	 * 多维数组合并（支持多数组）
@@ -62,5 +61,27 @@ if ( ! function_exists('array_merge_multi')) {
 	function array_merge_multi (...$args)
 	{
 		return \Linkunyuan\EsUtility\array_merge_multi(...$args);
+	}
+}
+
+if ( ! function_exists('listdate')) {
+	/**
+	 * 多维数组合并（支持多数组）
+	 * @return array
+	 */
+	function listdate ($beginday, $endday, $tpye = false)
+	{
+		return \Linkunyuan\EsUtility\listdate($beginday, $endday, $tpye);
+	}
+}
+
+if ( ! function_exists('difdate')) {
+	/**
+	 * 多维数组合并（支持多数组）
+	 * @return array
+	 */
+	function difdate ($beginday, $endday, $d = false)
+	{
+		return \Linkunyuan\EsUtility\difdate($beginday, $endday, $d);
 	}
 }
