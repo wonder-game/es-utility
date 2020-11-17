@@ -10,6 +10,10 @@
 namespace Linkunyuan\EsUtility\Classes;
 
 
+use EasySwoole\Mysqli\QueryBuilder;
+use EasySwoole\ORM\DbManager;
+use EasySwoole\EasySwoole\Task\TaskManager;
+
 class ShardTable
 {
  	public $Db = null;
@@ -21,9 +25,21 @@ class ShardTable
  	 */
  	public function setDb($db = null)
  	{
- 	 	$this->Db = is_object($db) ? $db : db();
+		$this->Db = is_object($db) ? $db : new QueryBuilder();
  	 	return $this;
  	}
+
+ 	public function query($sql = '')
+	{
+		$this->Db->raw($sql);
+		return DbManager::getInstance()->query($this->Db)->getResult();
+	}
+
+	public function execute($sql = '')
+	{
+		$this->Db->raw($sql);
+		return DbManager::getInstance()->query($this->Db);
+	}
 
 	/**
 	 * 按日,月,年时间分表
@@ -69,16 +85,13 @@ class ShardTable
 				return $this->_reMsg('开始日期必须小于结束日期', 1);
 			}
 
-			$arr = listdate($sdate, $edate, $type);
+			// 异步执行分区
+			TaskManager::getInstance()->async(function () use ($sdate, $edate, $type, $showtab, $table, $field){
+				$arr = listdate($sdate, $edate, $type);
 
- 	 	 	// 查看是否存在此表
-			$tables = [0=>1];
-			$showtab && $tables = $this->Db->query(" show create table $table");
- 	 	 	if( ! empty($tables[0]))
- 	 	 	{
- 	 	 	 	// 获取此表当前的分区情况
- 	 	 	 	$oldpt = $newpt = [];
- 	 	 	 	$partitions = $this->Db->query("
+				// 获取此表当前的分区情况
+				$oldpt = $newpt = [];
+				$partitions = $this->query("
 					select 
 						partition_description descr
 					from
@@ -97,7 +110,7 @@ class ShardTable
 					}
 					$sql = "ALTER TABLE $table  PARTITION  BY RANGE ($field)(" . implode(',', $psql)  .")";
 					// halt($sql);
-					$this->Db->execute($sql);
+					$this->execute($sql);
 				}else
 				{
 					$partitions = array_column($partitions, 'descr');
@@ -110,17 +123,45 @@ class ShardTable
 						}
 					}
 
-					$psql && ($sql = "ALTER TABLE $table  ADD PARTITION (" . implode(',', $psql)  .")") && $this->Db->execute($sql);
+					$psql && ($sql = "ALTER TABLE $table  ADD PARTITION (" . implode(',', $psql)  .")") && $this->execute($sql);
 					// halt($sql);
 				}
- 	 	 	 	return $this->_reMsg("表{$table}添加分区完成");
- 	 	 	} else {
- 	 	 		return $this->_reMsg("表{$table}不存在", 1);
- 	 	 	}
+				return $this->_reMsg("表{$table}添加分区完成");
+			});
  	 	} catch (\Exception $e) {
  	 	 	return $this->_reMsg($e->getMessage(), 2);
  	 	}
  	}
+
+ 	public function shard($month_ereg = '', $quarter_ereg = '', $year_ereg = '', $field = 'instime')
+	{
+		$this->setDb();
+
+		$month_table = $quarter_table = $year_table = [];
+
+		$tables = $this->query('SHOW TABLES');
+		foreach ($tables as $v)
+		{
+			$v = current($v);
+			foreach (['month', 'quarter', 'year'] as $t)
+			{
+				$var = "{$t}_ereg";
+				$var = $$var;
+				if ($var && preg_match($var, $v))
+				{
+					$var = "{$t}_table";
+					array_push($$var, $v);
+					break;
+				}
+			}
+		}
+
+		$month_table && $this->rangePartition($month_table);
+		$quarter_table && $this->rangePartition($quarter_table, 0, 0, $field, 3);
+		$year_table && $this->rangePartition($year_table, 0, 0, $field, 4);
+		return true;
+	}
+
 
 	/**
 	 * 返回信息
@@ -139,7 +180,7 @@ class ShardTable
 			'remark' => '查看详情'
 		]);*/
 
-		trace($msg, 'error', 'crontab');
+		trace($msg, $code ? 'error' : 'info', 'crontab');
 		return ['err'=>$code, 'msg'=>$msg];
 	}
 }

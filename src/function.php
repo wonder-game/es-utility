@@ -137,17 +137,15 @@ if ( ! function_exists('Linkunyuan\EsUtility\listdate')) {
 	 *
 	 * @param string|int $beginday 开始日期，格式为Ymd或者Y-m-d
 	 * @param string|int $endday 结束日期，格式为Ymd或者Y-m-d
-	 * @param int|bool $tpye 类型 1：日； 2：月； 3：季； 4：年
-	 * @author 林坤源
-	 * @version 7.0.0 最后修改时间 2019年04月11日
+	 * @param int $type 类型 1：日； 2：月； 3：季； 4：年
 	 * @return array
 	 */
-	function listdate($beginday, $endday, $tpye = false)
+	function listdate($beginday, $endday, $type = 2)
 	{
-		$dif = difdate($beginday, $endday, $tpye);
+		$dif = difdate($beginday, $endday, $type != 2);
 
 		// 季
-		if($tpye == 3)
+		if($type == 3)
 		{
 			// 开始的年份, 结束的年份
 			$arry = [date('Y', strtotime($beginday)), date('Y', strtotime($endday))];
@@ -183,7 +181,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\listdate')) {
 			}while($by<=$arry[1]);
 		}
 		// 年
-		elseif($tpye == 4)
+		elseif($type == 4)
 		{
 			$begintime = substr($beginday, 0, 4);
 			for($i = 0; $i<=$dif; ++$i)
@@ -195,14 +193,14 @@ if ( ! function_exists('Linkunyuan\EsUtility\listdate')) {
 		else
 		{
 			// 日期 p180302=>strtotime(20180304)
-			if($tpye === true || $tpye == 1)
+			if($type === true || $type == 1)
 			{
 				$format = 'Y-m-d';
 				$unit = 'day';
 				$d = '';
 			}
 			// 月份 p1803=>strtotime(20180401)
-			elseif($tpye === false || $tpye == 2)
+			elseif($type === false || $type == 2)
 			{
 				$format = 'Y-m';
 				$unit = 'month';

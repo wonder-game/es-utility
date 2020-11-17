@@ -66,19 +66,22 @@ if ( ! function_exists('array_merge_multi')) {
 
 if ( ! function_exists('listdate')) {
 	/**
-	 * 多维数组合并（支持多数组）
+	 * 返回两个日期之间的具体日期或月份
+	 *
+	 * @param string|int $beginday 开始日期，格式为Ymd或者Y-m-d
+	 * @param string|int $endday 结束日期，格式为Ymd或者Y-m-d
+	 * @param int $type 类型 1：日； 2：月； 3：季； 4：年
 	 * @return array
 	 */
-	function listdate ($beginday, $endday, $tpye = false)
+	function listdate ($beginday, $endday, $type = 2)
 	{
-		return \Linkunyuan\EsUtility\listdate($beginday, $endday, $tpye);
+		return \Linkunyuan\EsUtility\listdate($beginday, $endday, $type);
 	}
 }
 
 if ( ! function_exists('difdate')) {
 	/**
-	 * 多维数组合并（支持多数组）
-	 * @return array
+	 * 计算两个日期相差多少天或多少月
 	 */
 	function difdate ($beginday, $endday, $d = false)
 	{
