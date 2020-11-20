@@ -9,11 +9,25 @@
 namespace Linkunyuan\EsUtility\Classes;
 
 
+use EasySwoole\Http\GlobalParamHook;
 use EasySwoole\Http\Request;
+use EasySwoole\Http\Response;
 
 class LamUnit
 {
+	// 收到HTTP请求时触发处理
+	static public function onRequest(Request $request, Response $response)
+	{
+		// 将yapi中的通用参数标识符转换为具体的通用参数数组
+		self::utilityParam($request);
 
+		// 解密
+		self::decrypt($request);
+
+		// 将值写入$_GET,$_POST,$_COOKIE...
+		GlobalParamHook::getInstance()->onRequest($request, $response);
+	}
+	
 	// 将yapi中的通用参数标识符转换为具体的通用参数数组
 	static public function utilityParam(Request $request, $key = '一堆通用参数！！')
 	{
