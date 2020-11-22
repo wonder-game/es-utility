@@ -77,7 +77,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\trace')) {
 	function trace($log = '', $level = 'info', $category = 'debug')
 	{
 		is_scalar($log) or $log = json_encode($log, JSON_UNESCAPED_UNICODE);
-		return Logger::getInstance()->$level($log, $category);//记录error级别日志并输出到控制台
+		return Logger::getInstance()->$level($log, $category);
 	}
 }
 
