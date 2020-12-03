@@ -39,6 +39,20 @@ if ( ! function_exists('trace')) {
 	}
 }
 
+if ( ! function_exists('defer_redis')) {
+	/**
+	 * 返回redis句柄资源
+	 * @param string $poolname 标识
+	 * @param number $db 数据库编号
+	 * @return \EasySwoole\Redis\Redis
+	 */
+	function defer_redis($poolname = '', $db = null)
+	{
+		return \Linkunyuan\EsUtility\defer_redis($poolname, $db);
+	}
+}
+
+
 if ( ! function_exists('parse_name')) {
 	/**
 	 * 字符串命名风格转换

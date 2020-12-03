@@ -27,7 +27,7 @@ class LamUnit
 		// 将值写入$_GET,$_POST,$_COOKIE...
 		GlobalParamHook::getInstance()->onRequest($request, $response);
 	}
-	
+
 	// 将yapi中的通用参数标识符转换为具体的通用参数数组
 	static public function utilityParam(Request $request, $key = '一堆通用参数！！')
 	{
@@ -48,6 +48,7 @@ class LamUnit
 				'os' => 0,
 				'osver' => '12',
 				'exmodel' => 'Utility-Huawei P40',
+				'creqtime' => time()
 			];
 
 			is_array($comval) && $utility = array_merge($utility, $comval);

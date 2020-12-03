@@ -81,6 +81,24 @@ if ( ! function_exists('Linkunyuan\EsUtility\trace')) {
 	}
 }
 
+if ( ! function_exists('Linkunyuan\EsUtility\defer_redis')) {
+	/**
+	 * 返回redis句柄资源
+	 * @param string $poolname 标识
+	 * @param number $db 数据库编号
+	 * @return \EasySwoole\Redis\Redis
+	 */
+	function defer_redis($poolname = '', $db = null)
+	{
+		$poolname = $poolname ? : config('REDIS.poolname');
+		$db = is_numeric($db) ? $db : config('REDIS.db');
+		// defer方式获取连接
+		$Redis  = \EasySwoole\RedisPool\Redis::defer($poolname);
+		$Redis->select($db); // 切换到指定序号
+		return $Redis;
+	}
+}
+
 if ( ! function_exists('Linkunyuan\EsUtility\parse_name')) {
 	/**
 	 * 字符串命名风格转换
