@@ -62,6 +62,18 @@ trait LamModel
 		return $this->_error;
 	}
 
+	public function setCreateTime($instime = 'instime')
+	{
+		$this->createTime = $instime;
+		return $this;
+	}
+
+	public function setUpdateTime($updtime = 'updtime')
+	{
+		$this->updateTime = $updtime;
+		return $this;
+	}
+
 
 	/**
 	 * 更新缓存
@@ -255,6 +267,17 @@ trait LamModel
 	}
 
 	/*-------------------------- 字段修改器 --------------------------*/
+
+	protected function setInstimeAttr($instime = '', $alldata = [])
+	{
+		// TODO 本来不应该写成$_POST的，但easywoole的orm的setAttr()方法写得不合理，没有传原始的全部数据进来！！
+		if(isset($_POST['instime']))
+		{
+			return is_numeric($_POST['instime']) ? $_POST['instime'] : strtotime($_POST['instime']);
+		}
+		return $instime;
+	}
+
 
 	/**
 	 * 数据写入前对extension字段的值进行处理
