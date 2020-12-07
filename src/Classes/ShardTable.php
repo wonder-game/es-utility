@@ -12,10 +12,14 @@ namespace Linkunyuan\EsUtility\Classes;
 
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\DbManager;
-use EasySwoole\EasySwoole\Task\TaskManager;
+//use EasySwoole\EasySwoole\Task\TaskManager;
+use Linkunyuan\EsUtility\Traits\LamCli;
 
 class ShardTable
 {
+
+	use LamCli;
+
  	public $Db = null;
 
  	/**
@@ -86,7 +90,8 @@ class ShardTable
 			}
 
 			// 异步执行分区
-			TaskManager::getInstance()->async(function () use ($sdate, $edate, $type, $showtab, $table, $field){
+			//TaskManager::getInstance()->async(function () use ($sdate, $edate, $type, $showtab, $table, $field){
+			go(function () use ($sdate, $edate, $type, $showtab, $table, $field){
 				$arr = listdate($sdate, $edate, $type);
 
 				// 获取此表当前的分区情况
@@ -126,7 +131,11 @@ class ShardTable
 					$psql && ($sql = "ALTER TABLE $table  ADD PARTITION (" . implode(',', $psql)  .")") && $this->execute($sql);
 					// halt($sql);
 				}
-				return $this->_reMsg("表{$table}添加分区完成");
+				$res = $this->_reMsg("表{$table}添加分区完成");
+				// 保存日志
+				$this->__destruct();
+
+				return $res;
 			});
  	 	} catch (\Exception $e) {
  	 	 	return $this->_reMsg($e->getMessage(), 2);
