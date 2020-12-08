@@ -62,6 +62,12 @@ trait LamModel
 		return $this->_error;
 	}
 
+	public function setError($err = [])
+	{
+		$this->_error = $err;
+		return $this;
+	}
+
 	public function setAutoTimeStamp($auto = false)
 	{
 		$this->autoTimeStamp = $auto;
