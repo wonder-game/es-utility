@@ -62,6 +62,12 @@ trait LamModel
 		return $this->_error;
 	}
 
+	public function setAutoTimeStamp($auto = false)
+	{
+		$this->autoTimeStamp = $auto;
+		return $this;
+	}
+
 	public function setCreateTime($instime = 'instime')
 	{
 		$this->createTime = $instime;
