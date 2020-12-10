@@ -363,6 +363,38 @@ trait LamModel
 
 
 	/*-------------------------- 模型事件 --------------------------*/
+
+	public static function onAfterInsert($model, $res)
+	{
+		$res && $model->_after_insert();
+	}
+
+	protected function _after_insert()
+	{
+		// 存入缓存
+		if($this->awaCache)
+		{
+			go(function () {
+				$data = $this->getOriginData();
+				$this->cacheInfo($data[$this->schemaInfo()->getPkFiledName()], $data);
+			});
+		}
+	}
+
+	public static function onAfterUpdate($model, $res)
+	{
+		$res && $model->_after_update();
+	}
+
+	protected function _after_update()
+	{
+		// 修改缓存
+		if($this->awaCache)
+		{
+			
+		}
+	}
+
 	public static function onAfterDelete($model, $res)
 	{
 		$where = & $model->destroyWhere;
