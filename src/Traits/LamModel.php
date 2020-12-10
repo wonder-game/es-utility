@@ -86,6 +86,24 @@ trait LamModel
 		return $this;
 	}
 
+	/**
+	 * TODO 暂时没找到replace操作，此处先自定义着用(data中一定要有主键)
+	 * @access public
+	 * @param array $unique 唯一性约束的条件
+	 * @return integer|false
+	 */
+	public function replace($unique = [])
+	{
+		if($this->where($unique)->get())
+		{
+			$res = $this->update();
+		}else
+		{
+			$res = $this->save();
+		}
+		return $res;
+	}
+
 
 	/**
 	 * 更新缓存
@@ -366,13 +384,18 @@ trait LamModel
 
 	public static function onAfterInsert($model, $res)
 	{
-		$res && $model->_after_insert();
+		$model->_after_write($res);
 	}
 
-	protected function _after_insert()
+	public static function onAfterUpdate($model, $res)
+	{
+		$model->_after_write($res);
+	}
+
+	protected function _after_write($res = false)
 	{
 		// 存入缓存
-		if($this->awaCache)
+		if($res && $this->awaCache)
 		{
 			go(function () {
 				$data = $this->getOriginData();
@@ -381,33 +404,25 @@ trait LamModel
 		}
 	}
 
-	public static function onAfterUpdate($model, $res)
-	{
-		$res && $model->_after_update();
-	}
-
-	protected function _after_update()
-	{
-		// 修改缓存
-		if($this->awaCache)
-		{
-			
-		}
-	}
 
 	public static function onAfterDelete($model, $res)
 	{
-		$where = & $model->destroyWhere;
-		if($where && $res && $model->awaCache)
+		$model->_after_delete($res);
+	}
+
+	protected function _after_delete($res)
+	{
+		$where = & $this->destroyWhere;
+		if($where && $res && $this->awaCache)
 		{
 			// 如果条件仅为主键
-			if(is_numeric($where) || (is_array($where) && count($where) == 1 && key($where) == $model->schemaInfo()->getPkFiledName()))
+			if(is_numeric($where) || (is_array($where) && count($where) == 1 && key($where) == $this->schemaInfo()->getPkFiledName()))
 			{
 				// 直接取出主键值
 				$where = is_numeric($where) ? $where : current($where);
 			}
 			// 删除缓存
-			$model->cacheInfo($where, null);
+			$this->cacheInfo($where, null);
 		}
 		$where = [];
 	}
