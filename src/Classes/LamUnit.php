@@ -32,9 +32,9 @@ class LamUnit
 	static public function utilityParam(Request $request, $key = '一堆通用参数！！')
 	{
 		// $_SERVER
-		$server = $request->getServerParams();
+		//$server = $request->getServerParams();
 		// 获取IP
-		$utility['ip'] = $server['remote_addr'];
+		$utility['ip'] = ip($request);
 
 		if($comval = $request->getRequestParam($key))
 		{

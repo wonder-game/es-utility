@@ -102,3 +102,23 @@ if ( ! function_exists('difdate')) {
 		return \Linkunyuan\EsUtility\difdate($beginday, $endday, $d);
 	}
 }
+
+if ( ! function_exists('verify_token')) {
+	/**
+	 * 验证jwt并读取用户信息
+	 */
+	function verify_token ($orgs = [], $header = [], $key = 'uid')
+	{
+		return \Linkunyuan\EsUtility\verify_token($orgs, $header, $key);
+	}
+}
+
+if ( ! function_exists('ip')) {
+	/**
+	 * 验证jwt并读取用户信息
+	 */
+	function ip ($request)
+	{
+		return \Linkunyuan\EsUtility\ip($request);
+	}
+}

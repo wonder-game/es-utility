@@ -3,6 +3,7 @@ namespace Linkunyuan\EsUtility;
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
+use Linkunyuan\EsUtility\Classes\LamJwt;
 
 if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 	/**
@@ -259,6 +260,68 @@ if ( ! function_exists('Linkunyuan\EsUtility\difdate')) {
 		return ceil( ($endstamp-$beginstamp) / (3600*24) );
 	}
 }
+
+
+if ( ! function_exists('Linkunyuan\EsUtility\verify_token')) {
+	/**
+	 * 验证jwt并读取用户信息
+	 */
+	function verify_token($orgs = [], $header = [], $key = 'uid')
+	{
+		$token = $header['token'][0] ?? '';
+		if( ! $token)
+		{
+			// invalid_verify_token
+			return ['INVERTOKEN'=>1, 'code'=>401, 'msg'=>'缺少token'];
+		}
+		// 验证JWT
+		$jwt = LamJwt::verifyToken($token, config('ENCRYPT.key'));
+		if($jwt['status'] != 1 || $jwt['data'][$key] != $orgs[$key])
+		{
+			return ['INVERTOKEN'=>1, 'code'=>400, 'msg'=>'jwt有误'];
+		}
+
+		$jwt['data']['token'] = $token;
+
+		return $jwt['data'];
+	}
+}
+
+
+if ( ! function_exists('Linkunyuan\EsUtility\ip')) {
+	/**
+	 * 验证jwt并读取用户信息
+	 */
+	function ip($request)
+	{
+		$arr = $request->getHeaders();
+		return  ! empty($arr['x-forwarded-for'][0]) ? $arr['x-forwarded-for'][0] : (
+					! empty($arr['x-real-ip'][0]) ? $arr['x-real-ip'][0] : (
+						$request->getServerParams()['remote_addr'] ?? ''
+					)
+		);
+
+		/*Array
+		(
+			[connection] => Array ([0] => keep-alive)
+			[x-real-ip] => Array ([0] => 172.28.48.1)
+		    [x-forwarded-for] => Array ([0] => 172.28.48.1)
+			[host] => Array	([0] => 127.0.0.1:8503)
+			[content-length] => Array ([0] => 148)
+			[accept] => Array ([0] => application/json)
+			[cross-request-open-sign] => Array([0] => 1)
+			[user-agent] => Array ([0] => Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36)
+		    [token] => Array([0] => ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFNU1UazBPVGN4T0RNc0luTjFZaUk2SWlJc0ltNWlaaUk2TVRZd016STNNekU0TXl3aVlYVmtJam9pSWl3aWFXRjBJam94TmpBek1qY3pNVGd6TENKcWRHa2lPaUkxWmprd01ERmtaalpsTWprNElpd2lhWE56SWpvaUlpd2ljM1JoZEhWeklqb3hMQ0prWVhSaElqcDdJblZwWkNJNklqRWlMQ0oxYzJWeWJtRnRaU0k2SW14aGJYTnZiaUlzSW1kaGJXVnBaQ0k2SWpBaWZYMC5FcE5fN0gwNWtlX2RQWTNJWmxFMmxUQUtoSi1vdmVHRVgxQ2duMGNQdzNJ)
+			[content-type] => Array([0] => application/x-www-form-urlencoded)
+			[origin] => Array	([0] => chrome-extension://bbddljjploajjcembfomccpkbnmfapcj)
+			[accept-encoding] => Array	([0] => gzip, deflate)
+			[accept-language] => Array (	[0] => zh-CN,zh;q=0.9)
+		)*/
+	}
+}
+
+
+
 
 
 

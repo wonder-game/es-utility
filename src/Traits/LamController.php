@@ -9,5 +9,17 @@ namespace Linkunyuan\EsUtility\Traits;
 
 trait LamController
 {
-
+	protected function _isRsa($input = [], $header = [], $category = 'pay')
+	{
+		if(empty($input['envkeydata']) )
+		{
+			$data = verify_token($input, $header, 'operid');
+			if( ! empty($data['INVERTOKEN']))
+			{
+				trace('密文有误:' . var_export($input, true), 'error', $category);
+				return false;
+			}
+		}
+		return true;
+	}
 }
