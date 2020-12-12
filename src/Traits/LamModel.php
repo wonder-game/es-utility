@@ -399,7 +399,9 @@ trait LamModel
 		{
 			go(function () {
 				$data = $this->getOriginData();
-				$this->cacheInfo($data[$this->schemaInfo()->getPkFiledName()], $data);
+				$pk = $this->schemaInfo()->getPkFiledName();
+				is_array($pk) && $pk = $pk[0];
+				isset($data[$pk]) && $this->cacheInfo($data[$pk], $data);
 			});
 		}
 	}
