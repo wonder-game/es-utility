@@ -96,7 +96,7 @@ trait LamModel
 	{
 		if($this->where($unique)->get())
 		{
-			$res = $this->update();
+			$res = $this->where($unique)->update();
 		}else
 		{
 			$res = $this->save();
