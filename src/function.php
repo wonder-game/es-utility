@@ -295,13 +295,11 @@ if ( ! function_exists('Linkunyuan\EsUtility\ip')) {
 	function ip($request)
 	{
 		$arr = $request->getHeaders();
-		// IP1,IP2
-		$iparr = ! empty($arr['x-forwarded-for'][0]) ? $arr['x-forwarded-for'][0] : (
+		return  ! empty($arr['x-forwarded-for'][0]) ? $arr['x-forwarded-for'][0] : (
 					! empty($arr['x-real-ip'][0]) ? $arr['x-real-ip'][0] : (
 						$request->getServerParams()['remote_addr'] ?? ''
 					)
 		);
-		return explode(',', $iparr)[0];
 
 		/*Array
 		(
