@@ -276,7 +276,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\verify_token')) {
 		}
 		// 验证JWT
 		$jwt = LamJwt::verifyToken($token, config('ENCRYPT.key'));
-		if($jwt['status'] != 1 || $jwt['data'][$key] != $orgs[$key])
+		if($jwt['status'] != 1 || empty($jwt['data'][$key]) || empty($orgs[$key]) || $jwt['data'][$key] != $orgs[$key])
 		{
 			return ['INVERTOKEN'=>1, 'code'=>400, 'msg'=>'jwt有误'];
 		}

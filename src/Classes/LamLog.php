@@ -87,11 +87,13 @@ class LamLog implements LoggerInterface
 	private function _preAct($msg, int & $level = self::LOG_LEVEL_INFO, string $category = 'console', string $func = 'log')
 	{
 		$cid = Coroutine::getCid();
-		
+
 		if( ! is_scalar($msg))
 		{
 			$msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
 		}
+		$msg = str_replace(["\n","\r"], '', $msg);
+
 		$date = date('Y-m-d H:i:s');
 		$level = $this->levelMap($level);
 

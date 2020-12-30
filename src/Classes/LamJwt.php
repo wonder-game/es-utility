@@ -28,7 +28,7 @@ class LamJwt
 		is_array($extend) && extract($extend);
 
 		$jwt = Jwt::getInstance()
-			->setSecretKey($key) // 秘钥
+			->setSecretKey($key ? : config('ENCRYPT.key')) // 秘钥
 			->publish();
 
 		$jwt->setAlg('HMACSHA256'); // 加密方式
@@ -59,7 +59,7 @@ class LamJwt
 	{
 		$token = base64_decode($token);
 		try {
-			$jwt = Jwt::getInstance()->setSecretKey(config('ENCRYPT.key'))->decode($token);
+			$jwt = Jwt::getInstance()->setSecretKey($key ? : config('ENCRYPT.key'))->decode($token);
 			$status = $jwt->getStatus();
 
 			switch ($status)

@@ -11,8 +11,10 @@ trait LamController
 {
 	protected function _isRsa($input = [], $header = [], $category = 'pay')
 	{
-		if(empty($input['envkeydata']) )
+		// 如果不是rsa加密数据并且非本地开发环境
+		if(empty($input['envkeydata']) &&  get_cfg_var('env.app_dev') != 2)
 		{
+			// 则要求要JWT符合规则
 			$data = verify_token($input, $header, 'operid');
 			if( ! empty($data['INVERTOKEN']))
 			{
