@@ -29,11 +29,14 @@ trait LamModel
 
 	public $destroyWhere = []; // 执行删除数据时的where值
 
+	public $gameid = '';
 
-	public function __construct($data = [], $gameid = '')
+
+	public function __construct($data = [], $tabname = '', $gameid = '')
 	{
 		$this->_initialize();
-		$gameid != '' && $this->tableName($gameid);
+		$tabname != '' &&  $this->tableName($tabname);
+		$this->gameid = $gameid;
 		parent::__construct($data);
 	}
 
@@ -401,7 +404,7 @@ trait LamModel
 				$data = $this->getOriginData();
 				$pk = $this->schemaInfo()->getPkFiledName();
 				is_array($pk) && $pk = $pk[0];
-				isset($data[$pk]) && $this->cacheInfo($data[$pk], $data);
+				isset($data[$pk]) && $this->cacheInfo($data[$pk], $this->_getByUnique($pk, $data[$pk]));
 			});
 		}
 	}
