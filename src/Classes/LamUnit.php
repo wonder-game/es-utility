@@ -54,6 +54,18 @@ class LamUnit
 			is_array($comval) && $utility = array_merge($utility, $comval);
 		}
 
+		// 销售渠道
+		if( ! $request->getRequestParam('dtorid'))
+		{
+			$utility['dtorid'] = $request->getRequestParam('os') == 1 ? 3 : 4;
+		}
+
+		// 包序号（版本序号）
+		if( ! $request->getRequestParam('versioncode'))
+		{
+			$utility['versioncode'] = 1;
+		}
+
 		self::withParams($request, $utility, false, $key);
 	}
 
