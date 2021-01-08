@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fdbd75ec6e97db0d58f29b36b8574a76",
+    "content-hash": "0f792b8e435ee69e0772159cd25b3df5",
     "packages": [
         {
             "name": "doctrine/lexer",
@@ -779,6 +779,49 @@
                 "source": "https://github.com/easy-swoole/http-annotation/tree/1.4.3"
             },
             "time": "2020-08-24T07:18:32+00:00"
+        },
+        {
+            "name": "easyswoole/i18n",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/easy-swoole/i18n.git",
+                "reference": "55e68a06a5c57ee852c85e7559a500dfeff35bbf"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/easy-swoole/i18n/zipball/55e68a06a5c57ee852c85e7559a500dfeff35bbf",
+                "reference": "55e68a06a5c57ee852c85e7559a500dfeff35bbf",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "easyswoole/component": "^2.2"
+            },
+            "require-dev": {
+                "easyswoole/phpunit": "^1.0",
+                "easyswoole/swoole-ide-helper": "^1.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "EasySwoole\\I18N\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "support": {
+                "issues": "https://github.com/easy-swoole/i18n/issues",
+                "source": "https://github.com/easy-swoole/i18n/tree/master"
+            },
+            "time": "2020-04-18T08:34:32+00:00"
         },
         {
             "name": "easyswoole/jwt",

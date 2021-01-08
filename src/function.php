@@ -3,6 +3,7 @@ namespace Linkunyuan\EsUtility;
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
+use EasySwoole\I18N\I18N;
 use Linkunyuan\EsUtility\Classes\LamJwt;
 
 if ( ! function_exists('Linkunyuan\EsUtility\model')) {
@@ -368,6 +369,12 @@ if ( ! function_exists('Linkunyuan\EsUtility\ip')) {
 	}
 }
 
+if ( ! function_exists('Linkunyuan\EsUtility\lang')) {
+	function lang($const = '')
+	{
+		return I18N::getInstance()->translate($const);
+	}
+}
 
 
 

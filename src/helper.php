@@ -122,3 +122,10 @@ if ( ! function_exists('ip')) {
 		return \Linkunyuan\EsUtility\ip($request);
 	}
 }
+
+if ( ! function_exists('lang')) {
+	function lang($const = '')
+	{
+		return \Linkunyuan\EsUtility\lang($const);
+	}
+}
