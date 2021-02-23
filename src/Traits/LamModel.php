@@ -341,10 +341,10 @@ trait LamModel
 
 		settype($extension, 'array');
 
-		// 特殊处理 $extension = ['exp', '.....'];
-		if( ! empty($extension[0]) && $extension[0] == 'exp')
+		// 特殊处理 $extension = ['.....', 'exp'];  注意与ThinkPHP不同的是值在第一位操作符是在第二位！！
+		if( ! empty($extension[1]) && $extension[1] == 'exp')
 		{
-			return $extension;
+			return ['[F]'=>[$extension[0]]];
 		}
 
 		//循环判断$_POST['extension']中的各个键值，若为数字键值，则unset掉

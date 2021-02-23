@@ -27,6 +27,7 @@ class Dictionary extends AbstractDictionary
 	const PROTOCAL_ERR = 'PROTOCAL_ERR';
 	const CANCEL_CLOSE = 'CANCEL_CLOSE';
 	const PAYSUCCESS = 'PAYSUCCESS';
+	const PREPARING = 'PREPARING';
 }
 
 // 简体中文包
@@ -47,6 +48,7 @@ class Chinese extends Dictionary{
 	const PROTOCAL_ERR = '协议有误';
 	const CANCEL_CLOSE = '您已取消支付，请关闭网页';
 	const PAYSUCCESS = '支付成功';
+	const PREPARING = '支付中';
 }
 
 // 繁体中文包
@@ -68,6 +70,7 @@ class Traditional extends Dictionary
 	const PROTOCAL_ERR = '協定有誤';
 	const CANCEL_CLOSE = '您已取消支付，請關閉網頁';
 	const PAYSUCCESS = '支付成功';
+	const PREPARING = '支付中';
 }
 
 // 英文包
@@ -89,6 +92,7 @@ class English extends Dictionary
 	const PROTOCAL_ERR = 'Protocal error';
 	const CANCEL_CLOSE = 'You have cancelled the payment, please close the page';
 	const PAYSUCCESS = 'Payment successful';
+	const PREPARING = 'Payment preparing';
 }
 
 
