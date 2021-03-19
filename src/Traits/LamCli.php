@@ -78,9 +78,9 @@ trait LamCli
         }
         return [
             'begin' => $begin,
-            'begin_stamp' => $beginStamp,
+            'begin_stamp' => $beginStamp ?? $begin,
             'end' => $end,
-            'end_stamp' => $endStamp
+            'end_stamp' => $endStamp ?? $end
         ];
     }
 }
