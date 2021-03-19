@@ -28,7 +28,7 @@ class Crontab extends AbstractCronTask
     public function run(int $taskId, int $workerIndex)
     {
         // 获取执行Crontab列表
-        $model = new \App\Model\Crontab();
+        $model = model('Crontab');
         $cron = $model->getCrontab(explode('-', config('SERVNAME'))[3]);
         if (empty($cron)) {
             return;
