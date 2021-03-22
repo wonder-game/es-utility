@@ -22,8 +22,8 @@ trait CronCli
     public function getDb($name = 'default', $options = [])
     {
         $config = config("MYSQL.{$name}");
-        if (is_array($options)) {
-            $config['options'] = array_merge($config['options'], $options);
+        if (is_array($options) && $options) {
+            $config['options'] = array_merge($config['options'] ?? [], $options);
         }
         return new LamPdo($config);
     }
@@ -32,7 +32,6 @@ trait CronCli
      * 重设php和mysql时区
      * @param $mytz PHP标准的时区
      * @param $tzn 一定要写  +8:00 或者 -5:00 的格式！！！
-     * @throws \EasySwoole\ORM\Exception\Exception
      * @throws \Throwable
      */
     public function setCronTimeZone(LamPdo $pdo, $tzn, $mytz = '')
