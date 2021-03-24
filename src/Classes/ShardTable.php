@@ -20,6 +20,7 @@ class ShardTable
 
 	use LamCli;
 
+	/** @var QueryBuilder $Db */
  	public $Db = null;
 
  	/**
@@ -35,8 +36,7 @@ class ShardTable
 
  	public function query($sql = '')
 	{
-		$this->Db->raw($sql);
-		return DbManager::getInstance()->query($this->Db)->getResult();
+		return $this->execute($sql)->getResult();
 	}
 
 	public function execute($sql = '')
@@ -90,8 +90,8 @@ class ShardTable
 			}
 
 			// 异步执行分区
-			//TaskManager::getInstance()->async(function () use ($sdate, $edate, $type, $showtab, $table, $field){
-			go(function () use ($sdate, $edate, $type, $showtab, $table, $field){
+			TaskManager::getInstance()->async(function () use ($sdate, $edate, $type, $showtab, $table, $field){
+//			go(function () use ($sdate, $edate, $type, $showtab, $table, $field){
 				$arr = listdate($sdate, $edate, $type);
 
 				// 获取此表当前的分区情况
