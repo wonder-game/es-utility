@@ -12,7 +12,7 @@ namespace Linkunyuan\EsUtility\Classes;
 
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\DbManager;
-//use EasySwoole\EasySwoole\Task\TaskManager;
+use EasySwoole\EasySwoole\Task\TaskManager;
 use Linkunyuan\EsUtility\Traits\LamCli;
 
 class ShardTable
