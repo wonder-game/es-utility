@@ -13,10 +13,17 @@ trait LamCli
 {
     public function __destruct()
     {
-        // 保存日志
-        Logger::getInstance()->log('AFTERREQUEST');
+        $this->saveLog();
 
         // echo '+++++++++++++++++ __destruct ++++++++++++++++++';
+    }
+
+    /**
+     * 保存日志
+     */
+    public function saveLog()
+    {
+        Logger::getInstance()->log('AFTERREQUEST');
     }
 
     // TODO crontab中调用model()后会重置set time_zone成最初值，原因未知
