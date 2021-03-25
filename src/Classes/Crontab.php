@@ -6,9 +6,12 @@ namespace Linkunyuan\EsUtility\Classes;
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
+use Linkunyuan\EsUtility\Traits\LamCli;
 
 class Crontab extends AbstractCronTask
 {
+    use LamCli;
+
     public static function getRule(): string
     {
         return '* * * * *';
@@ -60,6 +63,7 @@ class Crontab extends AbstractCronTask
             // 投递给异步任务
             $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
                 trace("id={$value['id']} finish! {$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
+                $this->saveLog();
             });
         }
     }
