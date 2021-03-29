@@ -117,7 +117,7 @@ if ( ! function_exists('ip')) {
 	/**
 	 * 验证jwt并读取用户信息
 	 */
-	function ip ($request)
+	function ip ($request = null)
 	{
 		return \Linkunyuan\EsUtility\ip($request);
 	}
