@@ -9,131 +9,132 @@
 namespace Linkunyuan\EsUtility\Classes;
 
 
+use EasySwoole\Component\Context\ContextManager;
 use EasySwoole\Log\LoggerInterface;
 use Swoole\Coroutine;
 
 class LamLog implements LoggerInterface
 {
 
-	private $logDir;
-	// 普通日志内容数组
-	private $conArr = [];
-	// 独立level日志
-	private $levelArr = [];
-	// 独立category日志
-	private $catArr = [];
+    private $logDir;
 
-	public function __construct(string $logDir = null)
-	{
-		$this->logDir = $logDir ? : '';
-	}
+    public function __construct(string $logDir = null)
+    {
+        $this->logDir = $logDir ? : '';
+    }
 
-	public function log($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug'):string
-	{
-		$cid = Coroutine::getCid();
+    public function log($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug'):string
+    {
+        Coroutine::defer(function () {
+            $this->save();
+        });
 
-		if($msg == 'AFTERREQUEST')
-		{
-			return (string) $this->save();
-		}
+        $str = $this->_preAct($msg, $level, $category, 'log');
 
-		$str = $this->_preAct($msg, $level, $category, 'log');
+        return $str;
+    }
 
-		return $str;
-	}
+    public function console($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug')
+    {
+        $str = $this->_preAct($msg, $level, $category, 'console');
+        fwrite(STDOUT, Coroutine::getCid() . "\t$str\n");
+    }
 
-	public function console($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug')
-	{
-		$str = $this->_preAct($msg, $level, $category, 'console');
-		fwrite(STDOUT, Coroutine::getCid() . "\t$str\n");
-	}
+    // 保存日志
+    public function save()
+    {
+        empty($this->logDir) && $this->logDir = config('LOG_DIR');
+        $dir = $this->logDir . '/' . date('ym');
+        is_dir($dir) or @ mkdir($dir);
 
-	// 保存日志
-	public function save()
-	{
-		$cid = Coroutine::getCid();
-		empty($this->logDir) && $this->logDir = config('LOG_DIR');
-		$dir = $this->logDir . '/' . date('ym');
-		is_dir($dir) or @ mkdir($dir);
+        $context = $this->getAll();
+        if (empty($context))
+        {
+            return false;
+        }
+        foreach ($context as $key => $value)
+        {
+            if (empty($value))
+            {
+                continue;
+            }
+            if (is_array($value))
+            {
+                $value = implode("\n", $value);
+            }
 
-		// 保存普通日志
-		! empty($this->conArr[$cid]) && file_put_contents("$dir/" . date('d') . '.log', "\n" . implode("\n", $this->conArr[$cid]) . "\n",FILE_APPEND|LOCK_EX);
+            list(, $level, $category) = explode('.', $key);
 
-		// 保存独立文件的level日志
-		if( ! empty($this->levelArr[$cid]))
-		{
-			foreach($this->levelArr[$cid] as $l => $a)
-			{
-				file_put_contents("$dir/" . date('d') . "-$l.log", "\n" . implode("\n", $a) . "\n", FILE_APPEND|LOCK_EX);
-			}
-		}
+            $fname = '';
+            // 独立文件的日志
+            if (in_array($level, config('LOG.apart_level')))
+            {
+                $fname = "-{$level}";
+            }
+            elseif (in_array($category, config('LOG.apart_category')))
+            {
+                $fname = "-{$category}";
+            }
 
-		// 保存独立文件的category日志
-		if( ! empty($this->catArr[$cid]))
-		{
-			foreach($this->catArr[$cid] as $l => $a)
-			{
-				file_put_contents("$dir/" . date('d') . "-$l.log", "\n" . implode("\n", $a) . "\n", FILE_APPEND|LOCK_EX);
-			}
-		}
+            file_put_contents("$dir/" . date('d') . $fname . '.log', "\n" . $value . "\n", FILE_APPEND | LOCK_EX);
+        }
+
+        return true;
+    }
+
+    private function _preAct($msg, int & $level = self::LOG_LEVEL_INFO, string $category = 'console', string $func = 'log')
+    {
+
+        if( ! is_scalar($msg))
+        {
+            $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
+        }
+        $msg = str_replace(["\n","\r"], '', $msg);
+        $date = date('Y-m-d H:i:s');
+        $level = $this->levelMap($level);
+
+        $str = "[$date][$category][$level]$msg";
+
+        if($func == 'log')
+        {
+            $this->merge("log.{$level}.{$category}", $str);
+        }
+
+        return $str;
+    }
+
+    private function levelMap(int $level)
+    {
+        switch ($level)
+        {
+            case self::LOG_LEVEL_INFO:
+                return 'info';
+            case self::LOG_LEVEL_NOTICE:
+                return 'notice';
+            case self::LOG_LEVEL_WARNING:
+                return 'warning';
+            case self::LOG_LEVEL_ERROR:
+                return 'error';
+            default:
+                return 'unknown';
+        }
+    }
 
 
-		// 务必注销，防止内存积爆
-		unset( $this->conArr[$cid] );
+    /***************** Context上下文管理 *************************/
 
-		return true;
-	}
+    protected $contextKey = 'log';
 
-	private function _preAct($msg, int & $level = self::LOG_LEVEL_INFO, string $category = 'console', string $func = 'log')
-	{
-		$cid = Coroutine::getCid();
-		
-		if( ! is_scalar($msg))
-		{
-			$msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
-		}
-		$msg = str_replace(["\n","\r"], '', $msg);
-		$date = date('Y-m-d H:i:s');
-		$level = $this->levelMap($level);
+    protected function merge($key, $value)
+    {
+        $context = ContextManager::getInstance()->getContextArray() ?? [];
+        $context[$this->contextKey][$key][] = $value;
+        ContextManager::getInstance()->set($this->contextKey, $context[$this->contextKey]);
+    }
 
-		$str = "[$date][$category][$level]$msg";
-
-		if($func == 'log')
-		{
-			// 独立文件的level日志
-			if(in_array($level, config('LOG.apart_level')))
-			{
-				$this->levelArr[$cid][$level][] = "[$date][$category]$msg";
-			}
-			// 独立文件的category日志
-			elseif(in_array($category, config('LOG.apart_category')))
-			{
-				$this->catArr[$cid][$category][] = "[$date][$level]$msg";
-			}
-			// 普通日志
-			else
-			{
-				$this->conArr[$cid][] = $str;
-			}
-		}
-
-		return $str;
-	}
-
-	private function levelMap(int $level)
-	{
-		switch ($level)
-		{
-			case self::LOG_LEVEL_INFO:
-				return 'info';
-			case self::LOG_LEVEL_NOTICE:
-				return 'notice';
-			case self::LOG_LEVEL_WARNING:
-				return 'warning';
-			case self::LOG_LEVEL_ERROR:
-				return 'error';
-			default:
-				return 'unknown';
-		}
-	}
+    protected function getAll()
+    {
+        $array = ContextManager::getInstance()->getContextArray() ?? [];
+        return $array[$this->contextKey] ?? [];
+    }
 }
