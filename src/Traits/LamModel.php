@@ -90,21 +90,14 @@ trait LamModel
 	}
 
 	/**
-	 * TODO 暂时没找到replace操作，此处先自定义着用(data中一定要有主键)
+	 * data中一定要有主键
 	 * @access public
 	 * @param array $unique 唯一性约束的条件
 	 * @return integer|false
 	 */
 	public function replace($unique = [])
 	{
-		if($this->where($unique)->get())
-		{
-			$res = $this->where($unique)->update();
-		}else
-		{
-			$res = $this->save();
-		}
-		return $res;
+        return $this->data($unique)->duplicate($unique)->save();
 	}
 
 
