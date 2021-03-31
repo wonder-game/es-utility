@@ -132,8 +132,6 @@ class ShardTable
 					// halt($sql);
 				}
 				$res = $this->_reMsg("表{$table}添加分区完成");
-				// 保存日志
-				$this->saveLog();
 
 				return $res;
 			});
