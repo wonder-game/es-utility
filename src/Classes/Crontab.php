@@ -6,9 +6,12 @@ namespace Linkunyuan\EsUtility\Classes;
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
+use Linkunyuan\EsUtility\Traits\LamCli;
 
 class Crontab extends AbstractCronTask
 {
+    use LamCli;
+
     public static function getRule(): string
     {
         return '* * * * *';

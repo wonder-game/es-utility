@@ -12,7 +12,7 @@ namespace Linkunyuan\EsUtility\Classes;
 
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\DbManager;
-//use EasySwoole\EasySwoole\Task\TaskManager;
+use EasySwoole\EasySwoole\Task\TaskManager;
 use Linkunyuan\EsUtility\Traits\LamCli;
 
 class ShardTable
@@ -132,8 +132,6 @@ class ShardTable
 					// halt($sql);
 				}
 				$res = $this->_reMsg("表{$table}添加分区完成");
-				// 保存日志
-				$this->__destruct();
 
 				return $res;
 			});
