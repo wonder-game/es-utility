@@ -47,36 +47,21 @@ class LamLog implements LoggerInterface
         $dir = $this->logDir . '/' . date('ym');
         is_dir($dir) or @ mkdir($dir);
 
-        $context = $this->getAll();
-        if (empty($context))
+        foreach ([$this->logKey, $this->cateKey, $this->levelKey] as $key)
         {
-            return false;
-        }
-        foreach ($context as $key => $value)
-        {
-            if (empty($value))
+            // context[$cid][$key][$cate][] = $value
+            $cot = $this->context()->get($key);
+            if (empty($cot) || !is_array($cot))
             {
                 continue;
             }
-            if (is_array($value))
-            {
-                $value = implode("\n", $value);
-            }
 
-            list(, $level, $category) = explode('.', $key);
-
-            $fname = '';
-            // 独立文件的日志
-            if (in_array($level, config('LOG.apart_level')))
+            foreach ($cot as $l => $v)
             {
-                $fname = "-{$level}";
+                $fname = $key == $this->logKey ? '' : "-{$l}";
+                file_put_contents("$dir/" . date('d') . $fname . ".log", "\n" . implode("\n", $v) . "\n", FILE_APPEND|LOCK_EX);
             }
-            elseif (in_array($category, config('LOG.apart_category')))
-            {
-                $fname = "-{$category}";
-            }
-
-            file_put_contents("$dir/" . date('d') . $fname . '.log', "\n" . $value . "\n", FILE_APPEND | LOCK_EX);
+            $this->context()->unset($key);
         }
 
         return true;
@@ -97,7 +82,18 @@ class LamLog implements LoggerInterface
 
         if($func == 'log')
         {
-            $this->merge("log.{$level}.{$category}", $str);
+            if (in_array($level, config('LOG.apart_level')))
+            {
+                $this->merge($level, $str, $this->levelKey);
+            }
+            elseif (in_array($category, config('LOG.apart_category')))
+            {
+                $this->merge($category, $str, $this->cateKey);
+            }
+            else {
+                $this->merge('log', $str);
+            }
+
         }
 
         return $str;
@@ -123,18 +119,50 @@ class LamLog implements LoggerInterface
 
     /***************** Context上下文管理 *************************/
 
-    protected $contextKey = 'log';
+    /**
+     * 普通日志
+     * @var string
+     */
+    protected $logKey = 'log.log';
 
-    protected function merge($key, $value)
+    /**
+     * 需要独立文件的level日志
+     * @var string
+     */
+    protected $levelKey = 'log.level';
+
+    /**
+     * 需要独立文件的category日志
+     * @var string
+     */
+    protected $cateKey = 'log.cate';
+
+    /**
+     * 获取管理器对象
+     * @return ContextManager
+     */
+    protected function context(): ContextManager
     {
-        $context = ContextManager::getInstance()->getContextArray() ?? [];
-        $context[$this->contextKey][$key][] = $value;
-        ContextManager::getInstance()->set($this->contextKey, $context[$this->contextKey]);
+        return ContextManager::getInstance();
     }
 
-    protected function getAll()
+    /**
+     * 完整实例： context[$cid][$log][$key][] = $value
+     * @param $key
+     * @param $value
+     * @param string $log
+     */
+    protected function merge($key, $value, $log = '')
     {
-        $array = ContextManager::getInstance()->getContextArray() ?? [];
-        return $array[$this->contextKey] ?? [];
+        try {
+            $log = $log ?: $this->logKey;
+            $array = $this->context()->getContextArray() ?? [];
+            $array[$log][$key][] = $value;
+            $this->context()->set($log, $array[$log]);
+        }
+        catch (\EasySwoole\Component\Context\Exception\ModifyError $e)
+        {
+            // key与注册的log处理器名字冲突，暂时不做处理，丢掉这种日志
+        }
     }
 }
