@@ -129,3 +129,24 @@ if ( ! function_exists('lang')) {
 		return \Linkunyuan\EsUtility\lang($const);
 	}
 }
+
+if ( ! function_exists('wechatWarning')) {
+    function wechatWarning($msg, $file = '', $line = 0)
+    {
+        return \Linkunyuan\EsUtility\wechatWarning($msg, $file, $line);
+    }
+}
+
+if ( ! function_exists('wechatNotice')) {
+    function wechatNotice($title = '', $content = '')
+    {
+        return \Linkunyuan\EsUtility\wechatNotice($title, $content);
+    }
+}
+
+if ( ! function_exists('sendDingTalk')) {
+    function sendDingTalk($content = '')
+    {
+        return \Linkunyuan\EsUtility\sendDingTalk($content);
+    }
+}

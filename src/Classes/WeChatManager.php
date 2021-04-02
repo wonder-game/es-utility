@@ -58,15 +58,18 @@ class WeChatManager
      */
     public function sendTemplateMessage($data = [], $openid = '', $tmpId = '')
     {
-        $templateMsg = new TemplateMsg();
         if (empty($openid)) {
             $openid = config('wechat.touser');
         }
         if (empty($tmpId)) {
             $tmpId = config('wechat.templateId');
         }
+        if (is_string($openid))
+        {
+            $openid = [$openid];
+        }
 
-        $templateMsg->setTouser($openid);
+        $templateMsg = new TemplateMsg();
         $templateMsg->setUrl(config('wechat.url'));
         $templateMsg->setTemplateId($tmpId);
         $templateMsg->setData($data);
@@ -75,6 +78,11 @@ class WeChatManager
         if (! $wechat->officialAccount()->accessToken()->getToken()) {
             $wechat->officialAccount()->accessToken()->refresh();
         }
-        $wechat->officialAccount()->templateMsg()->send($templateMsg);
+
+        foreach ($openid as $id)
+        {
+            $templateMsg->setTouser($id);
+            $wechat->officialAccount()->templateMsg()->send($templateMsg);
+        }
     }
 }
