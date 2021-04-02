@@ -25,11 +25,19 @@ class LamLog implements LoggerInterface
 
     public function log($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug'):string
     {
-        Coroutine::defer(function () {
-            $this->save();
-        });
-
         $str = $this->_preAct($msg, $level, $category, 'log');
+
+        // 协程环境，注册defer
+        if (Coroutine::getCid() != -1)
+        {
+            Coroutine::defer(function () {
+                $this->save();
+            });
+        }
+        // 非协程环境，直接save
+        else {
+            $this->save();
+        }
 
         return $str;
     }
