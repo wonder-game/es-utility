@@ -3,8 +3,11 @@ namespace Linkunyuan\EsUtility;
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
+use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\I18N\I18N;
+use EasySwoole\Utility\File;
 use Linkunyuan\EsUtility\Classes\LamJwt;
+use Linkunyuan\EsUtility\Classes\WeChatManager;
 
 if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 	/**
@@ -377,9 +380,116 @@ if ( ! function_exists('Linkunyuan\EsUtility\lang')) {
 }
 
 
+if ( ! function_exists('Linkunyuan\EsUtility\wechatWarning')) {
+    /**
+     * 发送微信报警
+     * @param string $msg
+     * @param string $file
+     * @param int $line
+     */
+    function wechatWarning($msg, $file = '', $line = 0)
+    {
+        $time = time();
+        $strId = md5($file);
+        $chkFile = config('LOG_DIR') . '/wechat/checktime.log';
+        File::touchFile($chkFile, false);
+        $content = file_get_contents($chkFile);
+        $arr = json_decode($content, true);
+        if ($arr) {
+            $last = $arr[$strId]['time'] ?? '';
+            $limit = config('wechat.err_limit_time') * 60;
+            if ($last && $limit && $last > $time - $limit) {
+                return;
+            }
+        }
+        $arr[$strId]['time'] = $time;
+        file_put_contents($chkFile, json_encode($arr));
+
+        // 为避免绝对路径太长，最多取3级
+        $path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $file), -3));
+
+        $tempData = [
+            'first' => [
+                'value' => APP_NAME . "程序发生错误：第{$line}行",
+                'color' => '#FF0000'
+            ],
+            'keyword1' => [
+                'value' => "相关文件： {$path}",
+                'color' => '#FF0000'
+            ],
+            'keyword2' => [
+                'value' => "相关内容：{$msg}",
+                'color' => '#FF0000'
+            ],
+            'keyword3' => date('Y年m月d日 H:i:s'),
+            'remark' => '查看详情'
+        ];;
+        WeChatManager::getInstance()->sendTemplateMessage($tempData, false, config('wechat.template.warning'));
+    }
+}
+
+if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
+    /**
+     * 发送微信通知
+     * @param string $title
+     * @param string $content
+     */
+    function wechatNotice($title = '', $content = '')
+    {
+        $tempData = [
+            'first' => [
+                'value' => APP_NAME . $title,
+                'color' => '#32CD32'
+            ],
+            'keyword1' => [
+                'value' => $content,
+                'color' => '#32CD32'
+            ],
+            'keyword3' => date('Y年m月d日 H:i:s'),
+            'remark' => '查看详情'
+        ];;
+        WeChatManager::getInstance()->sendTemplateMessage($tempData, false, config('wechat.template.notice'));
+    }
+}
 
 
+if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
+    /**
+     * 发送钉钉机器人消息
+     * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
+     */
+    function sendDingTalk($content = '')
+    {
+        $url = config('dingtalk.url');
+        $secret = config('dingtalk.sign_key');
 
+        // 签名 &timestamp=XXX&sign=XXX
+        $timestamp = time() * 1000;
 
+        $data = json_encode([
+            'msgtype' => 'text',
+            'text' => [
+                'content' => $content
+            ],
+            'at' => [
+                'isAtAll' => true // @所有人
+            ]
+        ]);
 
+        $sign = utf8_encode(urlencode(base64_encode(hash_hmac('sha256', $timestamp . "\n" . $secret, $secret, true))));
 
+        $url .= "&timestamp={$timestamp}&sign={$sign}";
+
+        $client = new HttpClient($url);
+
+        // 支持文本 (text)、链接 (link)、markdown(markdown)、ActionCard、FeedCard消息类型
+
+        $response = $client->postJson($data);
+        $json = json_decode($response->getBody(), true);
+
+        if ($json['errcode'] !== 0)
+        {
+            trace("钉钉消息发送失败：data={$data},response={$response}", 'error');
+        }
+    }
+}
