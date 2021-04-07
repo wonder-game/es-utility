@@ -181,7 +181,8 @@ class ShardTable
         foreach ($alltable as $item)
         {
             $tname = current($item);
-            $sql = "select partition_description descr from INFORMATION_SCHEMA.partitions where TABLE_SCHEMA=schema() and TABLE_NAME='{$tname}'";
+            // RANGE分区
+            $sql = "select partition_description descr from INFORMATION_SCHEMA.partitions where TABLE_SCHEMA=schema() and TABLE_NAME='{$tname}' and PARTITION_METHOD='RANGE'";
             $partition = $this->execute($sql)->getResultColumn('descr');
             if (empty($partition) || empty($partition[0]))
             {
