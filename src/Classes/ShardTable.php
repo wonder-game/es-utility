@@ -169,6 +169,41 @@ class ShardTable
 		return true;
 	}
 
+    public function checkPartition($day)
+    {
+        $this->setDb();
+
+        $alltable = $this->query('SHOW TABLES');
+
+        $cutOff = strtotime("+{$day} days");
+
+        $warning = [];
+        foreach ($alltable as $item)
+        {
+            $tname = current($item);
+            $sql = "select partition_description descr from INFORMATION_SCHEMA.partitions where TABLE_SCHEMA=schema() and TABLE_NAME='{$tname}'";
+            $partition = $this->execute($sql)->getResultColumn('descr');
+            if (empty($partition) || empty($partition[0]))
+            {
+                continue;
+            }
+            $max = max($partition);
+
+            if ($max <= $cutOff)
+            {
+                $warning[] = $tname;
+            }
+        }
+        if ($warning)
+        {
+            $title = '数据表分区不足！！';
+            $msg = "检测到以下表分区不足{$day}天：" . implode('、', $warning);
+            trace($title . $msg, 'info', 'worker');
+            sendDingTalk($title . $msg);
+            wechatNotice($title, $msg);
+        }
+    }
+
 
 	/**
 	 * 返回信息
