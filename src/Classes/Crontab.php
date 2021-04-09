@@ -45,14 +45,14 @@ class Crontab extends AbstractCronTask
             $className = $value['rclass'];
             // 异步任务模板类，默认在\App\Task命名空间
             if (strpos($className, '\\') === false) {
-                $className = '\\App\\Task\\' . ucfirst($className);
+                $className = '\\Linkunyuan\\EsUtility\\Task\\' . ucfirst($className);
             }
-            if (!class_exists($className)) {
+            if ( ! class_exists($className)) {
                 trace("{$className} 不存在", 'error');
                 continue;
             }
 
-            if (!(CronExpression::factory($value['rule'])->isDue())) {
+            if ( ! (CronExpression::factory($value['rule'])->isDue())) {
                 // 时间未到
                 continue;
             }
