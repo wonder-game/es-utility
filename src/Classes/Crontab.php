@@ -61,9 +61,14 @@ class Crontab extends AbstractCronTask
 
             $class = new $className([$value['eclass'], $value['method']], is_array($args) ? $args : $value['args']);
             // 投递给异步任务
-            $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
+            $finish = $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
                 trace("id={$value['id']} finish! {$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
             });
+            // 只运行一次的任务
+            if ($finish && $value['status'] == 2)
+            {
+                $model->update(['status' => 1], ['id' => $value['id']]);
+            }
         }
     }
 }
