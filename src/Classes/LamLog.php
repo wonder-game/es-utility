@@ -28,7 +28,7 @@ class LamLog implements LoggerInterface
         $str = $this->_preAct($msg, $level, $category, 'log');
 
         // 协程环境，注册defer
-        if (Coroutine::getCid() != -1)
+        if (Coroutine::getCid() > 0)
         {
             Coroutine::defer(function () {
                 $this->save();
