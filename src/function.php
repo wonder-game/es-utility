@@ -386,8 +386,9 @@ if ( ! function_exists('Linkunyuan\EsUtility\wechatWarning')) {
      * @param string $msg
      * @param string $file
      * @param int $line
+     * @param string $servername
      */
-    function wechatWarning($msg, $file = '', $line = 0)
+    function wechatWarning($msg, $file = '', $line = 0, $servername = '')
     {
         $time = time();
         $strId = md5($file);
@@ -410,20 +411,24 @@ if ( ! function_exists('Linkunyuan\EsUtility\wechatWarning')) {
 
         $tempData = [
             'first' => [
-                'value' => APP_NAME . "程序发生错误：第{$line}行",
+                'value' => "程序发生错误：第{$line}行",
                 'color' => '#FF0000'
             ],
             'keyword1' => [
-                'value' => "相关文件： {$path}",
+                'value' => "服务器： {$servername}",
                 'color' => '#FF0000'
             ],
             'keyword2' => [
+                'value' => "相关文件： {$path}",
+                'color' => '#FF0000'
+            ],
+            'keyword3' => [
                 'value' => "相关内容：{$msg}",
                 'color' => '#FF0000'
             ],
-            'keyword3' => date('Y年m月d日 H:i:s'),
+            'keyword4' => date('Y年m月d日 H:i:s'),
             'remark' => '查看详情'
-        ];;
+        ];
         WeChatManager::getInstance()->sendTemplateMessage($tempData, false, config('wechat.template.warning'));
     }
 }
@@ -434,16 +439,16 @@ if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
      * @param string $title
      * @param string $content
      */
-    function wechatNotice($title = '', $content = '')
+    function wechatNotice($title = '', $content = '', $color = '#32CD32')
     {
         $tempData = [
             'first' => [
-                'value' => APP_NAME . $title,
-                'color' => '#32CD32'
+                'value' => $title,
+                'color' => $color
             ],
             'keyword1' => [
                 'value' => $content,
-                'color' => '#32CD32'
+                'color' => $color
             ],
             'keyword3' => date('Y年m月d日 H:i:s'),
             'remark' => '查看详情'
@@ -458,23 +463,19 @@ if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
      * 发送钉钉机器人消息
      * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
      */
-    function sendDingTalk($content = '')
+    function sendDingTalk($data = [])
     {
+        if (empty($data) || !is_array($data))
+        {
+            return;
+        }
+        $data = json_encode($data);
+
         $url = config('dingtalk.url');
         $secret = config('dingtalk.sign_key');
 
         // 签名 &timestamp=XXX&sign=XXX
         $timestamp = time() * 1000;
-
-        $data = json_encode([
-            'msgtype' => 'text',
-            'text' => [
-                'content' => $content
-            ],
-            'at' => [
-                'isAtAll' => true // @所有人
-            ]
-        ]);
 
         $sign = utf8_encode(urlencode(base64_encode(hash_hmac('sha256', $timestamp . "\n" . $secret, $secret, true))));
 
@@ -491,5 +492,40 @@ if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
         {
             trace("钉钉消息发送失败：data={$data},response={$response}", 'error');
         }
+    }
+}
+
+if (! function_exists('Linkunyuan\EsUtility\sendDingTalkText'))
+{
+    function sendDingTalkText($content = '', $at = true)
+    {
+        $data = [
+            'msgtype' => 'text',
+            'text' => [
+                'content' => $content
+            ],
+            'at' => [
+                'isAtAll' => $at
+            ]
+        ];
+        sendDingTalk($data);
+    }
+}
+
+if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
+{
+    function sendDingTalkMarkdown($title = '', $text = '', $at = true)
+    {
+        $data = [
+            'msgtype' => 'markdown',
+            'markdown' => [
+                'title' => $title,
+                'text' => '#### ' . $text
+            ],
+            'at' => [
+                'isAtAll' => $at
+            ]
+        ];
+        sendDingTalk($data);
     }
 }

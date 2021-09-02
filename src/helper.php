@@ -117,7 +117,7 @@ if ( ! function_exists('ip')) {
 	/**
 	 * 验证jwt并读取用户信息
 	 */
-	function ip ($request)
+	function ip ($request = null)
 	{
 		return \Linkunyuan\EsUtility\ip($request);
 	}
@@ -138,15 +138,29 @@ if ( ! function_exists('wechatWarning')) {
 }
 
 if ( ! function_exists('wechatNotice')) {
-    function wechatNotice($title = '', $content = '')
+    function wechatNotice($title = '', $content = '', $color = '#32CD32')
     {
-        return \Linkunyuan\EsUtility\wechatNotice($title, $content);
+        return \Linkunyuan\EsUtility\wechatNotice($title, $content, $color);
     }
 }
 
 if ( ! function_exists('sendDingTalk')) {
-    function sendDingTalk($content = '')
+    function sendDingTalk($data = [])
     {
-        return \Linkunyuan\EsUtility\sendDingTalk($content);
+        return \Linkunyuan\EsUtility\sendDingTalk($data);
+    }
+}
+
+if ( ! function_exists('sendDingTalkText')) {
+    function sendDingTalkText($content = '', $at = true)
+    {
+        return \Linkunyuan\EsUtility\sendDingTalkText($content, $at);
+    }
+}
+
+if ( ! function_exists('sendDingTalkMarkdown')) {
+    function sendDingTalkMarkdown($title = '', $text = '', $at = true)
+    {
+        return \Linkunyuan\EsUtility\sendDingTalkMarkdown($title, $text, $at);
     }
 }
