@@ -130,17 +130,10 @@ if ( ! function_exists('lang')) {
 	}
 }
 
-if ( ! function_exists('wechatWarning')) {
-    function wechatWarning($msg, $file = '', $line = 0)
-    {
-        return \Linkunyuan\EsUtility\wechatWarning($msg, $file, $line);
-    }
-}
-
 if ( ! function_exists('wechatNotice')) {
-    function wechatNotice($title = '', $content = '', $color = '#32CD32')
+    function wechatNotice($title = '', $content = '', $touser = false, $color = '#32CD32')
     {
-        return \Linkunyuan\EsUtility\wechatNotice($title, $content, $color);
+        return \Linkunyuan\EsUtility\wechatNotice($title, $content, $touser, $color);
     }
 }
 

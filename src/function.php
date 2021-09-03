@@ -379,67 +379,13 @@ if ( ! function_exists('Linkunyuan\EsUtility\lang')) {
 	}
 }
 
-
-if ( ! function_exists('Linkunyuan\EsUtility\wechatWarning')) {
-    /**
-     * 发送微信报警
-     * @param string $msg
-     * @param string $file
-     * @param int $line
-     * @param string $servername
-     */
-    function wechatWarning($msg, $file = '', $line = 0, $servername = '')
-    {
-        $time = time();
-        $strId = md5($file);
-        $chkFile = config('LOG_DIR') . '/wechat/checktime.log';
-        File::touchFile($chkFile, false);
-        $content = file_get_contents($chkFile);
-        $arr = json_decode($content, true);
-        if ($arr) {
-            $last = $arr[$strId]['time'] ?? '';
-            $limit = config('wechat.err_limit_time') * 60;
-            if ($last && $limit && $last > $time - $limit) {
-                return;
-            }
-        }
-        $arr[$strId]['time'] = $time;
-        file_put_contents($chkFile, json_encode($arr));
-
-        // 为避免绝对路径太长，最多取3级
-        $path = implode(DIRECTORY_SEPARATOR, array_slice(explode(DIRECTORY_SEPARATOR, $file), -3));
-
-        $tempData = [
-            'first' => [
-                'value' => "程序发生错误：第{$line}行",
-                'color' => '#FF0000'
-            ],
-            'keyword1' => [
-                'value' => "服务器： {$servername}",
-                'color' => '#FF0000'
-            ],
-            'keyword2' => [
-                'value' => "相关文件： {$path}",
-                'color' => '#FF0000'
-            ],
-            'keyword3' => [
-                'value' => "相关内容：{$msg}",
-                'color' => '#FF0000'
-            ],
-            'keyword4' => date('Y年m月d日 H:i:s'),
-            'remark' => '查看详情'
-        ];
-        WeChatManager::getInstance()->sendTemplateMessage($tempData, false, config('wechat.template.warning'));
-    }
-}
-
 if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
     /**
      * 发送微信通知
      * @param string $title
      * @param string $content
      */
-    function wechatNotice($title = '', $content = '', $color = '#32CD32')
+    function wechatNotice($title = '', $content = '', $touser = '', $color = '#32CD32')
     {
         $tempData = [
             'first' => [
@@ -453,7 +399,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
             'keyword3' => date('Y年m月d日 H:i:s'),
             'remark' => '查看详情'
         ];;
-        WeChatManager::getInstance()->sendTemplateMessage($tempData, false, config('wechat.template.notice'));
+        WeChatManager::getInstance()->sendTemplateMessage($tempData, $touser, config('wechat.template.notice'));
     }
 }
 
@@ -520,7 +466,7 @@ if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
             'msgtype' => 'markdown',
             'markdown' => [
                 'title' => $title,
-                'text' => '#### ' . $text
+                'text' => $text
             ],
             'at' => [
                 'isAtAll' => $at

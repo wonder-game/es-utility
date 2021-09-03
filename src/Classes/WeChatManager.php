@@ -66,7 +66,7 @@ class WeChatManager
         }
         if (is_string($openid))
         {
-            $openid = [$openid];
+            $openid = explode(',', $openid);
         }
 
         $templateMsg = new TemplateMsg();
