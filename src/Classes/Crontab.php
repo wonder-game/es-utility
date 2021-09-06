@@ -6,6 +6,7 @@ namespace Linkunyuan\EsUtility\Classes;
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
+use EasySwoole\Utility\File;
 use Linkunyuan\EsUtility\Traits\LamCli;
 
 class Crontab extends AbstractCronTask
@@ -30,18 +31,42 @@ class Crontab extends AbstractCronTask
 
     public function run(int $taskId, int $workerIndex)
     {
-        // 获取执行Crontab列表
-        $model = model('Crontab');
-        $cron = $model->getCrontab(explode('-', config('SERVNAME'))[3]);
-        if (empty($cron)) {
+        $file = config('LOG_DIR') . '/crontab.object.data';
+        try {
+            /** @var \App\Model\Crontab $model */
+            $model = model('Crontab');
+            // 获取执行Crontab列表
+            $cron = $model->getCrontab(explode('-', config('SERVNAME'))[3]);
+
+            // 成功记录到文件
+            File::createFile($file, json_encode($cron, JSON_UNESCAPED_UNICODE));
+        }
+        catch (\Exception | \Throwable $e)
+        {
+            // 失败降级从文件读取
+            $str = file_get_contents($file);
+
+            if (!$str)
+            {
+                return;
+            }
+
+            $cron = json_decode($str, true);
+        }
+
+        if (empty($cron) || !is_array($cron))
+        {
             return;
         }
+
         $task = TaskManager::getInstance();
         foreach ($cron as $value) {
-            if (!CronExpression::isValidExpression($value['rule'])) {
-                trace("运行规则设置错误 " . json_encode($value->toArray(), JSON_UNESCAPED_UNICODE), 'error');
+            if (!CronExpression::isValidExpression($value['rule']))
+            {
+                trace("id={$value['id']} 运行规则设置错误 {$value['rule']}", 'error');
                 continue;
             }
+
             $className = $value['rclass'];
             // 异步任务模板类，默认在\App\Task命名空间
             if (strpos($className, '\\') === false) {

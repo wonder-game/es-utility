@@ -66,7 +66,7 @@ class WeChatManager
         }
         if (is_string($openid))
         {
-            $openid = [$openid];
+            $openid = explode(',', $openid);
         }
 
         $templateMsg = new TemplateMsg();
@@ -81,8 +81,15 @@ class WeChatManager
 
         foreach ($openid as $id)
         {
-            $templateMsg->setTouser($id);
-            $wechat->officialAccount()->templateMsg()->send($templateMsg);
+            try {
+                $templateMsg->setTouser($id);
+                $wechat->officialAccount()->templateMsg()->send($templateMsg);
+            }
+            // 未关注、取消关注 或 其他
+            catch (\EasySwoole\WeChat\Exception\OfficialAccountError | \Exception $e)
+            {
+                continue;
+            }
         }
     }
 }
