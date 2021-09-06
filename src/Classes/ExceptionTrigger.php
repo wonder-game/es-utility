@@ -4,6 +4,9 @@
 namespace Linkunyuan\EsUtility\Classes;
 
 use EasySwoole\Component\WaitGroup;
+use EasySwoole\HttpClient\HttpClient;
+use EasySwoole\HttpClient\Exception\InvalidUrl;
+use EasySwoole\Redis\Exception\RedisException;
 use EasySwoole\Trigger\Location;
 use EasySwoole\Trigger\TriggerInterface;
 
@@ -59,12 +62,20 @@ class ExceptionTrigger implements TriggerInterface
 
             try {
                 $config = config('EXCEPTION_REPORT');
-                $redis = defer_redis($config['poolname'], $config['db']);
-                $redis->lPush($config['queue'], json_encode($eMsg));
+                if (isset($config['type']) && $config['type'] === 'http' && $config['url'])
+                {
+                    $encrypt = LamOpenssl::getInstance()->publicEncrypt(json_encode($eMsg));
+                    $client = new HttpClient($config['url']);
+                    $response = $client->post(['envkeydata' => $encrypt]);
+                    $httpCode = $response->getStatusCode();
+                    $httpBody = $response->getBody();
+                } else {
+                    $redis = defer_redis($config['poolname'], $config['db']);
+                    $redis->lPush($config['queue'], json_encode($eMsg));
+                }
             }
-            catch (\EasySwoole\Redis\Exception\RedisException | \Exception | \Throwable $e )
+            catch (InvalidUrl| RedisException | \Exception | \Throwable $e )
             {
-                // 如果连报警的redis都挂了，降级记录到文件
                 trace($eMsg, 'info', 'lowlevel');
             }
             $wg->done();
