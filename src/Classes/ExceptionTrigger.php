@@ -14,6 +14,12 @@ class ExceptionTrigger implements TriggerInterface
 {
     public function error($msg, int $errorCode = E_USER_ERROR, Location $location = null)
     {
+        // 暂不处理notice级别的异常
+        if (in_array($errorCode, [E_NOTICE]))
+        {
+            return;
+        }
+
         if($location == null){
             $location = new Location();
             $debugTrace = debug_backtrace();
