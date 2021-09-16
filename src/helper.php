@@ -138,9 +138,9 @@ if ( ! function_exists('wechatNotice')) {
 }
 
 if ( ! function_exists('sendDingTalk')) {
-    function sendDingTalk($data = [])
+    function sendDingTalk($data = [], $config = [])
     {
-        return \Linkunyuan\EsUtility\sendDingTalk($data);
+        return \Linkunyuan\EsUtility\sendDingTalk($data, $config);
     }
 }
 
