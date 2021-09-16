@@ -409,16 +409,21 @@ if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
      * 发送钉钉机器人消息
      * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
      */
-    function sendDingTalk($data = [])
+    function sendDingTalk($data = [], $config = [])
     {
         if (empty($data) || !is_array($data))
         {
             return;
         }
+        if (empty($config))
+        {
+            $config = config('dingtalk');
+        }
+
         $data = json_encode($data);
 
-        $url = config('dingtalk.url');
-        $secret = config('dingtalk.sign_key');
+        $url = $config['url'];
+        $secret = $config['sign_key'];
 
         // 签名 &timestamp=XXX&sign=XXX
         $timestamp = time() * 1000;
