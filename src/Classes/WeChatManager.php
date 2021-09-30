@@ -4,9 +4,9 @@
 namespace Linkunyuan\EsUtility\Classes;
 
 use EasySwoole\Component\Singleton;
-use EasySwoole\WeChat\WeChat;
 use RuntimeException;
-use EasySwoole\WeChat\Bean\OfficialAccount\TemplateMsg;
+use EasySwoole\WeChat\OfficialAccount\Application as OfficialAccount;
+use EasySwoole\WeChat\Factory;
 
 /**
  * Class WeChatManager
@@ -23,16 +23,18 @@ class WeChatManager
     protected $weChatList = [];
 
     /**
-     * 注册WeChat实例
+     * 创建WeChat实例
      * @param string $name  实例名称
-     * @param WeChat $weChat WeChat实例对象
      */
-    public function register(string $name, WeChat $weChat): void
+    public function register(string $name = 'default', array $config = []): void
     {
         if (isset($this->weChatList[$name])) {
             throw new RuntimeException('重复注册weChat.');
         }
-        $this->weChatList[$name] = $weChat;
+        $config = array_merge_multi(config('wechat'), $config);
+        $officialAccount = Factory::officialAccount($config['config']);
+
+        $this->weChatList[$name] = $officialAccount;
     }
 
     /**
@@ -41,7 +43,7 @@ class WeChatManager
      *
      * @return WeChat 返回WeChat实例对象
      */
-    public function weChat(string $name = 'default'): WeChat
+    public function weChat(string $name = 'default'): OfficialAccount
     {
         if (isset($this->weChatList[$name])) {
             return $this->weChatList[$name];
@@ -69,24 +71,20 @@ class WeChatManager
             $openid = explode(',', $openid);
         }
 
-        $templateMsg = new TemplateMsg();
-        $templateMsg->setUrl(config('wechat.url'));
-        $templateMsg->setTemplateId($tmpId);
-        $templateMsg->setData($data);
-
-        $wechat = $this->weChat();
-        if (! $wechat->officialAccount()->accessToken()->getToken()) {
-            $wechat->officialAccount()->accessToken()->refresh();
-        }
+        $OfficialAccount = $this->weChat();
 
         foreach ($openid as $id)
         {
             try {
-                $templateMsg->setTouser($id);
-                $wechat->officialAccount()->templateMsg()->send($templateMsg);
+                $OfficialAccount->templateMessage->send([
+                    'touser' => $id,
+                    'template_id' => $tmpId,
+                    'url' => config('wechat.url'),
+                    'data' => $data,
+                ]);
             }
             // 未关注、取消关注 或 其他
-            catch (\EasySwoole\WeChat\Exception\OfficialAccountError | \Exception $e)
+            catch (\Throwable | \Exception $e)
             {
                 continue;
             }

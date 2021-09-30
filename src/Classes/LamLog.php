@@ -8,15 +8,16 @@
 
 namespace Linkunyuan\EsUtility\Classes;
 
-
-use EasySwoole\Component\Context\ContextManager;
 use EasySwoole\Log\LoggerInterface;
 use Swoole\Coroutine;
 
 class LamLog implements LoggerInterface
 {
-
     private $logDir;
+    // 日志内容数组
+    private $conArr = [];
+    // 非独立日志的存储key
+    private $dfKey = 'dfLog';
 
     public function __construct(string $logDir = null)
     {
@@ -26,6 +27,8 @@ class LamLog implements LoggerInterface
     public function log($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug'):string
     {
         $str = $this->_preAct($msg, $level, $category, 'log');
+
+        // TODO 此if代码段按理应该写到EasySwooleEvent的onRequest，但由于官方Logger没有提供返回logger对象的接口，所以只能写到这
 
         // 协程环境，注册defer
         if (Coroutine::getCid() > 0)
@@ -51,33 +54,30 @@ class LamLog implements LoggerInterface
     // 保存日志
     public function save()
     {
-        empty($this->logDir) && $this->logDir = config('LOG_DIR');
+        empty($this->logDir) && $this->logDir = config('LOG.dir');
         $dir = $this->logDir . '/' . date('ym');
         is_dir($dir) or @ mkdir($dir);
 
-        foreach ([$this->logKey, $this->cateKey, $this->levelKey] as $key)
+        // conArr[$cid][$key][] = $value
+        foreach((array) $this->conArr[Coroutine::getUid()]  as $key => $value)
         {
-            // context[$cid][$key][$cate][] = $value
-            $cot = $this->context()->get($key);
-            if (empty($cot) || !is_array($cot))
+            if (empty($value) || ! is_array($value))
             {
                 continue;
             }
 
-            foreach ($cot as $l => $v)
-            {
-                $fname = $key == $this->logKey ? '' : "-{$l}";
-                file_put_contents("$dir/" . date('d') . $fname . ".log", "\n" . implode("\n", $v) . "\n", FILE_APPEND|LOCK_EX);
-            }
-            $this->context()->unset($key);
+            $fname = $key == $this->dfKey ? '' : "-$key";
+
+            file_put_contents("$dir/" . date('d') . $fname . ".log", "\n" . implode("\n", $value) . "\n", FILE_APPEND | LOCK_EX);
         }
+
+        unset($this->conArr[Coroutine::getUid()]);
 
         return true;
     }
 
     private function _preAct($msg, int & $level = self::LOG_LEVEL_INFO, string $category = 'console', string $func = 'log')
     {
-
         if( ! is_scalar($msg))
         {
             $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
@@ -92,16 +92,15 @@ class LamLog implements LoggerInterface
         {
             if (in_array($level, config('LOG.apart_level')))
             {
-                $this->merge($level, $str, $this->levelKey);
+                $this->merge($level, $str);
             }
             elseif (in_array($category, config('LOG.apart_category')))
             {
-                $this->merge($category, $str, $this->cateKey);
+                $this->merge($category, $str);
             }
             else {
-                $this->merge('log', $str);
+                $this->merge($this->dfKey, $str);
             }
-
         }
 
         return $str;
@@ -124,53 +123,13 @@ class LamLog implements LoggerInterface
         }
     }
 
-
-    /***************** Context上下文管理 *************************/
-
     /**
-     * 普通日志
-     * @var string
+     * 完整实例： conArr[$cid][$key][] = $value
+     * @param string $key
+     * @param string $value
      */
-    protected $logKey = 'log.log';
-
-    /**
-     * 需要独立文件的level日志
-     * @var string
-     */
-    protected $levelKey = 'log.level';
-
-    /**
-     * 需要独立文件的category日志
-     * @var string
-     */
-    protected $cateKey = 'log.cate';
-
-    /**
-     * 获取管理器对象
-     * @return ContextManager
-     */
-    protected function context(): ContextManager
+    protected function merge($key = '', $value = '')
     {
-        return ContextManager::getInstance();
-    }
-
-    /**
-     * 完整实例： context[$cid][$log][$key][] = $value
-     * @param $key
-     * @param $value
-     * @param string $log
-     */
-    protected function merge($key, $value, $log = '')
-    {
-        try {
-            $log = $log ?: $this->logKey;
-            $array = $this->context()->getContextArray() ?? [];
-            $array[$log][$key][] = $value;
-            $this->context()->set($log, $array[$log]);
-        }
-        catch (\EasySwoole\Component\Context\Exception\ModifyError $e)
-        {
-            // key与注册的log处理器名字冲突，暂时不做处理，丢掉这种日志
-        }
+        $this->conArr[Coroutine::getUid()][$key][] = $value;
     }
 }

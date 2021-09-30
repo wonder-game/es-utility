@@ -26,7 +26,7 @@ class LamUnit
 		self::decrypt($request);
 
 		// 将值写入$_GET,$_POST,$_COOKIE...
-		GlobalParamHook::getInstance()->onRequest($request, $response);
+		//GlobalParamHook::getInstance()->onRequest($request, $response);
 
 		// 设置默认语言
 		// print_r($_SERVER); // HTTP_ACCEPT_LANGUAGE  zh-CN,zh;q=0.9

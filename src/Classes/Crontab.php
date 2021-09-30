@@ -31,7 +31,7 @@ class Crontab extends AbstractCronTask
 
     public function run(int $taskId, int $workerIndex)
     {
-        $file = config('LOG_DIR') . '/crontab.object.data';
+        $file = config('LOG.dir') . '/crontab.object.data';
         try {
             /** @var \App\Model\Crontab $model */
             $model = model('Crontab');
