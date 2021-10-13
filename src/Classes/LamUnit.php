@@ -12,12 +12,13 @@ namespace Linkunyuan\EsUtility\Classes;
 use EasySwoole\Http\GlobalParamHook;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
+use EasySwoole\Http\GlobalParam\Hook;
 use EasySwoole\I18N\I18N;
 
 class LamUnit
 {
 	// 收到HTTP请求时触发处理
-	static public function onRequest(Request $request, Response $response)
+	static public function onRequest(Request $request, Response $response, Hook $globalParamHook)
 	{
 		// 将yapi中的通用参数标识符转换为具体的通用参数数组
 		self::utilityParam($request);
@@ -25,12 +26,22 @@ class LamUnit
 		// 解密
 		self::decrypt($request);
 
-		// 将值写入$_GET,$_POST,$_COOKIE...
-		//GlobalParamHook::getInstance()->onRequest($request, $response);
-
+        /* 替换全局变量（将值写入$_GET,$_POST,$_COOKIE... ） */
+        // easyswoole 3.3的写法
+        //GlobalParamHook::getInstance()->onRequest($request, $response);
+        
+        // easyswoole 3.4的写法
+        $globalParamHook->onRequest($request, $response); 
+        // 上面这一行之后才开始可以使用$_GET->toArray(),  $_POST->toArray()   ...，不过仍建议尽量少使用这种php-fpm风格的写法！！！    可能$_SERVER->toArray()会例外，因为格式变异太大
+        
+        
 		// 设置默认语言
-		// print_r($_SERVER); // HTTP_ACCEPT_LANGUAGE  zh-CN,zh;q=0.9
-		$lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+		// print_r($_SERVER);  // HTTP_ACCEPT_LANGUAGE => zh-CN,zh;q=0.9
+        // $lang = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+
+        // print_r($request->getHeaders());     // 'accept-language' => [0=>'zh-CN,zh;q=0.9']
+        $lang = $request->getHeader('accept-language')[0];
+        
 		if(stripos($lang, 'zh') !== false)
 		{
 			if(stripos($lang, 'tw') !== false || stripos($lang, 'hk') !== false)
@@ -47,8 +58,6 @@ class LamUnit
 	// 将yapi中的通用参数标识符转换为具体的通用参数数组
 	static public function utilityParam(Request $request, $key = '一堆通用参数！！')
 	{
-		// $_SERVER
-		//$server = $request->getServerParams();
 		// 获取IP
 		$utility['ip'] = ip($request);
 
