@@ -157,3 +157,10 @@ if ( ! function_exists('sendDingTalkMarkdown')) {
         return \Linkunyuan\EsUtility\sendDingTalkMarkdown($title, $text, $at);
     }
 }
+
+if ( ! function_exists('arrayToStd')) {
+    function arrayToStd(array $array = [])
+    {
+        return \Linkunyuan\EsUtility\arrayToStd($array);
+    }
+}

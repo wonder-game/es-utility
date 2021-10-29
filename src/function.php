@@ -480,3 +480,16 @@ if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
         sendDingTalk($data);
     }
 }
+
+if (!function_exists('Linkunyuan\EsUtility\arrayToStd'))
+{
+    function arrayToStd(array $array = [])
+    {
+        $std = new \stdClass();
+        foreach ($array as $key => $value)
+        {
+            $std->{$key} = is_array($value) ? arrayToStd($value) : $value;
+        }
+        return $std;
+    }
+}
