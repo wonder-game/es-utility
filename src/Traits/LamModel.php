@@ -393,12 +393,11 @@ trait LamModel
 		// 存入缓存
 		if($res && $this->awaCache)
 		{
-			go(function () {
-				$data = $this->getOriginData();
-				$pk = $this->schemaInfo()->getPkFiledName();
-				is_array($pk) && $pk = $pk[0];
-				isset($data[$pk]) && $this->cacheInfo($data[$pk], $this->_getByUnique($pk, $data[$pk]));
-			});
+		    // 此处去掉协程，原因是特殊场景需要复用连接池连接时会有问题，https://wiki.swoole.com/wiki/page/963.html
+            $data = $this->getOriginData();
+            $pk = $this->schemaInfo()->getPkFiledName();
+            is_array($pk) && $pk = $pk[0];
+            isset($data[$pk]) && $this->cacheInfo($data[$pk], $this->_getByUnique($pk, $data[$pk]));
 		}
 	}
 
