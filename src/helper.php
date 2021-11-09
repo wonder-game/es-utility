@@ -164,10 +164,3 @@ if ( ! function_exists('arrayToStd')) {
         return \Linkunyuan\EsUtility\arrayToStd($array);
     }
 }
-
-if ( ! function_exists('arrayToStd')) {
-    function arrayToStd(array $array = [])
-    {
-        return \Linkunyuan\EsUtility\arrayToStd($array);
-    }
-}
