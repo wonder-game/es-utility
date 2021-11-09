@@ -93,10 +93,9 @@ if ( ! function_exists('Linkunyuan\EsUtility\defer_redis')) {
 	 * @param number $db 数据库编号
 	 * @return \EasySwoole\Redis\Redis
 	 */
-	function defer_redis($poolname = '', $db = null)
+	function defer_redis($poolname = 'default', $db = null)
 	{
-		$poolname = $poolname ? : config('REDIS.poolname');
-		$db = is_numeric($db) ? $db : config('REDIS.db');
+		$db = is_numeric($db) ? $db : config("REDIS.$poolname.db");
 		// defer方式获取连接
 		$Redis  = \EasySwoole\RedisPool\RedisPool::defer($poolname);
 		$Redis->select($db); // 切换到指定序号
@@ -478,6 +477,19 @@ if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
             ]
         ];
         sendDingTalk($data);
+    }
+}
+
+if (!function_exists('Linkunyuan\EsUtility\arrayToStd'))
+{
+    function arrayToStd(array $array = [])
+    {
+        $std = new \stdClass();
+        foreach ($array as $key => $value)
+        {
+            $std->{$key} = is_array($value) ? arrayToStd($value) : $value;
+        }
+        return $std;
     }
 }
 

@@ -24,7 +24,7 @@ trait LamModel
 	public $awaCache = false; // after write and cache
 	public $awaCacheExpire = 7 * 24* 3600; // 单条记录的默认缓存时间
 
-	public $redisPoolname = ''; // redis连接池的标识
+	public $redisPoolname = 'default'; // redis连接池的标识
 	public $redisDb = null; // 默认redis库
 
 	public $destroyWhere = []; // 执行删除数据时的where值

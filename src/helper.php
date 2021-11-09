@@ -46,7 +46,7 @@ if ( ! function_exists('defer_redis')) {
 	 * @param number $db 数据库编号
 	 * @return \EasySwoole\Redis\Redis
 	 */
-	function defer_redis($poolname = '', $db = null)
+	function defer_redis($poolname = 'default', $db = null)
 	{
 		return \Linkunyuan\EsUtility\defer_redis($poolname, $db);
 	}
@@ -155,6 +155,13 @@ if ( ! function_exists('sendDingTalkMarkdown')) {
     function sendDingTalkMarkdown($title = '', $text = '', $at = true)
     {
         return \Linkunyuan\EsUtility\sendDingTalkMarkdown($title, $text, $at);
+    }
+}
+
+if ( ! function_exists('arrayToStd')) {
+    function arrayToStd(array $array = [])
+    {
+        return \Linkunyuan\EsUtility\arrayToStd($array);
     }
 }
 
