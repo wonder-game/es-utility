@@ -56,7 +56,7 @@ class LamLog implements LoggerInterface
     {
         empty($this->logDir) && $this->logDir = config('LOG.dir');
         $dir = $this->logDir . '/' . date('ym');
-        is_dir($dir) or @ mkdir($dir);
+        is_dir($dir) or @ mkdir($dir, 0777, true);
 
         // conArr[$cid][$key][] = $value
         foreach((array) $this->conArr[Coroutine::getUid()]  as $key => $value)
