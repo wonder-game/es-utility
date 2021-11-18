@@ -20,17 +20,18 @@ class ExceptionTrigger implements TriggerInterface
             return;
         }
 
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         if($location == null){
             $location = new Location();
-            $debugTrace = debug_backtrace();
-            $caller = array_shift($debugTrace);
+            $caller = array_shift($trace);
             $location->setLine($caller['line']);
             $location->setFile($caller['file']);
         }
         $eMsg = [
             'message' => $msg,
             'file' => $location->getFile(),
-            'line' => $location->getLine()
+            'line' => $location->getLine(),
+            'trace' => $trace
         ];
         $this->doError(__FUNCTION__, $eMsg);
     }
