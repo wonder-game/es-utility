@@ -131,36 +131,50 @@ if ( ! function_exists('lang')) {
 }
 
 if ( ! function_exists('wechatNotice')) {
-    function wechatNotice($title = '', $content = '', $touser = false, $color = '#32CD32')
-    {
-        return \Linkunyuan\EsUtility\wechatNotice($title, $content, $touser, $color);
-    }
+	function wechatNotice($title = '', $content = '', $touser = false, $color = '#32CD32')
+	{
+		return \Linkunyuan\EsUtility\wechatNotice($title, $content, $touser, $color);
+	}
 }
 
 if ( ! function_exists('sendDingTalk')) {
-    function sendDingTalk($data = [], $config = [])
-    {
-        return \Linkunyuan\EsUtility\sendDingTalk($data, $config);
-    }
+	function sendDingTalk($data = [], $config = [])
+	{
+		return \Linkunyuan\EsUtility\sendDingTalk($data, $config);
+	}
 }
 
 if ( ! function_exists('sendDingTalkText')) {
-    function sendDingTalkText($content = '', $at = true)
-    {
-        return \Linkunyuan\EsUtility\sendDingTalkText($content, $at);
-    }
+	function sendDingTalkText($content = '', $at = true)
+	{
+		return \Linkunyuan\EsUtility\sendDingTalkText($content, $at);
+	}
 }
 
 if ( ! function_exists('sendDingTalkMarkdown')) {
-    function sendDingTalkMarkdown($title = '', $text = '', $at = true)
-    {
-        return \Linkunyuan\EsUtility\sendDingTalkMarkdown($title, $text, $at);
-    }
+	function sendDingTalkMarkdown($title = '', $text = '', $at = true)
+	{
+		return \Linkunyuan\EsUtility\sendDingTalkMarkdown($title, $text, $at);
+	}
 }
 
 if ( ! function_exists('arrayToStd')) {
-    function arrayToStd(array $array = [])
-    {
-        return \Linkunyuan\EsUtility\arrayToStd($array);
-    }
+	function arrayToStd(array $array = [])
+	{
+		return \Linkunyuan\EsUtility\arrayToStd($array);
+	}
+}
+
+if ( ! function_exists('convertip')) {
+	function convertip($ip = '', $ipdatafile = '')
+	{
+		return \Linkunyuan\EsUtility\convertip($ip, $ipdatafile);
+	}
+}
+
+if ( ! function_exists('area')) {
+	function area($ip = '', $num = 'all')
+	{
+		return \Linkunyuan\EsUtility\area($ip, $num);
+	}
 }

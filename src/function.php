@@ -5,7 +5,6 @@ use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\I18N\I18N;
-use EasySwoole\Utility\File;
 use Linkunyuan\EsUtility\Classes\LamJwt;
 use Linkunyuan\EsUtility\Classes\WeChatManager;
 
@@ -302,18 +301,18 @@ if ( ! function_exists('Linkunyuan\EsUtility\ip')) {
 			$arr = $request->getHeaders();
 			// IP1,IP2
 			$iparr = ! empty($arr['x-forwarded-for'][0]) ? $arr['x-forwarded-for'][0] : (
-				! empty($arr['x-real-ip'][0]) ? $arr['x-real-ip'][0] : (
-					$request->getServerParams()['remote_addr'] ?? ''
-				)
+			! empty($arr['x-real-ip'][0]) ? $arr['x-real-ip'][0] : (
+				$request->getServerParams()['remote_addr'] ?? ''
+			)
 			);
 		}
 		else
 		{
 			// IP1,IP2
 			$iparr = ! empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : (
-				! empty($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : (
-					$_SERVER['REMOTE_ADDR'] ?? ''
-				)
+			! empty($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : (
+				$_SERVER['REMOTE_ADDR'] ?? ''
+			)
 			);
 		}
 
@@ -379,116 +378,277 @@ if ( ! function_exists('Linkunyuan\EsUtility\lang')) {
 }
 
 if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
-    /**
-     * 发送微信通知
-     * @param string $title
-     * @param string $content
-     */
-    function wechatNotice($title = '', $content = '', $touser = '', $color = '#32CD32')
-    {
-        $tempData = [
-            'first' => [
-                'value' => $title,
-                'color' => $color
-            ],
-            'keyword1' => [
-                'value' => $content,
-                'color' => $color
-            ],
-            'keyword3' => date('Y年m月d日 H:i:s'),
-            'remark' => '查看详情'
-        ];;
-        WeChatManager::getInstance()->sendTemplateMessage($tempData, $touser, config('wechat.template.notice'));
-    }
+	/**
+	 * 发送微信通知
+	 * @param string $title
+	 * @param string $content
+	 */
+	function wechatNotice($title = '', $content = '', $touser = '', $color = '#32CD32')
+	{
+		$tempData = [
+			'first' => [
+				'value' => $title,
+				'color' => $color
+			],
+			'keyword1' => [
+				'value' => $content,
+				'color' => $color
+			],
+			'keyword3' => date('Y年m月d日 H:i:s'),
+			'remark' => '查看详情'
+		];;
+		WeChatManager::getInstance()->sendTemplateMessage($tempData, $touser, config('wechat.template.notice'));
+	}
 }
 
 
 if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
-    /**
-     * 发送钉钉机器人消息
-     * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
-     */
-    function sendDingTalk($data = [], $config = [])
-    {
-        if (empty($data) || !is_array($data))
-        {
-            return;
-        }
-        if (empty($config))
-        {
-            $config = config('dingtalk');
-        }
+	/**
+	 * 发送钉钉机器人消息
+	 * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
+	 */
+	function sendDingTalk($data = [], $config = [])
+	{
+		if (empty($data) || !is_array($data))
+		{
+			return;
+		}
+		if (empty($config))
+		{
+			$config = config('dingtalk');
+		}
 
-        $data = json_encode($data);
+		$data = json_encode($data);
 
-        $url = $config['url'];
-        $secret = $config['sign_key'];
+		$url = $config['url'];
+		$secret = $config['sign_key'];
 
-        // 签名 &timestamp=XXX&sign=XXX
-        $timestamp = time() * 1000;
+		// 签名 &timestamp=XXX&sign=XXX
+		$timestamp = time() * 1000;
 
-        $sign = utf8_encode(urlencode(base64_encode(hash_hmac('sha256', $timestamp . "\n" . $secret, $secret, true))));
+		$sign = utf8_encode(urlencode(base64_encode(hash_hmac('sha256', $timestamp . "\n" . $secret, $secret, true))));
 
-        $url .= "&timestamp={$timestamp}&sign={$sign}";
+		$url .= "&timestamp={$timestamp}&sign={$sign}";
 
-        $client = new HttpClient($url);
+		$client = new HttpClient($url);
 
-        // 支持文本 (text)、链接 (link)、markdown(markdown)、ActionCard、FeedCard消息类型
+		// 支持文本 (text)、链接 (link)、markdown(markdown)、ActionCard、FeedCard消息类型
 
-        $response = $client->postJson($data);
-        $json = json_decode($response->getBody(), true);
+		$response = $client->postJson($data);
+		$json = json_decode($response->getBody(), true);
 
-        if ($json['errcode'] !== 0)
-        {
-            trace("钉钉消息发送失败：data={$data},response={$response}", 'error');
-        }
-    }
+		if ($json['errcode'] !== 0)
+		{
+			trace("钉钉消息发送失败：data={$data},response={$response}", 'error');
+		}
+	}
 }
 
 if (! function_exists('Linkunyuan\EsUtility\sendDingTalkText'))
 {
-    function sendDingTalkText($content = '', $at = true)
-    {
-        $data = [
-            'msgtype' => 'text',
-            'text' => [
-                'content' => $content
-            ],
-            'at' => [
-                'isAtAll' => $at
-            ]
-        ];
-        sendDingTalk($data);
-    }
+	function sendDingTalkText($content = '', $at = true)
+	{
+		$data = [
+			'msgtype' => 'text',
+			'text' => [
+				'content' => $content
+			],
+			'at' => [
+				'isAtAll' => $at
+			]
+		];
+		sendDingTalk($data);
+	}
 }
 
 if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
 {
-    function sendDingTalkMarkdown($title = '', $text = '', $at = true)
-    {
-        $data = [
-            'msgtype' => 'markdown',
-            'markdown' => [
-                'title' => $title,
-                'text' => $text
-            ],
-            'at' => [
-                'isAtAll' => $at
-            ]
-        ];
-        sendDingTalk($data);
-    }
+	function sendDingTalkMarkdown($title = '', $text = '', $at = true)
+	{
+		$data = [
+			'msgtype' => 'markdown',
+			'markdown' => [
+				'title' => $title,
+				'text' => $text
+			],
+			'at' => [
+				'isAtAll' => $at
+			]
+		];
+		sendDingTalk($data);
+	}
 }
 
 if (!function_exists('Linkunyuan\EsUtility\arrayToStd'))
 {
-    function arrayToStd(array $array = [])
-    {
-        $std = new \stdClass();
-        foreach ($array as $key => $value)
-        {
-            $std->{$key} = is_array($value) ? arrayToStd($value) : $value;
-        }
-        return $std;
-    }
+	function arrayToStd(array $array = [])
+	{
+		$std = new \stdClass();
+		foreach ($array as $key => $value)
+		{
+			$std->{$key} = is_array($value) ? arrayToStd($value) : $value;
+		}
+		return $std;
+	}
+}
+
+
+if ( ! function_exists('Linkunyuan\EsUtility\convertip'))
+{
+	/**
+	 * 官方网站　 http://www.cz88.net　请适时更新ip库
+	 * 按照ip地址返回所在地区
+	 * @param  string $ip ip地址  如果为空就使用当前请求ip
+	 * @param string $ipdatafile DAT文件完整路径
+	 * @return string 广东省广州市 电信  或者  - Unknown
+	 *
+	 */
+	function convertip($ip = '', $ipdatafile = '')
+	{
+		$ipdatafile = $ipdatafile ?: config('IPDAT_PATH');
+		$ip = $ip?:ip();
+
+		if(!$fd = @fopen($ipdatafile, 'rb')) {
+			return '- Invalid IP data file';
+		}
+
+		$ip = explode('.', $ip);
+		$ipNum = $ip[0] * 16777216 + $ip[1] * 65536 + $ip[2] * 256 + $ip[3];
+
+		if(!($DataBegin = fread($fd, 4)) || !($DataEnd = fread($fd, 4)) ) return;
+		@$ipbegin = implode('', unpack('L', $DataBegin));
+		if($ipbegin < 0) $ipbegin += pow(2, 32);
+		@$ipend = implode('', unpack('L', $DataEnd));
+		if($ipend < 0) $ipend += pow(2, 32);
+		$ipAllNum = ($ipend - $ipbegin) / 7 + 1;
+
+		$BeginNum = $ip2num = $ip1num = 0;
+		$ipAddr1 = $ipAddr2 = '';
+		$EndNum = $ipAllNum;
+
+		while($ip1num > $ipNum || $ip2num < $ipNum) {
+			$Middle= intval(($EndNum + $BeginNum) / 2);
+
+			fseek($fd, $ipbegin + 7 * $Middle);
+			$ipData1 = fread($fd, 4);
+			if(strlen($ipData1) < 4) {
+				fclose($fd);
+				return '- System Error';
+			}
+			$ip1num = implode('', unpack('L', $ipData1));
+			if($ip1num < 0) $ip1num += pow(2, 32);
+
+			if($ip1num > $ipNum) {
+				$EndNum = $Middle;
+				continue;
+			}
+
+			$DataSeek = fread($fd, 3);
+			if(strlen($DataSeek) < 3) {
+				fclose($fd);
+				return '- System Error';
+			}
+			$DataSeek = implode('', unpack('L', $DataSeek.chr(0)));
+			fseek($fd, $DataSeek);
+			$ipData2 = fread($fd, 4);
+			if(strlen($ipData2) < 4) {
+				fclose($fd);
+				return '- System Error';
+			}
+			$ip2num = implode('', unpack('L', $ipData2));
+			if($ip2num < 0) $ip2num += pow(2, 32);
+
+			if($ip2num < $ipNum) {
+				if($Middle == $BeginNum) {
+					fclose($fd);
+					return '- Unknown';
+				}
+				$BeginNum = $Middle;
+			}
+		}
+
+		$ipFlag = fread($fd, 1);
+		if($ipFlag == chr(1)) {
+			$ipSeek = fread($fd, 3);
+			if(strlen($ipSeek) < 3) {
+				fclose($fd);
+				return '- System Error';
+			}
+			$ipSeek = implode('', unpack('L', $ipSeek.chr(0)));
+			fseek($fd, $ipSeek);
+			$ipFlag = fread($fd, 1);
+		}
+
+		if($ipFlag == chr(2)) {
+			$AddrSeek = fread($fd, 3);
+			if(strlen($AddrSeek) < 3) {
+				fclose($fd);
+				return '- System Error';
+			}
+			$ipFlag = fread($fd, 1);
+			if($ipFlag == chr(2)) {
+				$AddrSeek2 = fread($fd, 3);
+				if(strlen($AddrSeek2) < 3) {
+					fclose($fd);
+					return '- System Error';
+				}
+				$AddrSeek2 = implode('', unpack('L', $AddrSeek2.chr(0)));
+				fseek($fd, $AddrSeek2);
+			} else {
+				fseek($fd, -1, SEEK_CUR);
+			}
+
+			while(($char = fread($fd, 1)) != chr(0))
+				$ipAddr2 .= $char;
+
+			$AddrSeek = implode('', unpack('L', $AddrSeek.chr(0)));
+			fseek($fd, $AddrSeek);
+
+			while(($char = fread($fd, 1)) != chr(0))
+				$ipAddr1 .= $char;
+		} else {
+			fseek($fd, -1, SEEK_CUR);
+			while(($char = fread($fd, 1)) != chr(0))
+				$ipAddr1 .= $char;
+
+			$ipFlag = fread($fd, 1);
+			if($ipFlag == chr(2)) {
+				$AddrSeek2 = fread($fd, 3);
+				if(strlen($AddrSeek2) < 3) {
+					fclose($fd);
+					return '- System Error';
+				}
+				$AddrSeek2 = implode('', unpack('L', $AddrSeek2.chr(0)));
+				fseek($fd, $AddrSeek2);
+			} else {
+				fseek($fd, -1, SEEK_CUR);
+			}
+			while(($char = fread($fd, 1)) != chr(0))
+				$ipAddr2 .= $char;
+		}
+		fclose($fd);
+
+		if(preg_match('/http/i', $ipAddr2)) {
+			$ipAddr2 = '';
+		}
+		return iconv('GBK', 'UTF-8', "$ipAddr1 $ipAddr2");
+	}
+}
+
+if ( ! function_exists('Linkunyuan\EsUtility\area')) {
+	/**
+	 * @param string $ip
+	 * @param int|null $num   为数字时返回地区数组中的一个成员；否则返回整个数组
+	 * @return array|string [国家, 地区, 网络商]  或者其中一个成员
+	 */
+	function area($ip = '', $num = 'all')
+	{
+		$str = convertip($ip);
+		if(preg_match('/北京市|上海市|天津市|重庆市|河北省|山西省|辽宁省|吉林省|黑龙江省|江苏省|浙江省|安徽省|福建省|江西省|山东省|河南省|湖北省|湖南省|广东省|海南省|四川省|贵州省|云南省|陕西省|甘肃省|青海省|台湾省|香港|澳门|内蒙古|广西|宁夏|新疆|西藏/', $str))
+		{
+			$str = "中国 $str";
+		}
+		$arr = explode(' ', $str);
+		return is_numeric($num) ? $arr[$num] : $arr;
+	}
 }
