@@ -507,7 +507,10 @@ if ( ! function_exists('Linkunyuan\EsUtility\convertip'))
 	{
 		$ipdatafile = $ipdatafile ?: config('IPDAT_PATH');
 		$ip = $ip?:ip();
-
+		if(is_numeric($ip))
+		{
+			$ip = long2ip($ip);
+		}
 		if(!$fd = @fopen($ipdatafile, 'rb')) {
 			return '- Invalid IP data file';
 		}
