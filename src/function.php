@@ -652,6 +652,16 @@ if ( ! function_exists('Linkunyuan\EsUtility\area')) {
 			$str = "中国 $str";
 		}
 		$arr = explode(' ', $str);
+		// 删除国家外的多余内容
+		foreach(['美国'=>'美国', '加拿大'=>'加拿大', '荷兰'=>'荷兰', '法属'=>'法国', '荷属'=>'荷兰'] as $k => $v)
+		{
+			if(stripos($arr[0], $k) ===0)
+			{
+				$arr[0] = $v;
+				break;
+			}
+		}
+
 		return is_numeric($num) ? $arr[$num] : $arr;
 	}
 }
