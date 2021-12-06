@@ -652,7 +652,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\area')) {
 			// 业务需求：非大陆需要单独记录
 			if(preg_match('/台湾|香港|澳门/', $str))
 			{
-				$str = "中国$str";
+				$str = '中国' . mb_substr(trim($str), 0, 2);
 			}
 			else
 			{
