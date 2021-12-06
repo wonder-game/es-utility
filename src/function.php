@@ -34,14 +34,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 		$model = null;
 
 		if (class_exists($class)) {
-			try{
-				$model = new $class($data, $gameid != '' ? parse_name($name,0, false) . "_$gameid" : '', $gameid);
-			}
-			catch (\Exception $e)
-			{
-				// TODO
-				var_dump($e->getMessage());
-			}
+			$model = new $class($data, $gameid != '' ? parse_name($name,0, false) . "_$gameid" : '', $gameid);
 		} else {
 			// TODO
 			//throw new \Exception("模型不存在:$class");
