@@ -81,10 +81,10 @@ class Crontab extends AbstractCronTask
                 // 时间未到
                 continue;
             }
+            
+            $args = is_array($value['args']) ? $value['args'] : json_decode($value['args'], true);
 
-            $args = json_decode($value['args'], true);
-
-            $class = new $className([$value['eclass'], $value['method']], is_array($args) ? $args : $value['args']);
+            $class = new $className([$value['eclass'], $value['method']], $args);
             // 投递给异步任务
             $finish = $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
                 trace("id={$value['id']} finish! {$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
