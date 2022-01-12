@@ -400,7 +400,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
 	 * 发送钉钉机器人消息
 	 * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
 	 */
-	function sendDingTalk($data = [], $config = [])
+	function sendDingTalk($data = [], $config = [], $log = false)
 	{
 		if (empty($data) || !is_array($data))
 		{
@@ -430,7 +430,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
 		$response = $client->postJson($data);
 		$json = json_decode($response->getBody(), true);
 
-		if ($json['errcode'] !== 0)
+		if ($json['errcode'] !== 0 && $log)
 		{
 			trace("钉钉消息发送失败：data={$data},response={$response}", 'error');
 		}
