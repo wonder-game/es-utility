@@ -12,6 +12,7 @@ namespace Linkunyuan\EsUtility\Classes;
 use EasySwoole\Http\GlobalParamHook;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
+use EasySwoole\Http\GlobalParam\Hook;
 use EasySwoole\I18N\I18N;
 
 class LamUnit
