@@ -14,7 +14,7 @@ class SaveHandler implements SaveHandlerInterface
         'redis-name' => 'report',
     ];
 
-    public function __construct($cfg = [])
+    public function __construct(array $cfg = [])
     {
         $cfg && $this->config = array_merge($this->config, $cfg);
     }
@@ -28,10 +28,13 @@ class SaveHandler implements SaveHandlerInterface
     {
         if ($array = Point::toArray($point)) {
             try {
-                RedisPool::invoke(function (Redis $redis) use ($array) {
+                RedisPool::invoke(function (Redis $redis) use ($array, $globalArg) {
                     foreach ($array as $value)
                     {
-                        $redis->lPush($this->config['queue'], json_encode($value, JSON_UNESCAPED_UNICODE));
+                        $redis->lPush(
+                            $this->config['queue'],
+                            json_encode(array_merge($value, $globalArg ?? []), JSON_UNESCAPED_UNICODE)
+                        );
                     }
                 }, $this->config['redis-name']);
             }
