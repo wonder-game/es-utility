@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0f792b8e435ee69e0772159cd25b3df5",
+    "content-hash": "998cbde487c3e71eb9eeaaf45629b270",
     "packages": [
         {
             "name": "doctrine/lexer",
@@ -779,6 +779,59 @@
                 "source": "https://github.com/easy-swoole/http-annotation/tree/1.4.3"
             },
             "time": "2020-08-24T07:18:32+00:00"
+        },
+        {
+            "name": "easyswoole/http-client",
+            "version": "1.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/easy-swoole/http-client.git",
+                "reference": "6f1f247495983d0494465851c263f2b2c893f8bb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/easy-swoole/http-client/zipball/6f1f247495983d0494465851c263f2b2c893f8bb",
+                "reference": "6f1f247495983d0494465851c263f2b2c893f8bb",
+                "shasum": ""
+            },
+            "require": {
+                "easyswoole/spl": "^1.1",
+                "php": ">=7.1.0"
+            },
+            "require-dev": {
+                "easyswoole/phpunit": "^1.0",
+                "easyswoole/swoole-ide-helper": "^1.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "EasySwoole\\HttpClient\\": "src/",
+                    "EasySwoole\\HttpClient\\Test\\": "tests/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "YF",
+                    "email": "291323003@qq.com"
+                }
+            ],
+            "description": "php stander lib",
+            "homepage": "https://www.easyswoole.com/",
+            "keywords": [
+                "async",
+                "easyswoole",
+                "framework",
+                "swoole"
+            ],
+            "support": {
+                "issues": "https://github.com/easy-swoole/http-client/issues",
+                "source": "https://github.com/easy-swoole/http-client/tree/1.5.0"
+            },
+            "time": "2021-02-22T05:47:59+00:00"
         },
         {
             "name": "easyswoole/i18n",
@@ -1855,5 +1908,5 @@
         "php": ">=7.0"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.2.0"
 }

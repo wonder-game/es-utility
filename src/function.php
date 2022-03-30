@@ -145,6 +145,26 @@ if ( ! function_exists('Linkunyuan\EsUtility\array_merge_multi')) {
 	}
 }
 
+if ( ! function_exists('Linkunyuan\EsUtility\array_sort_multi')) {
+	/**
+	 * 二维数组按某字段排序
+	 */
+	function array_sort_multi($data = [], $field = '', $direction = SORT_DESC)
+	{
+		if (!$data) return [];
+		$arrsort = [];
+		foreach ($data as $uniqid => $row) {
+			foreach ($row as $key => $value) {
+				$arrsort[$key][$uniqid] = $value;
+			}
+		}
+		if ($direction) {
+			array_multisort($arrsort[$field], $direction, $data);
+		}
+		return $data;
+	}
+}
+
 if ( ! function_exists('Linkunyuan\EsUtility\listdate')) {
 	/**
 	 * 返回两个日期之间的具体日期或月份

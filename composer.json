@@ -19,7 +19,8 @@
       "easyswoole/mysqli": ">=2.2",
       "easyswoole/task": ">=1.1",
       "easyswoole/log": ">=1.0",
-      "easyswoole/i18n": "^1.0"
+      "easyswoole/i18n": "^1.0",
+        "easyswoole/http-client": "^1.5"
     },
 	"autoload": {
        "psr-4": {

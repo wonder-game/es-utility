@@ -78,6 +78,16 @@ if ( ! function_exists('array_merge_multi')) {
 	}
 }
 
+if ( ! function_exists('array_sort_multi')) {
+	/**
+	 * 二维数组按某字段排序
+	 */
+	function array_sort_multi ($data = [], $field = '', $direction = SORT_DESC)
+	{
+		return \Linkunyuan\EsUtility\array_sort_multi($data, $field, $direction);
+	}
+}
+
 if ( ! function_exists('listdate')) {
 	/**
 	 * 返回两个日期之间的具体日期或月份
