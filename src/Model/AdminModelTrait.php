@@ -1,0 +1,64 @@
+<?php
+
+namespace WonderGame\EsUtility\Model;
+
+use EasySwoole\Mysqli\QueryBuilder;
+
+trait AdminModelTrait
+{
+    protected function setBaseTraitProptected()
+    {
+        $this->autoTimeStamp = true;
+        $this->sort = ['sort' => 'asc', 'id' => 'asc'];
+    }
+
+    protected function setPasswordAttr($password = '', $alldata = [])
+    {
+        if($password != '')
+        {
+            return password_hash($password, PASSWORD_DEFAULT);
+        }
+        return false;
+    }
+
+    protected function getExtensionAttr($extension = '', $alldata = [])
+    {
+        $array = is_array($extension) ? $extension : json_decode($extension, true);
+
+        if (isset($array['gameids']) && is_string($array['gameids']))
+        {
+            $array['gameids'] = explode(',', $array['gameids']);
+        }
+
+        // 如果是超级管理员可能是空数组或字符串
+        $array['gameids'] = array_map('intval', $array['gameids'] ?? []);
+        // package和gameid固定返回数组，gameid转整型
+        foreach (['gameids', 'pkgbnd'] as $col)
+        {
+            $colValue = $array[$col] ?? [];
+            if (is_string($colValue)) {
+                $colValue = explode(',', $colValue);
+            }
+            $array[$col] = $colValue;
+        }
+        // 强类型限制, 游戏id有0
+        $array['gid'] = !empty($array['gid']) ? intval($array['gid']) : '';
+
+        return $array;
+    }
+
+    /**
+     * 关联Role分组模型
+     * @return array|mixed|null
+     * @throws \Throwable
+     */
+    public function relation()
+    {
+        $callback = function(QueryBuilder $query){
+            $query->where('status', 1);
+            return $query;
+        };
+
+        return $this->hasOne(find_model('role'), $callback, 'rid', 'id');
+    }
+}

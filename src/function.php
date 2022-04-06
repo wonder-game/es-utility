@@ -1,14 +1,60 @@
 <?php
-namespace Linkunyuan\EsUtility;
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\I18N\I18N;
-use Linkunyuan\EsUtility\Classes\LamJwt;
-use Linkunyuan\EsUtility\Classes\WeChatManager;
+use WonderGame\EsUtility\Classes\LamJwt;
+use WonderGame\EsUtility\Classes\WeChatManager;
+use EasySwoole\Spl\SplArray;
+use EasySwoole\RedisPool\RedisPool;
+use EasySwoole\Redis\Redis;
 
-if ( ! function_exists('Linkunyuan\EsUtility\model')) {
+if (!function_exists('isSuper')) {
+    /**
+     * 是否超级管理员
+     * @param $rid
+     * @return bool
+     */
+    function isSuper($rid = null)
+    {
+        $super = sysinfo('super');
+        return $super && is_array($super) && in_array($rid, $super);
+    }
+}
+
+if ( ! function_exists('find_model')) {
+    /**
+     * @param $name
+     * @param $thorw
+     * @return string|null
+     * @throws Exception
+     */
+    function find_model($name, $thorw = true)
+    {
+        if (!$namespaces = config('MODEL_NAMESPACES'))
+        {
+            $namespaces = ['\\App\\Model'];
+        }
+
+        foreach ($namespaces as $namespace)
+        {
+            $className = rtrim($namespace, '\\') . '\\' . ucfirst($name);
+            if (class_exists($className))
+            {
+                return $className;
+            }
+        }
+
+        if ($thorw)
+        {
+            throw new \Exception('Class Not Found: ' . $name);
+        }
+        return null;
+    }
+}
+
+if ( ! function_exists('model')) {
 	/**
 	 * 实例化Model
 	 * @param string    $name Model名称
@@ -16,12 +62,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 	 */
 	function model($name = '', $data = [])
 	{
-		//static $instance = [];
 		$guid = $name = parse_name($name, 1);
-
-//		if (isset($instance[$guid])) {
-//			return $instance[$guid];
-//		}
 
 		$gameid = '';
 		// 实例化XXX_gid模型
@@ -29,22 +70,15 @@ if ( ! function_exists('Linkunyuan\EsUtility\model')) {
 		{
 			list($name, $gameid) = explode(':', $name);
 		}
+        $tableName = $gameid != '' ? parse_name($name, 0, false) . "_$gameid" : '';
 
-		$class = "\\App\\Model\\$name";
-		$model = null;
+        $className = find_model($name);
 
-		if (class_exists($class)) {
-			$model = new $class($data, $gameid != '' ? parse_name($name,0, false) . "_$gameid" : '', $gameid);
-		} else {
-			// TODO
-			//throw new \Exception("模型不存在:$class");
-		}
-		//$instance[$guid] = $model;
-		return $model;
+        return new $className($data, $tableName, $gameid);
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\config')) {
+if ( ! function_exists('config')) {
 	/**
 	 * 获取和设置配置参数
 	 * @param string|array  $name 参数名
@@ -63,7 +97,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\config')) {
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\trace')) {
+if ( ! function_exists('trace')) {
 	/**
 	 * 记录日志信息
 	 * @param string|array $log log信息 支持字符串和数组
@@ -78,7 +112,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\trace')) {
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\defer_redis')) {
+if ( ! function_exists('defer_redis')) {
 	/**
 	 * 返回redis句柄资源
 	 * @param string $poolname 标识
@@ -87,15 +121,14 @@ if ( ! function_exists('Linkunyuan\EsUtility\defer_redis')) {
 	 */
 	function defer_redis($poolname = 'default', $db = null)
 	{
-		$db = is_numeric($db) ? $db : config("REDIS.$poolname.db");
 		// defer方式获取连接
-		$Redis  = \EasySwoole\RedisPool\RedisPool::defer($poolname);
-		$Redis->select($db); // 切换到指定序号
+		$Redis  = RedisPool::defer($poolname);
+        is_numeric($db) && $Redis->select($db); // 切换到指定序号
 		return $Redis;
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\parse_name')) {
+if ( ! function_exists('parse_name')) {
 	/**
 	 * 字符串命名风格转换
 	 * @param string $name 字符串
@@ -117,7 +150,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\parse_name')) {
 }
 
 
-if ( ! function_exists('Linkunyuan\EsUtility\array_merge_multi')) {
+if ( ! function_exists('array_merge_multi')) {
 	/**
 	 * 多维数组合并（支持多数组）
 	 * @return array
@@ -145,27 +178,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\array_merge_multi')) {
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\array_sort_multi')) {
-	/**
-	 * 二维数组按某字段排序
-	 */
-	function array_sort_multi($data = [], $field = '', $direction = SORT_DESC)
-	{
-		if (!$data) return [];
-		$arrsort = [];
-		foreach ($data as $uniqid => $row) {
-			foreach ($row as $key => $value) {
-				$arrsort[$key][$uniqid] = $value;
-			}
-		}
-		if ($direction) {
-			array_multisort($arrsort[$field], $direction, $data);
-		}
-		return $data;
-	}
-}
-
-if ( ! function_exists('Linkunyuan\EsUtility\listdate')) {
+if ( ! function_exists('listdate')) {
 	/**
 	 * 返回两个日期之间的具体日期或月份
 	 *
@@ -254,7 +267,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\listdate')) {
 }
 
 
-if ( ! function_exists('Linkunyuan\EsUtility\difdate')) {
+if ( ! function_exists('difdate')) {
 	/**
 	 * 计算两个日期相差多少天或多少月
 	 */
@@ -277,7 +290,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\difdate')) {
 }
 
 
-if ( ! function_exists('Linkunyuan\EsUtility\verify_token')) {
+if ( ! function_exists('verify_token')) {
 	/**
 	 * 验证jwt并读取用户信息
 	 */
@@ -303,7 +316,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\verify_token')) {
 }
 
 
-if ( ! function_exists('Linkunyuan\EsUtility\ip')) {
+if ( ! function_exists('ip')) {
 	/**
 	 * 验证jwt并读取用户信息
 	 */
@@ -383,14 +396,14 @@ if ( ! function_exists('Linkunyuan\EsUtility\ip')) {
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\lang')) {
+if ( ! function_exists('lang')) {
 	function lang($const = '')
 	{
 		return I18N::getInstance()->translate($const);
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
+if ( ! function_exists('wechatNotice')) {
 	/**
 	 * 发送微信通知
 	 * @param string $title
@@ -415,7 +428,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\wechatNotice')) {
 }
 
 
-if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
+if ( ! function_exists('sendDingTalk')) {
 	/**
 	 * 发送钉钉机器人消息
 	 * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
@@ -457,7 +470,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\sendDingTalk')) {
 	}
 }
 
-if (! function_exists('Linkunyuan\EsUtility\sendDingTalkText'))
+if (! function_exists('sendDingTalkText'))
 {
 	function sendDingTalkText($content = '', $at = true)
 	{
@@ -474,7 +487,7 @@ if (! function_exists('Linkunyuan\EsUtility\sendDingTalkText'))
 	}
 }
 
-if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
+if (! function_exists('sendDingTalkMarkdown'))
 {
 	function sendDingTalkMarkdown($title = '', $text = '', $at = true)
 	{
@@ -492,7 +505,7 @@ if (! function_exists('Linkunyuan\EsUtility\sendDingTalkMarkdown'))
 	}
 }
 
-if (!function_exists('Linkunyuan\EsUtility\arrayToStd'))
+if (!function_exists('arrayToStd'))
 {
 	function arrayToStd(array $array = [])
 	{
@@ -506,7 +519,7 @@ if (!function_exists('Linkunyuan\EsUtility\arrayToStd'))
 }
 
 
-if ( ! function_exists('Linkunyuan\EsUtility\convertip'))
+if ( ! function_exists('convertip'))
 {
 	/**
 	 * 官方网站　 http://www.cz88.net　请适时更新ip库
@@ -651,7 +664,7 @@ if ( ! function_exists('Linkunyuan\EsUtility\convertip'))
 	}
 }
 
-if ( ! function_exists('Linkunyuan\EsUtility\area')) {
+if ( ! function_exists('area')) {
 	/**
 	 * @param string $ip
 	 * @param int|null $num   为数字时返回地区数组中的一个成员；否则返回整个数组
@@ -685,4 +698,50 @@ if ( ! function_exists('Linkunyuan\EsUtility\area')) {
 
 		return is_numeric($num) ? $arr[$num] : $arr;
 	}
+}
+
+if (! function_exists('sysinfo'))
+{
+    /**
+     * 获取系统设置的动态配置
+     * @document http://www.easyswoole.com/Components/Spl/splArray.html
+     * @param string|true|null $key true-直接返回SplArray对象，非true取值与 SplArray->get 相同
+     * @param string|null $default 默认值
+     * @return array|SplArray|mixed|null
+     */
+    function sysinfo($key = null, $default = null) {
+
+        /** @var SplArray $Spl */
+        $Spl = RedisPool::invoke(function (Redis $redis) {
+
+            $model = model('sysinfo');
+
+            $redisKey = $model->getCacheKey();
+
+            $cache = $redis->get($redisKey);
+            if ($cache !== false && !is_null($cache))
+            {
+                $slz = unserialize($cache);
+                if ($slz instanceof SplArray)
+                {
+                    return $slz;
+                }
+            }
+
+            $data = $model->where('status', 1)->all();
+
+            $array = [];
+            /** @var Sysinfo $item */
+            foreach ($data as $item)
+            {
+                $array[$item->getAttr('varname')] = $item->getAttr('value');
+            }
+
+            $Spl = new SplArray($array);
+            $redis->set($redisKey, serialize($Spl));
+            return $Spl;
+        });
+
+        return $key === true ? $Spl : $Spl->get($key, $default);
+    }
 }

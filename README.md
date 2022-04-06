@@ -6,14 +6,14 @@ Quick Start
 
 Install the library using [composer](https://getcomposer.org):
 
-    php composer.phar require linkunyuan/es-utility
+    php composer.phar require wonder-game/es-utility
 
 Import traits and run:
 
 _Controller_
 ```php
 <?php
-use Linkunyuan\EsUtility\Traits\LamController;
+use WonderGame\EsUtility\Traits\LamController;
 
 class MyClass
 {
@@ -26,7 +26,7 @@ class MyClass
 _Model_
 ```php
 <?php
-use Linkunyuan\EsUtility\Traits\LamModel;
+use WonderGame\EsUtility\Traits\LamModel;
 
 class MyClass
 {

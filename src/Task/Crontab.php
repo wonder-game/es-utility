@@ -1,10 +1,13 @@
 <?php
 
 
-namespace Linkunyuan\EsUtility\Task;
+namespace WonderGame\EsUtility\Task;
 
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 
+/**
+ * Crontab通用模板类
+ */
 class Crontab implements TaskInterface
 {
     protected $eclass = '';

@@ -1,7 +1,8 @@
 <?php
-namespace Linkunyuan\EsUtility\Classes;
+namespace WonderGame\EsUtility\Common\Classes;
 
 /**
+ * 此类已废弃！！请使用swoole协程客户端
  * 同步Pdo操作类
  * @author lamson
  * @version 2.0 2017-08-14
@@ -260,7 +261,7 @@ class LamPdo extends \PDO
 
 		return $this->setData($_set)->where($array['where'])->execSql($this->sqlStmt, $value, $fetch);
 	}
-	
+
 	/**
 	 * 自增
 	 * @param string $table 表名
@@ -369,7 +370,7 @@ class LamPdo extends \PDO
 		return (array) array_intersect_key($data, $columns);
 	}
 
-	
+
 	// 链式操作的一些方法
 	// field(string), where(string), order(string), group(string), limit(int, [int]), setData(string)
 	public function __call($name, $args)
@@ -409,20 +410,20 @@ class LamPdo extends \PDO
 
 		return $this;
 	}
-	
+
 	//获取正在执行的sql语句
 	public function getLastSql()
 	{
 		return $this->lastSql;
 	}
-	
+
 	//设置查询结果集类型
 	public function setFetchType($type)
 	{
 		$this->fetchType = $type;
 		return $this;
 	}
-	
+
 	/**
 	 * 构造where内容
 	 * @author lamson
@@ -435,9 +436,9 @@ class LamPdo extends \PDO
 		{
 			$key = array_keys($idata);
 			$value = array_values($idata);
-			
+
 			$idata = []; // 准备存储新的值
-						
+
 			$where = '';
 			foreach ($value as $k => $v)
 			{
@@ -460,7 +461,7 @@ class LamPdo extends \PDO
 						$str = '?';
 						$idata[] = $v[1];
 					}
-					
+
 					$where .= " `{$key[$k]}` $v[0] $str AND";
 				}
 				else
@@ -469,10 +470,10 @@ class LamPdo extends \PDO
 					$idata[] = $v;
 				}
 			}
-			
+
 			$where = ! empty($where) ? trim($where, 'AND') : '1=2';
 		}
-		
+
 		return ['where'=>$where, 'value'=>$idata];
 	}
 
@@ -489,7 +490,7 @@ class LamPdo extends \PDO
         trace($this->lastSql . ($data ? '  ,data :: '.json_encode($data, JSON_UNESCAPED_UNICODE) : ''), 'info', 'sql');
         return empty($this->errorInfo['err_info']) ?  '' : $this->log($data);
 	}
-	
+
 	/**
 	 * 记录日志
 	 * @param array $data SQL操作中的数据

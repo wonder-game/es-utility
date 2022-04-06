@@ -1,12 +1,12 @@
 <?php
 
-namespace Linkunyuan\EsUtility\HttpTracker;
+namespace WonderGame\EsUtility\HttpTracker;
 
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\Tracker\PointContext;
 
-use Linkunyuan\EsUtility\HttpTracker\SaveHandler;
+use WonderGame\EsUtility\HttpTracker\SaveHandler;
 
 class Index extends PointContext
 {
@@ -19,7 +19,7 @@ class Index extends PointContext
     {
         return array_merge([
             'url' => $request->getUri()->__toString(),
-            'ip' => \Linkunyuan\EsUtility\ip($request),
+            'ip' => ip($request),
             'method' => $request->getMethod(),
             'path' => $request->getUri()->getPath(),
             'server_name' => config('SERVNAME'),

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Linkunyuan\EsUtility\Classes;
+namespace WonderGame\EsUtility\Common\Classes;
 
 use EasySwoole\Component\WaitGroup;
 use EasySwoole\HttpClient\HttpClient;

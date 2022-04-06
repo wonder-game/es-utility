@@ -1,6 +1,6 @@
 <?php
 
-namespace Linkunyuan\EsUtility\HttpTracker;
+namespace WonderGame\EsUtility\HttpTracker;
 
 use EasySwoole\Tracker\Point;
 use EasySwoole\Tracker\SaveHandlerInterface;
@@ -40,7 +40,7 @@ class SaveHandler implements SaveHandlerInterface
             }
             catch (\Exception | \Throwable $e)
             {
-                \Linkunyuan\EsUtility\trace($e->getMessage(), 'error');
+                trace($e->getMessage(), 'error');
                 return false;
             }
         }

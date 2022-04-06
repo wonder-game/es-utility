@@ -1,13 +1,14 @@
 <?php
 
 
-namespace Linkunyuan\EsUtility\Classes;
+namespace WonderGame\EsUtility\Common\Classes;
 
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Utility\File;
-use Linkunyuan\EsUtility\Traits\LamCli;
+use WonderGame\EsUtility\Traits\LamCli;
+use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 
 class Crontab extends AbstractCronTask
 {
@@ -69,19 +70,22 @@ class Crontab extends AbstractCronTask
 
             $className = $value['rclass'];
             // 异步任务模板类，默认在\App\Task命名空间
-            if (strpos($className, '\\') === false) {
-                $className = '\\Linkunyuan\\EsUtility\\Task\\' . ucfirst($className);
+            if ($className && strpos($className, '\\') === false) {
+                $className = '\\WonderGame\\EsUtility\\Task\\' . ucfirst($className);
             }
+
             if ( ! class_exists($className)) {
-                trace("{$className} 不存在", 'error');
-                continue;
+//                trace("{$className} 不存在", 'error');
+//                continue;
+                // 2022-04-06 为兼容升级版本
+                $className = CrontabTemplate::class;
             }
 
             if ( ! (CronExpression::factory($value['rule'])->isDue())) {
                 // 时间未到
                 continue;
             }
-            
+
             $args = is_array($value['args']) ? $value['args'] : json_decode($value['args'], true);
 
             $class = new $className([$value['eclass'], $value['method']], $args);
