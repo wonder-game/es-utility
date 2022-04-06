@@ -7,13 +7,10 @@ use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Utility\File;
-use WonderGame\EsUtility\Traits\LamCli;
 use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 
 class Crontab extends AbstractCronTask
 {
-    use LamCli;
-
     public static function getRule(): string
     {
         return '* * * * *';

@@ -58,9 +58,22 @@ trait BaseControllerTrait
     {
         if (!$this->response()->isEndResponse()) {
 
-            if (is_null($msg))
-            {
-                $msg = Code::getReasonPhrase($code);
+            if (is_null($msg)) {
+                $msg = Code::getReasonPhrase($statusCode);
+            } elseif ($msg) {
+                // 允许直传i18n的key
+                $dictionary = config('CLASS_DICTIONARY');
+                if (!$dictionary || !class_exists($dictionary)) {
+                    $appLanguage = '\\App\\Common\\Languages\\Dictionary';
+                    $dictionary = class_exists($appLanguage) ? $appLanguage : Dictionary::class;
+                }
+                // todo 利用对象池模型特性保存常量列表，不要每次反射拿
+                $objClass = new \ReflectionClass($dictionary);
+                $const = $objClass->getConstants();
+                if (in_array($msg, $const))
+                {
+                    $msg = lang($msg);
+                }
             }
 
             $data = [
