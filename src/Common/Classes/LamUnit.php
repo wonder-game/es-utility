@@ -45,12 +45,15 @@ class LamUnit
         // print_r($request->getHeaders());     // 'accept-language' => [0=>'zh-CN,zh;q=0.9']
         $lang = $request->getHeader('accept-language')[0];
 
+        /**************** todo 多语言是在App实现的，最好不放在公共部分, key最好能够枚举而不是字符串 *******************/
 		if(stripos($lang, 'zh') !== false)
 		{
 			if(stripos($lang, 'tw') !== false || stripos($lang, 'hk') !== false)
 			{
 				I18N::getInstance()->setLanguage('Tw');
-			}
+			} else {
+                I18N::getInstance()->setLanguage('Cn');
+            }
 		}
 		elseif(stripos($lang, 'en') !== false)
 		{
