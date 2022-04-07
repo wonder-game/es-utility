@@ -12,6 +12,31 @@ use WonderGame\EsUtility\Common\Languages\Dictionary;
  */
 trait BaseControllerTrait
 {
+    private $langsConstants = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->setLanguageConstants();
+    }
+
+    protected function setLanguageConstants()
+    {
+        $dictionary = config('CLASS_DICTIONARY');
+        if (!$dictionary || !class_exists($dictionary)) {
+            $appLanguage = '\\App\\Common\\Languages\\Dictionary';
+            $dictionary = class_exists($appLanguage) ? $appLanguage : Dictionary::class;
+        }
+        $objClass = new \ReflectionClass($dictionary);
+        $this->langsConstants = $objClass->getConstants();
+    }
+
+    protected function getLanguageConstants()
+    {
+        return $this->langsConstants;
+    }
+
     protected function _isRsa($input = [], $header = [], $category = 'pay')
     {
         // 则要求JWT要符合规则
@@ -58,28 +83,19 @@ trait BaseControllerTrait
     {
         if (!$this->response()->isEndResponse()) {
 
-            if (is_null($msg)) {
+            if (is_null($msg))
+            {
                 $msg = Code::getReasonPhrase($statusCode);
-            } elseif ($msg) {
-                // 允许直传i18n的key
-                $dictionary = config('CLASS_DICTIONARY');
-                if (!$dictionary || !class_exists($dictionary)) {
-                    $appLanguage = '\\App\\Common\\Languages\\Dictionary';
-                    $dictionary = class_exists($appLanguage) ? $appLanguage : Dictionary::class;
-                }
-                // todo 利用对象池模型特性保存常量列表，不要每次反射拿
-                $objClass = new \ReflectionClass($dictionary);
-                $const = $objClass->getConstants();
-                if (in_array($msg, $const))
-                {
-                    $msg = lang($msg);
-                }
+            }
+            elseif ($msg && in_array($msg, $this->langsConstants))
+            {
+                $msg = lang($msg);
             }
 
             $data = [
                 'code' => $statusCode,
                 'result' => $result,
-                'message' => $msg
+                'message' => $msg ?? ''
             ];
             $this->response()->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
             $this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
