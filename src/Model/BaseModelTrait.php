@@ -15,6 +15,7 @@ trait BaseModelTrait
     protected $sort = ['id' => 'desc'];
 
     /*************** 以下为原LamModel属性 ***************/
+    protected $_error = [];
     protected $awaCache = false;
     protected $awaCacheExpire = 7 * 24* 3600; // 单条记录的默认缓存时间
     protected $redisPoolname = 'default'; // redis连接池的标识
@@ -413,5 +414,17 @@ trait BaseModelTrait
             $this->cacheInfo($where, null);
         }
         $where = [];
+    }
+
+    /******************** 兼容部分项目 _error ，最好能改为异常处理 ************************/
+    public function getError()
+    {
+        return $this->_error;
+    }
+
+    public function setError($err = [])
+    {
+        $this->_error = $err;
+        return $this;
     }
 }

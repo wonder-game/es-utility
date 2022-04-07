@@ -8,10 +8,9 @@ use WonderGame\EsUtility\Common\Classes\LamOpenssl;
 
 trait HttpTrackerTrait
 {
-    protected $connectionName = 'log';
-
     protected function setBaseTraitProptected()
     {
+        $this->connectionName = 'log';
         $this->sort = ['instime' => 'desc'];
     }
 
