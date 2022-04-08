@@ -233,4 +233,25 @@ trait AdminTrait
             parent::editPost();
         }
     }
+
+    public function getToken()
+    {
+        // 此接口比较重要，只允许超级管理员调用
+        if (! $this->isSuper())
+        {
+            return $this->error(Code::CODE_FORBIDDEN);
+        }
+        if (!isset($this->get['id']))
+        {
+            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_8);
+        }
+        $id = $this->get['id'];
+        $isExtsis = $this->Model->where(['id' => $id, 'status' => 1])->count();
+        if (!$isExtsis)
+        {
+            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_9);
+        }
+        $token = get_login_token($id, 3600);
+        $this->success($token);
+    }
 }

@@ -36,47 +36,6 @@ trait PackageTrait
         parent::addPost();
     }
 
-    public function gkey()
-    {
-        $rand = [
-            'logkey' => mt_rand(50, 60),
-            'paykey' => mt_rand(70, 80)
-        ];
-        if (!isset($this->get['column']) || !isset($rand[$this->get['column']]))
-        {
-            return $this->error(Code::ERROR_OTHER);
-        }
-
-        $sign = uniqid($rand[$this->get['column']]);
-
-        $this->success($sign);
-    }
-
-    protected function _afterEditGet($data)
-    {
-        if (is_array($data['extension']['uwp']['productid'])) {
-            $data['extension']['uwp']['productid'] = $this->unformatKeyValue($data['extension']['uwp']['productid']);
-        }
-
-        if (is_array($data['extension']['adjust']['event'])) {
-            $data['extension']['adjust']['event'] = $this->unformatKeyValue($data['extension']['adjust']['event']);
-        }
-        if (is_string($data['extension']['qzf']['pf'])) {
-            $data['extension']['qzf']['pf'] = explode(',', $data['extension']['qzf']['pf']);
-        }
-        return $data;
-    }
-
-    protected function _writeBefore()
-    {
-        if (is_array($this->post['extension']['qzf']['pf']))
-        {
-            $this->post['extension']['qzf']['pf'] = implode(',', $this->post['extension']['qzf']['pf']);
-        }
-        $this->post['extension']['uwp']['productid'] = $this->formatKeyValue($this->post['extension']['uwp']['productid']);
-        $this->post['extension']['adjust']['event'] = $this->formatKeyValue($this->post['extension']['adjust']['event']);
-    }
-
     // 单纯的保存Key-Value类型
     public function saveKeyValue($id = 0, $name = '', $kv = [])
     {
@@ -92,29 +51,7 @@ trait PackageTrait
         $model->update();
         $this->success();
     }
-    protected function formatKeyValue($kv = [])
-    {
-        foreach($kv as $arr)
-        {
-            if (empty($arr['Key']) || empty($arr['Value']))
-            {
-                continue;
-            }
-            $data[$arr['Key']] = $arr['Value'];
-        }
-        return $data?:[];
-    }
-    protected function unformatKeyValue($kv = [])
-    {
-        foreach ($kv as $key => $value)
-        {
-            $result[] = [
-                'Key' => $key,
-                'Value' => $value
-            ];
-        }
-        return $result?:[];
-    }
+
 
     // 检查pkgbnd是否已存在了
     public function pkgbndExist()

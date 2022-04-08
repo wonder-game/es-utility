@@ -765,3 +765,19 @@ if (!function_exists('array_merge_decode')) {
         return array_merge_multi($merge, $array);
     }
 }
+
+if (!function_exists('get_login_token')) {
+    /**
+     * 如果项目的token规则与此不同，请在项目中重写此函数
+     * @param $id
+     * @return string
+     */
+    function get_login_token($id, $expire = null)
+    {
+        if (is_null($expire) || !is_numeric($expire))
+        {
+            $expire = config('auth.expire');
+        }
+        return LamJwt::getToken(['id' => $id], config('auth.jwtkey'), $expire);
+    }
+}

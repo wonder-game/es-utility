@@ -23,6 +23,8 @@ use WonderGame\EsUtility\Common\Exception\SyncException;
  */
 trait AuthTrait
 {
+    protected $operinfo = [];
+
     protected $uploadKey = 'file';
 
     /////////////////////////////////////////////////////////////////////////
@@ -36,7 +38,7 @@ trait AuthTrait
     protected array $_authAlias = ['change' => 'edit', 'export' => 'index'];
 
     // 无需认证
-    protected array $_authOmit = [];
+    protected array $_authOmit = ['upload', 'options'];
 
     protected $isExport = false;
 
