@@ -745,3 +745,23 @@ if (! function_exists('sysinfo'))
         return $key === true ? $Spl : $Spl->get($key, $default);
     }
 }
+
+if (!function_exists('array_merge_decode')) {
+    /**
+     * array_merge_decode
+     * @param $array
+     * @param $merge
+     * @return array
+     */
+    function array_merge_decode($array, $merge = [])
+    {
+        foreach (['array', 'merge'] as $var)
+        {
+            if (is_string($$var) && ($decode = json_decode($$var, true)))
+            {
+                $$var = $decode;
+            }
+        }
+        return array_merge_multi($merge, $array);
+    }
+}
