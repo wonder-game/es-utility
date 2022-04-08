@@ -29,7 +29,6 @@
   "autoload": {
     "psr-4": {
       "WonderGame\\EsUtility\\": "src"
-    },
-    "files": ["src/function.php"]
+    }
   }
 }
