@@ -2,6 +2,7 @@
 
 namespace WonderGame\EsUtility\Model;
 
+use EasySwoole\ORM\DbManager;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\ORM\AbstractModel;
 
@@ -414,6 +415,23 @@ trait BaseModelTrait
             $this->cacheInfo($where, null);
         }
         $where = [];
+    }
+
+    // 开启事务
+    public function startTrans()
+    {
+        DbManager::getInstance()->startTransaction($this->getQueryConnection());
+    }
+
+    public function commit()
+    {
+        DbManager::getInstance()->commit($this->getQueryConnection());
+
+    }
+
+    public function rollback()
+    {
+        DbManager::getInstance()->rollback($this->getQueryConnection());
     }
 
     /******************** 兼容部分项目 _error ，最好能改为异常处理 ************************/
