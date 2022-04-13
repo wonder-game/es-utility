@@ -68,17 +68,19 @@ class ExceptionTrigger implements TriggerInterface
             unset($eMsg['trace']);
 
             try {
-                $config = config('EXCEPTION_REPORT');
-                if (isset($config['type']) && $config['type'] === 'http' && $config['url'])
+                if ($config = config('EXCEPTION_REPORT'))
                 {
-                    $encrypt = LamOpenssl::getInstance()->publicEncrypt(json_encode($eMsg));
-                    $client = new HttpClient($config['url']);
-                    $response = $client->post(['envkeydata' => $encrypt]);
-                    $httpCode = $response->getStatusCode();
-                    $httpBody = $response->getBody();
-                } else {
-                    $redis = defer_redis($config['poolname'], $config['db']);
-                    $redis->lPush($config['queue'], json_encode($eMsg));
+                    if (isset($config['type']) && $config['type'] === 'http' && $config['url'])
+                    {
+                        $encrypt = LamOpenssl::getInstance()->publicEncrypt(json_encode($eMsg));
+                        $client = new HttpClient($config['url']);
+                        $response = $client->post(['envkeydata' => $encrypt]);
+                        $httpCode = $response->getStatusCode();
+                        $httpBody = $response->getBody();
+                    } else {
+                        $redis = defer_redis($config['poolname'], $config['db']);
+                        $redis->lPush($config['queue'], json_encode($eMsg));
+                    }
                 }
             }
             catch (InvalidUrl| RedisException | \Exception | \Throwable $e )

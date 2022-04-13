@@ -4,6 +4,9 @@ namespace WonderGame\EsUtility\Common\Classes;
 
 use EasySwoole\ORM\AbstractModel;
 
+/**
+ * todo 此类需要重写
+ */
 class Tree
 {
     /**
@@ -24,12 +27,13 @@ class Tree
      */
     protected $ids = null;
 
-    public function __construct($ids = null, $child = '')
+    public function __construct($ids = null, $child = '', $data = [])
     {
         if (!is_null($ids)) {
             $this->ids = is_string($ids) ? explode(',', $ids) : $ids;
         }
         $child && $this->childName = $child;
+        $data && $this->menu = $data;
     }
 
     public function originData($where = [])

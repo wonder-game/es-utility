@@ -10,6 +10,7 @@ use EasySwoole\ORM\Db\MysqliClient;
 use EasySwoole\Policy\Policy;
 use EasySwoole\Policy\PolicyNode;
 use EasySwoole\Utility\MimeType;
+use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\DateUtils;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\XlsWriter;
@@ -109,7 +110,7 @@ trait AuthTrait
         $this->operinfo['role'] = $relation;
 
         // 将管理员信息挂载到Request
-        $this->request()->withAttribute('operinfo', $this->operinfo);
+        CtxRequest::getInstance()->withOperinfo($this->operinfo);
         return $this->checkAuth();
     }
 

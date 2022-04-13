@@ -42,6 +42,17 @@ class CtxRequest
         }
     }
 
+    /*************** 协程内判断方法，备选方案，在不方便调$server->connection_info($fd);的场景使用 *************/
+    public function isHttp(): bool
+    {
+        return !is_null($this->request) && $this->request instanceof Request;
+    }
+
+    public function isWebSocket(): bool
+    {
+        return !is_null($this->caller) && $this->caller instanceof Caller;
+    }
+
     public function __set($name, $value)
     {
         $name = strtolower($name);
