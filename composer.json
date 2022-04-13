@@ -17,7 +17,7 @@
     "php": ">=7.0",
     "easyswoole/jwt": ">=1.1",
     "easyswoole/config": ">=1.0",
-    "easyswoole/easyswoole": "^3.3",
+    "easyswoole/easyswoole": "^3.4",
     "easyswoole/redis-pool": ">=2.1",
     "easyswoole/orm": ">=1.4",
     "easyswoole/mysqli": ">=2.2",

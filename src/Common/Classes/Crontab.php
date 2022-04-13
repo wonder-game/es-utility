@@ -30,7 +30,7 @@ class Crontab extends AbstractCronTask
 
     public function run(int $taskId, int $workerIndex)
     {
-        $file = config('LOG.dir') . '/crontab.object.data';
+        $file = config('CRONTAB_BACKUP_FILE') ?: (config('LOG.dir') . '/crontab.object.data');
         try {
             /** @var \App\Model\Crontab $model */
             $model = model('Crontab');
@@ -43,9 +43,7 @@ class Crontab extends AbstractCronTask
         catch (\Exception | \Throwable $e)
         {
             // 失败降级从文件读取
-            $str = file_get_contents($file);
-
-            if (!$str)
+            if (!file_exists($file) || !($str = file_get_contents($file)))
             {
                 return;
             }
