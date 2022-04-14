@@ -9,6 +9,10 @@
 namespace WonderGame\EsUtility\Common\Classes;
 
 
+use EasySwoole\Command\Color;
+use EasySwoole\EasySwoole\Command\Utility;
+use EasySwoole\EasySwoole\Core;
+use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Http\GlobalParamHook;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
@@ -148,6 +152,64 @@ class LamUnit
 
 		self::withParams($request, $envkeydata, true);
 
-		return $envkeydata;
-	}
+        return $envkeydata;
+    }
+
+    public static function hotReload()
+    {
+        // 只允许在开发环境运行
+        if (Core::getInstance()->runMode() === 'dev') {
+            $watchConfig = config('HOT_RELOAD_DIR') ?: [EASYSWOOLE_ROOT . '/App'];
+
+            $watcher = new \EasySwoole\FileWatcher\FileWatcher();
+            // // 设置监控规则和监控目录
+            foreach ($watchConfig as $dir) {
+                $watcher->addRule(new \EasySwoole\FileWatcher\WatchRule($dir));
+            }
+
+            $watcher->setOnChange(function (array $list) {
+                echo PHP_EOL . PHP_EOL . Color::warning('Worker进程重启，检测到以下文件变更: ') . PHP_EOL;
+
+                foreach ($list as $item) {
+                    $scanType = is_file($item) ? 'file' : (is_dir($item) ? 'dir' : '未知');
+                    echo Utility::displayItem("[$scanType]", $item) . PHP_EOL;
+                }
+                $Server = ServerManager::getInstance()->getSwooleServer();
+
+                // worker进程reload不会触发客户端的断线重连，但是原来的fd已经不可用了
+                foreach ($Server->connections as $fd) {
+                    // 不要在 close 之后写清理逻辑。应当放置到 onClose 回调中处理
+                    $Server->close($fd);
+                }
+
+                $Server->reload();
+
+                echo Color::success('Worker进程启动成功 ') . PHP_EOL;
+                echo Color::red('请自行区分 Master 和 Worker 程序 !!!!!!!!!!') . PHP_EOL . PHP_EOL;
+            });
+
+            $watcher->setOnException(function (\Throwable $throwable) {
+
+                echo PHP_EOL . Color::danger('Worker进程重启失败: ') . PHP_EOL;
+                echo Utility::displayItem("[message]", $throwable->getMessage()) . PHP_EOL;
+                echo Utility::displayItem("[file]", $throwable->getFile() . ', 第 ' . $throwable->getLine() . ' 行') . PHP_EOL;
+
+                echo Color::warning('trace:') . PHP_EOL;
+                if ($trace = $throwable->getTrace()) {
+                    // 简单打印就行
+                    var_dump($trace);
+//                    foreach ($trace as $key => $item)
+//                    {
+//                        echo Utility::displayItem("$key-----------------------", $item) . PHP_EOL;
+//                        foreach ($item as $ik => $iv)
+//                        {
+//                            echo Utility::displayItem("[$ik]", $iv) . PHP_EOL;
+//                        }
+//                        echo Utility::displayItem("$key-----------------------", $item) . PHP_EOL;
+//                    }
+                }
+            });
+            $watcher->attachServer(ServerManager::getInstance()->getSwooleServer());
+        }
+    }
 }
