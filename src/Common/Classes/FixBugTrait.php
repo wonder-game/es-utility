@@ -18,6 +18,8 @@ trait FixBugTrait
         $pkgbnd = 'com.wonderland.bombtankad';
         $gameid = 5;
         $input = $this->request()->getRequestParam();
+//        trace("参数debug1： " . json_encode($input, JSON_UNESCAPED_UNICODE));
+//        trace("参数debug2： " . $servername . ', ' . $pkgbnd . ', ' . $gameid . ', ' . explode('-', $servername)[0]);
         if (explode('-', $servername)[0] !== 'xjp'
             && (isset($input['versioncode']) && intval($input['versioncode']) <= 6)
             && (isset($input['pkgbnd']) && $input['pkgbnd'] === $pkgbnd)
@@ -49,9 +51,15 @@ trait FixBugTrait
                 }
                 $headerArray[$hk] = $hd;
             }
-
+            unset($headerArray['host']);
+//            trace(json_encode($headerArray));
+//            trace("开始转发： " . $url);
             $HttpClient = new HttpClient($url);
-            $HttpClient->setHeaders($headerArray, true, false);
+            if (stripos($url, 'https://') === 0)
+            {
+                $HttpClient->setEnableSSL();
+            }
+            $HttpClient->setHeaders($headerArray, false, false);
             $method = strtolower($this->request()->getMethod());
 
             /** @var Response $response */
@@ -72,7 +80,9 @@ trait FixBugTrait
                 $response = $HttpClient->$method($post);
             }
 
+//            trace('转发结束: ' . $response->getStatusCode() . ', body=' . $response->getBody());
             $array = json_decode($response->getBody(), true);
+//            trace("转发完成： " . json_encode($array,  JSON_UNESCAPED_UNICODE));
             $this->writeJson($array['code'], $array['result'] ?? [], $array['message']);
             return false;
         }
