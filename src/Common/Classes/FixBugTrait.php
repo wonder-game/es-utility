@@ -83,8 +83,7 @@ trait FixBugTrait
 //            trace('转发结束: ' . $response->getStatusCode() . ', body=' . $response->getBody());
             $array = json_decode($response->getBody(), true);
 //            trace("转发完成： " . json_encode($array,  JSON_UNESCAPED_UNICODE));
-            $this->writeJson($array['code'], $array['result'] ?? [], $array['message']);
-            return false;
+            $this->writeJson($array['code'], $array['result'] ?? [], $array['message'] ?? ($array['msg'] ?? ''));
         }
         return false;
     }
