@@ -7,19 +7,16 @@ trait CrontabTrait
     protected function _search()
     {
         $where = [];
-        foreach (['status', 'sys', 'server'] as $col)
+        foreach (['status'] as $col)
         {
             if (isset($this->get[$col]) && $this->get[$col] !== '')
             {
                 $where[$col] = $this->get[$col];
             }
         }
-        foreach (['name', 'method'] as $val)
+        if (!empty($this->get['name']))
         {
-            if (!empty($this->get[$val]))
-            {
-                $where[$val] = ["%{$this->get[$val]}%", 'like'];
-            }
+            $this->Model->where("(name like '%{$this->get['name']}%' OR eclass like '%{$this->get['name']}%' OR method like '%{$this->get['name']}%')");
         }
 
         return $where;
