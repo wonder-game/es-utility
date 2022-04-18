@@ -159,7 +159,7 @@ class ShardTable
 			}
 		}
 
-		$month_table && $this->rangePartition($month_table);
+		$month_table && $this->rangePartition($month_table, 0, 0, $field);
 		$quarter_table && $this->rangePartition($quarter_table, 0, 0, $field, 3);
 		$year_table && $this->rangePartition($year_table, 0, 0, $field, 4);
 		return true;
