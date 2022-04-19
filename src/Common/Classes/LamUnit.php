@@ -168,7 +168,7 @@ class LamUnit
             }
 
             $watcher->setOnChange(function (array $list) {
-                echo PHP_EOL . PHP_EOL . Color::warning('Worker进程重启，检测到以下文件变更: ') . PHP_EOL;
+                echo PHP_EOL . PHP_EOL . Color::warning(' Worker进程重启，检测到以下文件变更: ') . PHP_EOL;
 
                 foreach ($list as $item) {
                     $scanType = is_file($item) ? 'file' : (is_dir($item) ? 'dir' : '未知');
