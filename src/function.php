@@ -781,3 +781,15 @@ if (!function_exists('get_login_token')) {
         return LamJwt::getToken(['id' => $id], config('auth.jwtkey'), $expire);
     }
 }
+
+if (!function_exists('is_env')) {
+    /**
+     * 判断当前运行环境
+     * @param $env
+     * @return bool
+     */
+    function is_env($env = 'dev')
+    {
+        return \EasySwoole\EasySwoole\Core::getInstance()->runMode() === $env;
+    }
+}

@@ -11,7 +11,6 @@ namespace WonderGame\EsUtility\Common\Classes;
 
 use EasySwoole\Command\Color;
 use EasySwoole\EasySwoole\Command\Utility;
-use EasySwoole\EasySwoole\Core;
 use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Http\GlobalParamHook;
 use EasySwoole\Http\Request;
@@ -158,7 +157,7 @@ class LamUnit
     public static function hotReload()
     {
         // 只允许在开发环境运行
-        if (Core::getInstance()->runMode() === 'dev') {
+        if (is_env('dev')) {
             $watchConfig = config('HOT_RELOAD_DIR') ?: [EASYSWOOLE_ROOT . '/App'];
 
             $watcher = new \EasySwoole\FileWatcher\FileWatcher();
