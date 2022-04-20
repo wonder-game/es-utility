@@ -104,6 +104,7 @@ trait有哪些坑
 - [ ] 自定义Log处理器改为onLog + Event方式
 - [ ] 重写Tree类
 - [ ] WebSocket相关类，事件、解析、Caller、连接符管理等
+- [ ] Crontab支持database、file、http等方式获取
 
 ### 其他
 
