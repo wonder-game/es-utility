@@ -9,6 +9,7 @@ use EasySwoole\HttpClient\Exception\InvalidUrl;
 use EasySwoole\Redis\Exception\RedisException;
 use EasySwoole\Trigger\Location;
 use EasySwoole\Trigger\TriggerInterface;
+use EasySwoole\Utility\File;
 
 class ExceptionTrigger implements TriggerInterface
 {
@@ -20,7 +21,7 @@ class ExceptionTrigger implements TriggerInterface
             return;
         }
 
-        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+        $trace = debug_backtrace();
         if($location == null){
             $location = new Location();
             $caller = array_shift($trace);
@@ -33,7 +34,7 @@ class ExceptionTrigger implements TriggerInterface
             'line' => $location->getLine(),
             'trace' => $trace
         ];
-        $this->doError(__FUNCTION__, $eMsg);
+        $this->doTrigger(__FUNCTION__, $eMsg);
     }
 
     public function throwable(\Throwable $throwable)
@@ -42,11 +43,22 @@ class ExceptionTrigger implements TriggerInterface
             'message' => $throwable->getMessage(),
             'file' => $throwable->getFile(),
             'line' => $throwable->getLine(),
-            'trace' => $throwable->getTrace()
+            'trace' => $throwable->getTrace(),
         ];
-        $this->doError(__FUNCTION__, $eMsg);
+        $this->doTrigger(__FUNCTION__, $eMsg);
 
         throw $throwable;
+    }
+
+    protected function doTrigger($trigger, $eMsg = [])
+    {
+        trace($eMsg, 'error', $trigger);
+        unset($eMsg['trace']);
+        $eMsg['trigger'] = $trigger;
+        if (\Swoole\Coroutine::getCid() >= 0) {
+            $task = \EasySwoole\EasySwoole\Task\TaskManager::getInstance();
+            $task->async(new \WonderGame\EsUtility\Task\Error($eMsg));
+        }
     }
 
     protected function doError($trigger, $eMsg = [])

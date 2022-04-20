@@ -443,6 +443,10 @@ if ( ! function_exists('sendDingTalk')) {
 		{
 			$config = config('dingtalk');
 		}
+        if (empty($config)) {
+            trace('DingTalk Config is empty!');
+            return;
+        }
 
 		$data = json_encode($data);
 
@@ -785,7 +789,7 @@ if (!function_exists('get_login_token')) {
 if (!function_exists('is_env')) {
     /**
      * 判断当前运行环境
-     * @param $env
+     * @param $env dev|test|produce|...
      * @return bool
      */
     function is_env($env = 'dev')
