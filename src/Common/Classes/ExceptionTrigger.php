@@ -46,8 +46,6 @@ class ExceptionTrigger implements TriggerInterface
             'trace' => $throwable->getTrace(),
         ];
         $this->doTrigger(__FUNCTION__, $eMsg);
-
-        throw $throwable;
     }
 
     protected function doTrigger($trigger, $eMsg = [])

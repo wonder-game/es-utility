@@ -25,7 +25,8 @@ class Crontab extends AbstractCronTask
 
     public function onException(\Throwable $throwable, int $taskId, int $workerIndex)
     {
-        throw $throwable;
+        \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+        return '执行失败： ' . __CLASS__;
     }
 
     public function run(int $taskId, int $workerIndex)
