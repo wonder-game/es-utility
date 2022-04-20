@@ -211,4 +211,46 @@ class LamUnit
             $watcher->attachServer(ServerManager::getInstance()->getSwooleServer());
         }
     }
+
+    /**
+     * 注册Crontab
+     * @return void
+     */
+    public static function registerCrontab()
+    {
+        $Crontab = \EasySwoole\EasySwoole\Crontab\Crontab::getInstance();
+        $Crontab->addTask(\WonderGame\EsUtility\Common\Classes\Crontab::class);
+    }
+
+    /**
+     * 注册自定义进程
+     * @param array $jobs
+     * @param array $config
+     * @return void
+     */
+    public static function registerConsumer(array $jobs, array $config = [])
+    {
+        $group = config('SERVER_NAME') . '.my';
+        foreach ($jobs as $value) {
+
+            $proName = $group . '.' . $value['name'];
+
+            $class = $value['class'];
+            if (empty($class) || !class_exists($class)) {
+                continue;
+            }
+            $psnum = intval($value['psnum'] ?? 1);
+
+            for ($i = 0; $i < $psnum; ++$i) {
+                $cfg = array_merge([
+                    'processName' => $proName . '.' . $i,
+                    'processGroup' => $group,
+                    'arg' => $value,
+                    'enableCoroutine' => true,
+                ], $config);
+                $processConfig = new \EasySwoole\Component\Process\Config($cfg);
+                \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
+            }
+        }
+    }
 }

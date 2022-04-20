@@ -62,7 +62,7 @@ trait CrontabTrait
     protected function getArgsAttr($data)
     {
         $json = json_decode($data, true);
-        return $json ? $json : '';
+        return $json ? $json : [];
     }
 
     public function getCrontab($svr = '')
