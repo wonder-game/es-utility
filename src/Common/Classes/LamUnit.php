@@ -276,7 +276,7 @@ class LamUnit
             ], true),
         ],
         // 微信模板id,
-        'WX_TEMP' => [
+        'WX_TPLID' => [
             'warning' => '',
             'notice' => ''
         ]

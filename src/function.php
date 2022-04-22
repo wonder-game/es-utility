@@ -412,7 +412,7 @@ if ( ! function_exists('wechatNotice'))
 	function wechatNotice($title = '', $content = '', $color = '#32CD32')
 	{
         EsNotify::getInstance()->doesOne('wechat', new Notice([
-            'templateId' => config('WX_TEMP.notice'),
+            'templateId' => config('WX_TPLID.notice'),
             'title' => $title,
             'content' => $content,
             'color' => $color
@@ -425,7 +425,7 @@ if (!function_exists('wechatWarning'))
     function wechatWarning($file, $line, $servername, $message, $color = '#FF0000')
     {
         EsNotify::getInstance()->doesOne('wechat', new Warning([
-            'templateId' => config('WX_TEMP.warning'),
+            'templateId' => config('WX_TPLID.warning'),
             'file' => $file,
             'line' => $line,
             'servername' => $servername,
