@@ -4,8 +4,12 @@ use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\I18N\I18N;
+use WonderGame\EsNotify\DingTalk\Message\Markdown;
+use WonderGame\EsNotify\DingTalk\Message\Text;
+use WonderGame\EsNotify\EsNotify;
+use WonderGame\EsNotify\WeChat\Message\Notice;
+use WonderGame\EsNotify\WeChat\Message\Warning;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
-use WonderGame\EsUtility\Common\Classes\WeChatManager;
 use EasySwoole\Spl\SplArray;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Redis\Redis;
@@ -403,123 +407,68 @@ if ( ! function_exists('lang')) {
 	}
 }
 
-if ( ! function_exists('wechatNotice')) {
-	/**
-	 * 发送微信通知
-	 * @param string $title
-	 * @param string $content
-	 */
-	function wechatNotice($title = '', $content = '', $touser = '', $color = '#32CD32')
+if ( ! function_exists('wechatNotice'))
+{
+	function wechatNotice($title = '', $content = '', $color = '#32CD32')
 	{
-		$tempData = [
-			'first' => [
-				'value' => $title,
-				'color' => $color
-			],
-			'keyword1' => [
-				'value' => $content,
-				'color' => $color
-			],
-			'keyword3' => date('Y年m月d日 H:i:s'),
-			'remark' => '查看详情'
-		];;
-		WeChatManager::getInstance()->sendTemplateMessage($tempData, $touser, config('wechat.template.notice'));
-	}
+        EsNotify::getInstance()->doesOne('wechat', new Notice([
+            'templateId' => config('WX_TEMP.notice'),
+            'title' => $title,
+            'content' => $content,
+            'color' => $color
+        ]));
+    }
 }
 
-
-if ( ! function_exists('sendDingTalk')) {
-	/**
-	 * 发送钉钉机器人消息
-	 * @doc https://developers.dingtalk.com/document/app/custom-robot-access?spm=ding_open_doc.document.0.0.6d9d28e1eEU9Jd#topic-2026027
-	 */
-	function sendDingTalk($data = [], $config = [], $log = false)
-	{
-		if (empty($data) || !is_array($data))
-		{
-			return;
-		}
-		if (empty($config))
-		{
-			$config = config('dingtalk');
-		}
-        if (empty($config)) {
-            trace('DingTalk Config is empty!');
-            return;
-        }
-
-		$data = json_encode($data);
-
-		$url = $config['url'];
-		$secret = $config['sign_key'];
-
-		// 签名 &timestamp=XXX&sign=XXX
-		$timestamp = time() * 1000;
-
-		$sign = utf8_encode(urlencode(base64_encode(hash_hmac('sha256', $timestamp . "\n" . $secret, $secret, true))));
-
-		$url .= "&timestamp={$timestamp}&sign={$sign}";
-
-		$client = new HttpClient($url);
-
-		// 支持文本 (text)、链接 (link)、markdown(markdown)、ActionCard、FeedCard消息类型
-
-		$response = $client->postJson($data);
-		$json = json_decode($response->getBody(), true);
-
-		if ($json['errcode'] !== 0 && $log)
-		{
-			trace("钉钉消息发送失败：data={$data},response={$response}", 'error');
-		}
-	}
+if (!function_exists('wechatWarning'))
+{
+    function wechatWarning($file, $line, $servername, $message, $color = '#FF0000')
+    {
+        EsNotify::getInstance()->doesOne('wechat', new Warning([
+            'templateId' => config('WX_TEMP.warning'),
+            'file' => $file,
+            'line' => $line,
+            'servername' => $servername,
+            'message' => $message,
+            'color' => $color
+        ]));
+    }
 }
 
 if (! function_exists('sendDingTalkText'))
 {
-	function sendDingTalkText($content = '', $at = true)
-	{
-		$data = [
-			'msgtype' => 'text',
-			'text' => [
-				'content' => $content
-			],
-			'at' => [
-				'isAtAll' => $at
-			]
-		];
-		sendDingTalk($data);
-	}
+    function sendDingTalkText($content = '', $at = true)
+    {
+        EsNotify::getInstance()->doesOne('dingtalk', new Text([
+            'content' => $content,
+            'isAtAll' => $at
+        ]));
+    }
 }
 
 if (! function_exists('sendDingTalkMarkdown'))
 {
-	function sendDingTalkMarkdown($title = '', $text = '', $at = true)
-	{
-		$data = [
-			'msgtype' => 'markdown',
-			'markdown' => [
-				'title' => $title,
-				'text' => $text
-			],
-			'at' => [
-				'isAtAll' => $at
-			]
-		];
-		sendDingTalk($data);
-	}
+    function sendDingTalkMarkdown($title = '', $text = '', $at = true)
+    {
+        EsNotify::getInstance()->doesOne('dingtalk', new Markdown([
+            'title' => $title,
+            'text' => $text,
+            'isAtAll' => $at
+        ]));
+    }
 }
 
 if (!function_exists('arrayToStd'))
 {
-	function arrayToStd(array $array = [])
-	{
-		$std = new \stdClass();
-		foreach ($array as $key => $value)
-		{
-			$std->{$key} = is_array($value) ? arrayToStd($value) : $value;
-		}
-		return $std;
-	}
+    function arrayToStd(array $array = [])
+    {
+        $std = new \stdClass();
+        foreach ($array as $key => $value)
+        {
+            $std->{$key} = is_array($value) ? arrayToStd($value) : $value;
+        }
+        return $std;
+    }
 }
 
 
