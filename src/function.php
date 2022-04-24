@@ -2,7 +2,6 @@
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
-use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\I18N\I18N;
 use WonderGame\EsNotify\DingTalk\Message\Markdown;
 use WonderGame\EsNotify\DingTalk\Message\Text;
@@ -14,18 +13,24 @@ use EasySwoole\Spl\SplArray;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Redis\Redis;
 
-if (!function_exists('isSuper')) {
-    /**
-     * 是否超级管理员
-     * @param $rid
-     * @return bool
-     */
-    function isSuper($rid = null)
-    {
-        $super = sysinfo('super');
-        return $super && is_array($super) && in_array($rid, $super);
-    }
+// TODO，兼容旧有程序，待删除
+function isSuper($rid = null)
+{
+	return is_super($rid);
 }
+if (!function_exists('is_super')) {
+	/**
+	 * 是否超级管理员
+	 * @param $rid
+	 * @return bool
+	 */
+	function is_super($rid = null)
+	{
+		$super = sysinfo('super');
+		return $super && is_array($super) && in_array($rid, $super);
+	}
+}
+
 
 if ( ! function_exists('find_model')) {
     /**
@@ -58,6 +63,7 @@ if ( ! function_exists('find_model')) {
     }
 }
 
+
 if ( ! function_exists('model')) {
 	/**
 	 * 实例化Model
@@ -82,6 +88,7 @@ if ( ! function_exists('model')) {
 	}
 }
 
+
 if ( ! function_exists('config')) {
 	/**
 	 * 获取和设置配置参数
@@ -101,6 +108,7 @@ if ( ! function_exists('config')) {
 	}
 }
 
+
 if ( ! function_exists('trace')) {
 	/**
 	 * 记录日志信息
@@ -115,6 +123,7 @@ if ( ! function_exists('trace')) {
 		return Logger::getInstance()->$level($log, $category);
 	}
 }
+
 
 if ( ! function_exists('defer_redis')) {
 	/**
@@ -131,6 +140,7 @@ if ( ! function_exists('defer_redis')) {
 		return $Redis;
 	}
 }
+
 
 if ( ! function_exists('parse_name')) {
 	/**
@@ -422,6 +432,7 @@ if ( ! function_exists('ip')) {
 	}
 }
 
+
 if ( ! function_exists('lang')) {
 	function lang($const = '')
 	{
@@ -429,68 +440,99 @@ if ( ! function_exists('lang')) {
 	}
 }
 
-if ( ! function_exists('wechatNotice'))
+
+// TODO，兼容旧有程序，待删除
+function wechatNotice($title = '', $content = '', $color = '#32CD32')
 {
-	function wechatNotice($title = '', $content = '', $color = '#32CD32')
+	return wechat_notice($title, $content, $color);
+}
+if ( ! function_exists('wechat_notice'))
+{
+	function wechat_notice($title = '', $content = '', $color = '#32CD32')
 	{
-        EsNotify::getInstance()->doesOne('wechat', new Notice([
-            'templateId' => config('WX_TPLID.notice'),
-            'title' => $title,
-            'content' => $content,
-            'color' => $color
-        ]));
-    }
+		EsNotify::getInstance()->doesOne('wechat', new Notice([
+			'templateId' => config('WX_TPLID.notice'),
+			'title' => $title,
+			'content' => $content,
+			'color' => $color
+		]));
+	}
 }
 
-if (!function_exists('wechatWarning'))
+
+// TODO，兼容旧有程序，待删除
+function wechatWarning($file, $line, $servername, $message, $color = '#FF0000')
 {
-    function wechatWarning($file, $line, $servername, $message, $color = '#FF0000')
-    {
-        EsNotify::getInstance()->doesOne('wechat', new Warning([
-            'templateId' => config('WX_TPLID.warning'),
-            'file' => $file,
-            'line' => $line,
-            'servername' => $servername,
-            'message' => $message,
-            'color' => $color
-        ]));
-    }
+	return wechat_warning($file, $line, $servername, $message, $color);
+}
+if (!function_exists('wechat_warning'))
+{
+	function wechat_warning($file, $line, $servername, $message, $color = '#FF0000')
+	{
+		EsNotify::getInstance()->doesOne('wechat', new Warning([
+			'templateId' => config('WX_TPLID.warning'),
+			'file' => $file,
+			'line' => $line,
+			'servername' => $servername,
+			'message' => $message,
+			'color' => $color
+		]));
+	}
 }
 
-if (! function_exists('sendDingTalkText'))
+
+// TODO，兼容旧有程序，待删除
+function sendDingTalkText($content = '', $at = true)
 {
-    function sendDingTalkText($content = '', $at = true)
-    {
-        EsNotify::getInstance()->doesOne('dingtalk', new Text([
-            'content' => $content,
-            'isAtAll' => $at
-        ]));
-    }
+	return dingtalk_text($content, $at);
+}
+if (! function_exists('dingtalk_text'))
+{
+	function dingtalk_text($content = '', $at = true)
+	{
+		EsNotify::getInstance()->doesOne('dingtalk', new Text([
+			'content' => $content,
+			'isAtAll' => $at
+		]));
+	}
 }
 
-if (! function_exists('sendDingTalkMarkdown'))
+
+// TODO，兼容旧有程序，待删除
+function sendDingTalkMarkdown($title = '', $text = '', $at = true)
 {
-    function sendDingTalkMarkdown($title = '', $text = '', $at = true)
-    {
-        EsNotify::getInstance()->doesOne('dingtalk', new Markdown([
-            'title' => $title,
-            'text' => $text,
-            'isAtAll' => $at
-        ]));
-    }
+	return dingtalk_markdown($title, $text , $at);
+}
+if (! function_exists('dingtalk_markdown'))
+{
+	function dingtalk_markdown($title = '', $text = '', $at = true)
+	{
+		EsNotify::getInstance()->doesOne('dingtalk', new Markdown([
+			'title' => $title,
+			'text' => $text,
+			'isAtAll' => $at
+		]));
+	}
 }
 
-if (!function_exists('arrayToStd'))
+
+// TODO，兼容旧有程序，待删除
+function arrayToStd(array $array = [])
 {
-    function arrayToStd(array $array = [])
-    {
-        $std = new \stdClass();
-        foreach ($array as $key => $value)
-        {
-            $std->{$key} = is_array($value) ? arrayToStd($value) : $value;
-        }
-        return $std;
-    }
+	return array_to_std($array);
+}
+if (!function_exists('array_to_std'))
+{
+	function array_to_std(array $array = [])
+	{
+		$func = __FUNCTION__;
+		$std = new \stdClass();
+		foreach ($array as $key => $value)
+		{
+			$std->{$key} = is_array($value) ? $func($value) : $value;
+		}
+		return $std;
+	}
 }
 
 
@@ -639,6 +681,7 @@ if ( ! function_exists('convertip'))
 	}
 }
 
+
 if ( ! function_exists('area')) {
 	/**
 	 * @param string $ip
@@ -674,6 +717,7 @@ if ( ! function_exists('area')) {
 		return is_numeric($num) ? $arr[$num] : $arr;
 	}
 }
+
 
 if (! function_exists('sysinfo'))
 {
@@ -721,6 +765,7 @@ if (! function_exists('sysinfo'))
     }
 }
 
+
 if (!function_exists('array_merge_decode')) {
     /**
      * array_merge_decode
@@ -741,6 +786,7 @@ if (!function_exists('array_merge_decode')) {
     }
 }
 
+
 if (!function_exists('get_login_token')) {
     /**
      * 如果项目的token规则与此不同，请在项目中重写此函数
@@ -756,6 +802,7 @@ if (!function_exists('get_login_token')) {
         return LamJwt::getToken(['id' => $id], config('auth.jwtkey'), $expire);
     }
 }
+
 
 if (!function_exists('is_env')) {
     /**
