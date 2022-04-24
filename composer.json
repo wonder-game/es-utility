@@ -25,7 +25,8 @@
     "easyswoole/log": ">=1.0",
     "easyswoole/i18n": "^1.0",
     "easyswoole/policy": "^1.0",
-    "easyswoole/file-watcher": "^1.0"
+    "easyswoole/file-watcher": "^1.0",
+    "wonder-game/es-notify": "^1.0"
   },
   "autoload": {
     "psr-4": {

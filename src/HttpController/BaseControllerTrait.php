@@ -43,7 +43,7 @@ trait BaseControllerTrait
         $data = verify_token($input, $header, 'operid');
 
         // 如果不是rsa加密数据并且非本地开发环境
-        if(empty($input['envkeydata']) &&  ! empty($data['INVERTOKEN'])  &&  get_cfg_var('env.app_dev') != 2)
+        if(empty($input['envkeydata']) &&  ! empty($data['INVERTOKEN'])  &&  !is_env('dev'))
         {
             trace('密文有误:' . var_export($input, true), 'error', $category);
             return false;

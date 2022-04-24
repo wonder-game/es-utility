@@ -24,15 +24,25 @@ class Error implements TaskInterface
         if ($this->checkTime())
         {
             $title = '程序异常';
+            $servname = config('SERVNAME');
+            $servername = config('SERVER_NAME');
+
             $message = implode($this->warp, [
                 '### **'. $title . '**',
-                '- 服务器: ' . config('SERVNAME'),
-                '- 项 目：' . config('SERVER_NAME'),
+                '- 服务器: ' . $servname,
+                '- 项 目：' . $servername,
                 "- 文 件：{$this->data['file']} 第 {$this->data['line']} 行",
                 "- 详 情：" . $this->data['message'] ?? '',
                 '- 触发方式： ' . $this->data['trigger'] ?? '',
             ]);
             sendDingTalkMarkdown($title, $message);
+
+            wechatWarning(
+                $this->data['file'],
+                $this->data['line'],
+                $servname . ' -> ' . $servername,
+                $this->data['message']
+            );
         }
     }
 

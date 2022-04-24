@@ -17,6 +17,7 @@ use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\Http\GlobalParam\Hook;
 use EasySwoole\I18N\I18N;
+use WonderGame\EsNotify\EsNotify;
 
 class LamUnit
 {
@@ -250,6 +251,41 @@ class LamUnit
                 ], $config);
                 $processConfig = new \EasySwoole\Component\Process\Config($cfg);
                 \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
+            }
+        }
+    }
+
+    public static function registerNotify()
+    {
+        /*
+         * 常规配置示例，可根据需求调整
+         *
+         * 'ES_NOTIFY' => [
+            'dingtalk' => new \WonderGame\EsNotify\DingTalk\Config([
+                'url' => '',
+                'signKey' => '',
+            ], true),
+            'wechat' => new \WonderGame\EsNotify\WeChat\Config([
+                'appId' => '',
+                'appSecret' => '',
+                'token' => '',
+                'url' => '',
+                'toOpenid' => [],
+
+                //  ... 自定义属性, 获取方式 Config->getProperty('xx')
+            ], true),
+        ],
+        // 微信模板id,
+        'WX_TPLID' => [
+            'warning' => '',
+            'notice' => ''
+        ]
+        */
+        if ($esNotify = config('ES_NOTIFY'))
+        {
+            foreach ($esNotify as $name => $cfg)
+            {
+                EsNotify::getInstance()->register($cfg, $name);
             }
         }
     }
