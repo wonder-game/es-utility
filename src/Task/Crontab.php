@@ -43,12 +43,16 @@ class Crontab implements TaskInterface
         $className = "\\App\\Crontab\\" . ucfirst($this->eclass);
 
         if (!class_exists($className)) {
-            trace("$className Not Found!", 'error');
+            $msg = 'Class not found: ' . $className;
+            trace($msg, 'error');
+            sendDingTalkText($msg);
             return;
         }
 
         if ( ! method_exists($className, $this->method)) {
-            trace("{$className}->{$this->method} Not Found!", 'error');
+            $msg = "Method not exist: {$className}->{$this->method}";
+            trace($msg, 'error');
+            sendDingTalkText($msg);
             return;
         }
 

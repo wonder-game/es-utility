@@ -61,7 +61,9 @@ class Crontab extends AbstractCronTask
         foreach ($cron as $value) {
             if (!CronExpression::isValidExpression($value['rule']))
             {
-                trace("id={$value['id']} 运行规则设置错误 {$value['rule']}", 'error');
+                $msg = "id={$value['id']} 运行规则设置错误 {$value['rule']}";
+                trace($msg, 'error');
+                sendDingTalkText($msg);
                 continue;
             }
 
@@ -84,9 +86,15 @@ class Crontab extends AbstractCronTask
             }
 
             $args = $value['args'] ?: [];
-            if (is_string($args) && ($decode = json_decode($args, true)))
+            if (is_string($args))
             {
-                $args = $decode;
+                $args = json_decode($args, true);
+            }
+            if (!is_array($args)) {
+                $msg = "定时任务参数解析失败: id={$value['id']},name={$value['name']},args=" . var_export($value['args'], true);
+                trace($msg, 'error');
+                sendDingTalkText($msg);
+                continue;
             }
 
             $class = new $className([$value['eclass'], $value['method']], $args);
@@ -95,9 +103,13 @@ class Crontab extends AbstractCronTask
                 trace("[CRONTAB] id={$value['id']} finish! {$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
             });
             // 只运行一次的任务
-            if ($finish && $value['status'] == 2)
+            if ($finish > 0 && $value['status'] == 2)
             {
                 $model->update(['status' => 1], ['id' => $value['id']]);
+            }
+
+            if ($finish <= 0) {
+                trace("投递失败: 返回值={$finish}, id={$value['id']}, name={$value['name']}", 'error');
             }
         }
     }
