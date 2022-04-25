@@ -63,4 +63,30 @@ trait PackageTrait
         $count = $this->Model->where('pkgbnd', $pkgbnd)->count();
         $this->success(['count' => $count]);
     }
+
+    protected function formatKeyValue($kv = [])
+    {
+        $data = [];
+        foreach($kv as $arr)
+        {
+            if (empty($arr['Key']) || empty($arr['Value']))
+            {
+                continue;
+            }
+            $data[$arr['Key']] = $arr['Value'];
+        }
+        return $data;
+    }
+    protected function unformatKeyValue($kv = [])
+    {
+        $result = [];
+        foreach ($kv as $key => $value)
+        {
+            $result[] = [
+                'Key' => $key,
+                'Value' => $value
+            ];
+        }
+        return $result;
+    }
 }
