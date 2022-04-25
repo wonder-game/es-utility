@@ -51,7 +51,7 @@ trait BaseModelTrait
     protected function _getTable()
     {
         $name = basename(str_replace('\\', '/', get_called_class()));
-        return strtolower(trim(preg_replace("/[A-Z]/", "_\\0", $name), "_"));
+        return parse_name($name);
     }
 
     public function getPk()
