@@ -24,30 +24,30 @@ class LamJwt
 	{
 		$time = time();
 		$uniqid = uniqid();
-
+		
 		is_array($extend) && extract($extend);
-
+		
 		$jwt = Jwt::getInstance()
 			->setSecretKey($key ?: config('ENCRYPT.key')) // 秘钥
 			->publish();
-
+		
 		$jwt->setAlg('HMACSHA256'); // 加密方式
-		$jwt->setAud($aud??''); // 用户(接收jwt的一方)
+		$jwt->setAud($aud ?? ''); // 用户(接收jwt的一方)
 		$jwt->setExp($time + $expire); // 过期时间
 		$jwt->setIat($time); // 发布时间
-		$jwt->setIss($iss??''); // 发行人(jwt签发者)
+		$jwt->setIss($iss ?? ''); // 发行人(jwt签发者)
 		$jwt->setJti($uniqid); // jwt id 用于标识该jwt
 		//$jwt->setNbf(time()+60*5); // 在此之前不可用
 		$jwt->setSub($sub ?? ''); // 主题
-
+		
 		// 自定义数据
 		$jwt->setData($data);
-
+		
 		// 最终生成的token
 		$token = $jwt->__toString();
 		return base64_encode($token);
 	}
-
+	
 	/**
 	 * 验证和解析jwt
 	 * @param string $token
@@ -61,9 +61,8 @@ class LamJwt
 		try {
 			$jwt = Jwt::getInstance()->setSecretKey($key ?: config('ENCRYPT.key'))->decode($token);
 			$status = $jwt->getStatus();
-
-			switch ($status)
-			{
+			
+			switch ($status) {
 				case  1:
 					$data = [
 						'aud' => $jwt->getAud(),
@@ -84,9 +83,9 @@ class LamJwt
 					break;
 			}
 		} catch (\EasySwoole\Jwt\Exception $e) {
-
+		
 		}
-
-		return ['status'=> $status, 'data' => $data];
+		
+		return ['status' => $status, 'data' => $data];
 	}
 }
