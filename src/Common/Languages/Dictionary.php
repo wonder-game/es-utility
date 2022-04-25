@@ -18,6 +18,7 @@ class Dictionary extends AbstractDictionary
     const MISS_KEY_PARA = 'MISS_KEY_PARA';
     const SUCCESS = 'SUCCESS';
     const FAIL = 'FAIL';
+	const ERROR = 'ERROR';
     const VENDOR_TYPE_ERR = 'VENDOR_TYPE_ERR';
     const VENDOR_NOT_BINDED = 'VENDOR_NOT_BINDED';
     const VENDOR_HAD_BINDED = 'VENDOR_HAD_BINDED';
