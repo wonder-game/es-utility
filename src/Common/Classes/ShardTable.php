@@ -180,8 +180,8 @@ class ShardTable
 			$title = '数据表分区不足！！';
 			$msg = "检测到以下表分区不足{$day}天：" . implode('、', $warning);
 			trace($title . $msg, 'info', 'worker');
-			sendDingTalkText($title . $msg);
-			wechatNotice($title, $msg);
+			dingtalk_text($title . $msg);
+			wechat_notice($title, $msg);
 		}
 	}
 	

@@ -93,7 +93,7 @@ trait AuthTrait
 			return false;
 		}
 		
-		if (empty($data['status']) && ( ! isSuper($data['rid']))) {
+		if (empty($data['status']) && ( ! is_super($data['rid']))) {
 			$this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_4);
 			return false;
 		}
@@ -234,10 +234,7 @@ trait AuthTrait
 	
 	protected function isSuper($rid = null)
 	{
-		if (is_null($rid)) {
-			$rid = $this->operinfo['rid'];
-		}
-		return isSuper($rid);
+		return is_super(is_null($rid) ? $this->operinfo['rid'] : $rid);
 	}
 	
 	protected function getUserMenus()

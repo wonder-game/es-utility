@@ -14,7 +14,7 @@
     }
   ],
   "require": {
-    "php": ">=7.1",
+    "php": ">=7.4",
     "easyswoole/jwt": ">=1.1",
     "easyswoole/config": ">=1.0",
     "easyswoole/easyswoole": "^3.4",

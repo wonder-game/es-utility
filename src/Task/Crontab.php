@@ -45,14 +45,14 @@ class Crontab implements TaskInterface
 		if ( ! class_exists($className)) {
 			$msg = 'Class not found: ' . $className;
 			trace($msg, 'error');
-			sendDingTalkText($msg);
+			dingtalk_text($msg);
 			return;
 		}
 		
 		if ( ! method_exists($className, $this->method)) {
 			$msg = "Method not exist: {$className}->{$this->method}";
 			trace($msg, 'error');
-			sendDingTalkText($msg);
+			dingtalk_text($msg);
 			return;
 		}
 		

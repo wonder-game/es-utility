@@ -67,7 +67,7 @@ trait MenuModelTrait
 	{
 		$where = ['permission' => ['', '<>']];
 		
-		if ( ! isSuper($rid)) {
+		if ( ! is_super($rid)) {
 			/** @var Role $Role */
 			$Role = model('Role');
 			$menuIds = $Role->where('id', $rid)->val('menu');

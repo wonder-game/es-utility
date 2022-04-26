@@ -17,7 +17,7 @@ trait RoleModelTrait
 			$data = implode(',', $data);
 		}
 		// 超级管理员永远返回*
-		if (isset($alldata['id']) && isSuper($alldata['id'])) {
+		if (isset($alldata['id']) && is_super($alldata['id'])) {
 			return '*';
 		}
 		return $data;
@@ -26,7 +26,7 @@ trait RoleModelTrait
 	protected static function onBeforeDelete(Role $model)
 	{
 		// 超级管理员不可删除
-		return ! isSuper($model['id']);
+		return ! is_super($model['id']);
 	}
 	
 	public function getRoleListAll()

@@ -29,7 +29,7 @@ trait RoleTrait
 			if ($val instanceof AbstractModel) {
 				$val = $val->toArray();
 			}
-			if (isSuper($val['id'])) {
+			if (is_super($val['id'])) {
 				$val['menu'] = $allMenu;
 			} else {
 				if (is_string($val['menu'])) {

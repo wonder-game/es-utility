@@ -41,14 +41,14 @@ trait HttpTrackerTrait
 		if ($json = json_decode($val, true)) {
 			$arr = $json;
 		}
-		return arrayToStd($arr);
+		return array_to_std($arr);
 	}
 	
 	protected function getResponseAttr($val)
 	{
 		$json = json_decode($val, true);
 		$arr = is_array($json) ? $json : [];
-		return arrayToStd($arr);
+		return array_to_std($arr);
 	}
 	
 	/**

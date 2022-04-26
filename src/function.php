@@ -13,11 +13,6 @@ use WonderGame\EsNotify\WeChat\Message\Notice;
 use WonderGame\EsNotify\WeChat\Message\Warning;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 
-// TODO，兼容旧有程序，待删除
-function isSuper($rid = null)
-{
-	return is_super($rid);
-}
 
 if ( ! function_exists('is_super')) {
 	/**
@@ -411,12 +406,6 @@ if ( ! function_exists('lang')) {
 }
 
 
-// TODO，兼容旧有程序，待删除
-function wechatNotice($title = '', $content = '', $color = '#32CD32')
-{
-	return wechat_notice($title, $content, $color);
-}
-
 if ( ! function_exists('wechat_notice')) {
 	function wechat_notice($title = '', $content = '', $color = '#32CD32')
 	{
@@ -429,12 +418,6 @@ if ( ! function_exists('wechat_notice')) {
 	}
 }
 
-
-// TODO，兼容旧有程序，待删除
-function wechatWarning($file, $line, $servername, $message, $color = '#FF0000')
-{
-	return wechat_warning($file, $line, $servername, $message, $color);
-}
 
 if ( ! function_exists('wechat_warning')) {
 	function wechat_warning($file, $line, $servername, $message, $color = '#FF0000')
@@ -451,12 +434,6 @@ if ( ! function_exists('wechat_warning')) {
 }
 
 
-// TODO，兼容旧有程序，待删除
-function sendDingTalkText($content = '', $at = true)
-{
-	return dingtalk_text($content, $at);
-}
-
 if ( ! function_exists('dingtalk_text')) {
 	function dingtalk_text($content = '', $at = true)
 	{
@@ -467,12 +444,6 @@ if ( ! function_exists('dingtalk_text')) {
 	}
 }
 
-
-// TODO，兼容旧有程序，待删除
-function sendDingTalkMarkdown($title = '', $text = '', $at = true)
-{
-	return dingtalk_markdown($title, $text, $at);
-}
 
 if ( ! function_exists('dingtalk_markdown')) {
 	function dingtalk_markdown($title = '', $text = '', $at = true)
@@ -485,12 +456,6 @@ if ( ! function_exists('dingtalk_markdown')) {
 	}
 }
 
-
-// TODO，兼容旧有程序，待删除
-function arrayToStd(array $array = [])
-{
-	return array_to_std($array);
-}
 
 if ( ! function_exists('array_to_std')) {
 	function array_to_std(array $array = [])

@@ -34,9 +34,9 @@ class Error implements TaskInterface
 				"- 详 情：" . $this->data['message'] ?? '',
 				'- 触发方式： ' . $this->data['trigger'] ?? '',
 			]);
-			sendDingTalkMarkdown($title, $message);
+			dingtalk_markdown($title, $message);
 			
-			wechatWarning(
+			wechat_warning(
 				$this->data['file'],
 				$this->data['line'],
 				$servname . ' -> ' . $servername,
