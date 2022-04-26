@@ -25,11 +25,12 @@ trait BaseModelTrait
 	
 	public function __construct($data = [], $tabname = '', $gameid = '')
 	{
-		if (empty($tabname)) {
-			$tabname = $this->_getTable();
+		// $tabname > $this->tableName > $this->_getTable()
+		$tabname && $this->tableName = $tabname;
+		if ( ! $this->tableName) {
+			$this->tableName = $this->_getTable();
 		}
 		
-		$this->tableName = $tabname;
 		$this->gameid = $gameid;
 
 //        $this->autoTimeStamp = false;
