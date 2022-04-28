@@ -4,6 +4,7 @@
 namespace WonderGame\EsUtility\HttpController\Admin;
 
 
+use WonderGame\EsUtility\Common\Classes\Tree;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
@@ -17,7 +18,7 @@ trait MenuTrait
 	public function index()
 	{
 		$input = $this->get;
-		
+
 		$where = [];
 		if ( ! empty($input['title'])) {
 			$where['title'] = ["%{$input['title']}%", 'like'];
@@ -25,11 +26,11 @@ trait MenuTrait
 		if (isset($input['status']) && $input['status'] !== '') {
 			$where['status'] = $input['status'];
 		}
-		
+
 		$result = $this->Model->menuAll($where);
 		$this->success($result);
 	}
-	
+
 	public function add()
 	{
 		// 如果name不为空，检查唯一性
@@ -43,7 +44,7 @@ trait MenuTrait
 		}
 		parent::add();
 	}
-	
+
 	/**
 	 * Client vue-router
 	 */
@@ -56,4 +57,15 @@ trait MenuTrait
 		$menu = $this->Model->getRouter($userMenus);
 		$this->success($menu);
 	}
+
+    /**
+     * 所有菜单树形结构
+     * @return void
+     */
+    public function treeList()
+    {
+        $Tree = new Tree();
+        $treeData = $Tree->originData()->getTree();
+        $this->success($treeData);
+    }
 }

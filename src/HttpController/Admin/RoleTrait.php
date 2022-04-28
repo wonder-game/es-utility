@@ -17,14 +17,14 @@ trait RoleTrait
 		}
 		return $where;
 	}
-	
+
 	protected function _afterIndex($items, $total)
 	{
 		// 处理超级管理员菜单权限
 		/** @var AbstractModel $Menu */
 		$Menu = model('Menu');
 		$allMenu = $Menu->column('id');
-		
+
 		foreach ($items as $key => &$val) {
 			if ($val instanceof AbstractModel) {
 				$val = $val->toArray();
@@ -43,4 +43,17 @@ trait RoleTrait
 		}
 		return parent::_afterIndex($items, $total);
 	}
+
+    public function options()
+    {
+        $options = $this->Model->order('sort', 'asc')->field(['id', 'name'])->all();
+        $result = [];
+        foreach ($options as $option) {
+            $result[] = [
+                'label' => $option->getAttr('name'),
+                'value' => $option->getAttr('id'),
+            ];
+        }
+        $this->success($result);
+    }
 }

@@ -21,7 +21,7 @@ trait PackageTrait
 		}
 		return false;
 	}
-	
+
 	public function addPost()
 	{
 		$pkgbnd = $this->post['pkgbnd'];
@@ -31,24 +31,24 @@ trait PackageTrait
 		}
 		parent::addPost();
 	}
-	
+
 	// 单纯的保存Key-Value类型
 	public function saveKeyValue($id = 0, $name = '', $kv = [])
 	{
 		$kv = $this->formatKeyValue($this->post['kv']);
 		$model = $this->Model->where('id', $this->post['id'])->get();
 		$extension = $model->getAttr('extension');
-		
+
 		// 由a.b.c 组装成 ['a']['b']['c']
 		$name = "['" . str_replace('.', "']['", $this->post['name']) . "']";
 		eval("\$extension$name = " . var_export($kv, true) . ';');
-		
+
 		$model->extension = $extension;
 		$model->update();
 		$this->success();
 	}
-	
-	
+
+
 	// 检查pkgbnd是否已存在了
 	public function pkgbndExist()
 	{
@@ -59,7 +59,7 @@ trait PackageTrait
 		$count = $this->Model->where('pkgbnd', $pkgbnd)->count();
 		$this->success(['count' => $count]);
 	}
-	
+
 	protected function formatKeyValue($kv = [])
 	{
 		$data = [];
@@ -71,7 +71,7 @@ trait PackageTrait
 		}
 		return $data;
 	}
-	
+
 	protected function unformatKeyValue($kv = [])
 	{
 		$result = [];
@@ -83,4 +83,11 @@ trait PackageTrait
 		}
 		return $result;
 	}
+
+    public function options()
+    {
+        // 除了extension外的所有字段
+        $options = $this->Model->order('gameid', 'desc')->order('sort', 'asc')->field(['id', 'name', 'gameid', 'pkgbnd', 'os', 'sort'])->all();
+        $this->success($options);
+    }
 }

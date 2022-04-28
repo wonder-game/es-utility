@@ -13,7 +13,7 @@ trait GameTrait
 		if ( ! empty($filter['gameid'])) {
 			$where['id'] = [$filter['gameid'], 'IN'];
 		}
-		
+
 		if (isset($this->get['status']) && $this->get['status'] !== '') {
 			$where['status'] = $this->get['status'];
 		}
@@ -22,7 +22,7 @@ trait GameTrait
 		}
 		return $where;
 	}
-	
+
 	public function gkey()
 	{
 		$rand = [
@@ -32,9 +32,22 @@ trait GameTrait
 		if ( ! isset($this->get['column']) || ! isset($rand[$this->get['column']])) {
 			return $this->error(Code::ERROR_OTHER);
 		}
-		
+
 		$sign = uniqid($rand[$this->get['column']]);
-		
+
 		$this->success($sign);
 	}
+
+    public function options()
+    {
+        $options = $this->Model->where('status', 1)->order('sort', 'asc')->field(['id', 'name'])->all();
+        $result = [];
+        foreach ($options as $option) {
+            $result[] = [
+                'label' => $option->getAttr('name'),
+                'value' => $option->getAttr('id'),
+            ];
+        }
+        $this->success($result);
+    }
 }
