@@ -658,7 +658,7 @@ if ( ! function_exists('sysinfo')) {
 		
 		/** @var SplArray $Spl */
 		$Spl = RedisPool::invoke(function (Redis $redis) {
-			
+			/** @var \App\Model\Sysinfo $model */
 			$model = model('sysinfo');
 			
 			$redisKey = $model->getCacheKey();
