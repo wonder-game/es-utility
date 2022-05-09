@@ -239,6 +239,8 @@ trait AuthTrait
             $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_5);
         } catch (HttpParamException | SyncException $e) {
             $this->error($e->getCode(), $e->getMessage());
+        } catch (\Exception $e) {
+            $this->error(Code::CODE_INTERNAL_SERVER_ERROR, $e->getMessage());
         }
     }
 
