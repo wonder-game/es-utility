@@ -74,4 +74,6 @@ class Dictionary extends AbstractDictionary
 	const ADMIN_PUBTRAIT_2 = 'ADMIN_PUBTRAIT_2';
 	const ADMIN_PUBTRAIT_3 = 'ADMIN_PUBTRAIT_3';
 	const ADMIN_PUBTRAIT_4 = 'ADMIN_PUBTRAIT_4';
+
+    const PERMISSION_DENIED = 'PERMISSION_DENIED';
 }

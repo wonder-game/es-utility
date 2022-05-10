@@ -214,125 +214,95 @@ trait AuthTrait
         return is_array($userMenu) ? $userMenu : [];
     }
 
-    public function add()
+    protected function ifRunBeforeAction()
     {
-        $this->info(__FUNCTION__);
-    }
-
-    public function edit()
-    {
-        $this->info(__FUNCTION__);
-    }
-
-    protected function info($name)
-    {
-        $rqm = $this->request()->getMethod();
-        $method = $name . ucfirst(strtolower($rqm));
-
-        try {
-            // 为何用反射，因为父类中没有主动定义全部的方法，各子类也只有在用到的场景才会定义
-            $ref = new \ReflectionClass(static::class);
-            $methosClass = $ref->getMethod($method);
-            // 反射的是自己，this调用
-            $this->{$methosClass->name}();
-        } catch (\ReflectionException $e) {
-            $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_5);
-        } catch (HttpParamException | SyncException $e) {
-            $this->error($e->getCode(), $e->getMessage());
+        foreach (['__before__common', '__before_' . $this->getActionName()] as $beforeAction)
+        {
+            if (method_exists(static::class, $beforeAction)) {
+                $this->$beforeAction();
+            }
         }
     }
 
-    /**
-     * 一般用来获取添加页需要的数据
-     */
-    protected function addGet()
+    protected function __getModel(): AbstractModel
     {
-        return $this->success();
-    }
+        $request = array_merge($this->get, $this->post);
 
-    /**
-     * 一般用来提交添加数据
-     * @throws \EasySwoole\ORM\Exception\Exception
-     * @throws \Throwable
-     */
-    protected function addPost()
-    {
-        $this->_writeBefore();
-        $result = $this->Model->data($this->post)->save();
-        $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_6);
-    }
-
-    protected function editPost()
-    {
-        $this->_writeBefore();
-        $post = $this->post;
-        $pk = $this->Model->getPk();
-        if ( ! isset($post[$pk])) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_7);
+        if ( ! $this->Model instanceof AbstractModel) {
+            throw new HttpParamException('Model Not instanceof AbstractModel !');
         }
 
-        $model = $this->Model->where($pk, $post[$pk])->get();
-
-        if (empty($model)) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_8);
-        }
-
-        $where = null;
-        // 单独处理id为0值的情况，因为update传where后，data不会取差集，会每次update所有字段, 而不传$where时会走进preSetWhereFromExistModel用empty判断主键，0值会报错
-        if (intval($post[$pk]) === 0) {
-            $where = [$pk => $post[$pk]];
-        }
-
-        /*
-         * update返回的是执行语句是否成功,只有mysql语句出错时才会返回false,否则都为true
-         * 所以需要getAffectedRows来判断是否更新成功
-         */
-        $upd = $model->update($post, $where);
-        if ($upd === false) {
-            $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_9);
-            trace('edit update失败: ' . $model->lastQueryResult()->getLastError());
-        } else {
-            $this->success();
-        }
-    }
-
-    protected function editGet()
-    {
-        // todo 处理联合主键场景
         $pk = $this->Model->getPk();
         // 不排除id为0的情况
-        if ( ! isset($this->get[$pk]) || $this->get[$pk] === '') {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_10);
+        if ( ! isset($request[$pk]) || $request[$pk] === '') {
+            throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_10));
         }
-        $model = $this->Model->where($pk, $this->get[$pk])->get();
+        $model = $this->Model->where($pk, $request[$pk])->get();
         if (empty($model)) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_11);
+            throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_11));
         }
-        $data = $this->_afterEditGet($model->toArray());
-        $this->success($data);
+
+        return $model;
     }
 
-    public function del()
+    protected function _add($return = false)
     {
-        $get = $this->get;
-        $pk = $this->Model->getPk();
-        if ( ! isset($get[$pk])) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_12);
+        if ($this->isMethod('POST')) {
+            $result = $this->Model->data($this->post)->save();
+            if ($return) {
+                return $result;
+            } else {
+                $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_6);
+            }
         }
-
-        $model = $this->Model->where($pk, $get[$pk])->get();
-        if (empty($model)) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_13);
-        }
-
-        $result = $model->destroy();
-        $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_14);
     }
 
-    public function change()
+    protected function _edit($return = false)
+    {
+        $pk = $this->Model->getPk();
+        $model = $this->__getModel();
+        $request = array_merge($this->get, $this->post);
+
+        $data = [];
+        if ($this->isMethod('POST')) {
+
+            $where = null;
+            // 单独处理id为0值的情况，因为update传where后，data不会取差集，会每次update所有字段, 而不传$where时会走进preSetWhereFromExistModel用empty判断主键，0值会报错
+            if (intval($request[$pk]) === 0) {
+                $where = [$pk => $request[$pk]];
+            }
+
+            /*
+             * update返回的是执行语句是否成功,只有mysql语句出错时才会返回false,否则都为true
+             * 所以需要getAffectedRows来判断是否更新成功
+             * 只要SQL没错误就认为成功
+             */
+            $upd = $model->update($request, $where);
+            if ($upd === false) {
+                trace('edit update失败: ' . $model->lastQueryResult()->getLastError());
+                throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_9));
+            }
+        }
+
+        return $return ? $model : $this->success($model);
+    }
+
+    protected function _del($return = false)
+    {
+        $model = $this->__getModel();
+        $result = $model->destroy();
+        if ($return) {
+            return $model;
+        } else {
+            $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_14);
+        }
+    }
+
+    protected function _change($return = false)
     {
         $post = $this->post;
-        foreach (['id', 'column'] as $col) {
+        $pk = $this->Model->getPk();
+        foreach ([$pk, 'column'] as $col) {
             if ( ! isset($post[$col]) || ! isset($post[$post['column']])) {
                 return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_15);
             }
@@ -340,15 +310,7 @@ trait AuthTrait
 
         $column = $post['column'];
 
-        $pk = $this->Model->getPk();
-        if ( ! isset($post[$pk])) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_16);
-        }
-
-        $model = $this->Model->where($pk, $post[$pk])->get();
-        if (empty($model)) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_17);
-        }
+        $model = $this->__getModel();
 
         $where = null;
         // 单独处理id为0值的情况，因为update传where后，data不会取差集，会每次update所有字段, 而不传$where时会走进preSetWhereFromExistModel用empty判断主键，0值会报错
@@ -358,18 +320,27 @@ trait AuthTrait
 
         $upd = $model->update([$column => $post[$column]], $where);
 //        $rowCount = $model->lastQueryResult()->getAffectedRows();
-        $upd !== false ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_18);
+        if ($upd === false) {
+            throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_18));
+        }
+        return $return ? $model : $this->success();
     }
 
+    // index在父类已经预定义了，不能使用actionNotFound模式
     public function index()
+    {
+        return $this->_index();
+    }
+
+    protected function _index($return = false)
     {
         $page = $this->get[config('fetchSetting.pageField')] ?? 1;          // 当前页码
         $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
 
-        $where = $this->_search();
+        $where = $this->__search();
 
         // 处理排序
-        $this->_order();
+        $this->__order();
 
         $this->Model->scopeIndex();
 
@@ -379,12 +350,16 @@ trait AuthTrait
         $result = $this->Model->lastQueryResult();
         $total = $result->getTotalCount();
 
-        // 后置操作
-        $data = $this->_afterIndex($items, $total);
-        $this->success($data);
+        $data = $this->__after_index($items, $total);
+        return $return ? $data : $this->success($data);
     }
 
-    protected function _order()
+    protected function __after_index($items, $total)
+    {
+        return [config('fetchSetting.listField') => $items, config('fetchSetting.totalField') => $total];
+    }
+
+    protected function __order()
     {
         $sortField = $this->get['_sortField'] ?? ''; // 排序字段
         $sortValue = $this->get['_sortValue'] ?? ''; // 'ascend' | 'descend'
@@ -425,14 +400,14 @@ trait AuthTrait
             }
         }
 
-        $where = $this->_search();
+        $where = $this->__search();
 
         // 处理排序
-        $this->_order();
+        $this->__order();
 
         // todo 希望优化为fetch模式
         $items = $this->Model->all($where);
-        $data = $this->_afterIndex($items, 0)[config('fetchSetting.listField')];
+        $data = $this->__after_index($items, 0)[config('fetchSetting.listField')];
 
         // 是否需要合并合计行，如需合并，data为索引数组，为空字段需要占位
 
@@ -519,7 +494,7 @@ trait AuthTrait
      * 构造查询数据
      * @return array
      */
-    protected function _search()
+    protected function __search()
     {
         return null;
     }
@@ -576,23 +551,4 @@ trait AuthTrait
         return $filter + $this->get;
     }
 
-    /**
-     * 列表后置操作
-     * @param $items
-     * @return mixed
-     */
-    protected function _afterIndex($items, $total)
-    {
-        return [config('fetchSetting.listField') => $items, config('fetchSetting.totalField') => $total];
-    }
-
-    protected function _afterEditGet($data)
-    {
-        return $data;
-    }
-
-    protected function _writeBefore()
-    {
-
-    }
 }
