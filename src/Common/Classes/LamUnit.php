@@ -185,12 +185,14 @@ class LamUnit
 	{
 		// 只允许在开发环境运行
 		if (is_env('dev')) {
-			$watchConfig = config('HOT_RELOAD_DIR') ?: [EASYSWOOLE_ROOT . '/App'];
+			$watchConfig = config('HOT_RELOAD_DIR') ?: [EASYSWOOLE_ROOT . '/App', EASYSWOOLE_ROOT . '/vendor/wonder-game'];
 
 			$watcher = new \EasySwoole\FileWatcher\FileWatcher();
-			// // 设置监控规则和监控目录
+			// 设置监控规则和监控目录
 			foreach ($watchConfig as $dir) {
-				$watcher->addRule(new \EasySwoole\FileWatcher\WatchRule($dir));
+                if (is_dir($dir)) {
+                    $watcher->addRule(new \EasySwoole\FileWatcher\WatchRule($dir));
+                }
 			}
 
 			$watcher->setOnChange(function (array $list) {

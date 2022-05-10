@@ -2,13 +2,15 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
+use EasySwoole\ORM\AbstractModel;
 use WonderGame\EsUtility\Common\Classes\Tree;
+use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
 trait AdminTrait
 {
-    protected function _search()
+    protected function __search()
     {
         $where = [];
         if ( ! empty($this->get['rid'])) {
@@ -22,7 +24,7 @@ trait AdminTrait
         return $where;
     }
 
-    protected function _afterIndex($items, $total)
+    protected function __after_index($items, $total)
     {
         $Role = model('Role');
         $roleList = $Role->getRoleListAll();
@@ -30,10 +32,10 @@ trait AdminTrait
             unset($value['password']);
             $value->relation;
         }
-        return parent::_afterIndex(['items' => $items, 'roleList' => $roleList], $total);
+        return parent::__after_index(['items' => $items, 'roleList' => $roleList], $total);
     }
 
-    public function getUserInfo()
+    protected function _getUserInfo($return = false)
     {
         $upload = config('UPLOAD');
 
@@ -104,99 +106,32 @@ trait AdminTrait
 
         $result['config'] = $config;
 
-        $this->success($result);
+        return $return ? $result : $this->success($result);
     }
 
     /**
      * 用户权限码
      */
-    public function getPermCode()
+    protected function _getPermCode($return = false)
     {
         $model = model('Menu');
         $code = $model->permCode($this->operinfo['rid']);
-        $this->success($code);
+        return $return ? $code : $this->success($code);
     }
 
-    protected function addGet()
+    public function edit()
     {
-        $result = $this->_views();
-        $this->success($result);
-    }
-
-    protected function _afterEditGet($items)
-    {
-        $result = $this->_views();
-
-        unset($items['password'], $items['itime']);
-        $result['result'] = $items;
-
-        return $result;
-    }
-
-    protected function _views()
-    {
-    }
-
-    protected function _writeBefore()
-    {
-        // 留空，不修改密码
         if (empty($this->post['password'])) {
             unset($this->post['password']);
         }
+        return $this->_edit();
     }
 
-    protected function editPost()
-    {
-        if ( ! $this->isSuper()) {
-            $id = $this->post['id'];
-            if (empty($id)) {
-                $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_3);
-            }
-            $origin = $this->Model->where('id', $id)->val('extension');
-
-            /**
-             * 和数据库对比，如果原来已分配的包，当前操作用户没有这个包的权限，要追加进post
-             * @param $current 当前操作用户的gameids或pkgbnd
-             * @param $org 数据库原值，gameid或pkgbnd
-             * @param $post $this->post[xxx]
-             */
-            $diffAuth = function ($current, $org, $post) {
-                is_string($current) && $current = explode(',', $current);
-                is_string($org) && $org = explode(',', $org);
-                is_string($post) && $post = explode(',', $post);
-
-                $result = [];
-                foreach ($org as $value) {
-                    if ( ! in_array($value, $current)) {
-                        $result[] = $value;
-                    }
-                }
-
-                return array_unique(array_merge($post, $result));
-            };
-
-            // 包权限
-            $this->post['extension']['pkgbnd'] = $diffAuth(
-                $this->operinfo['extension']['pkgbnd'],
-                $origin['pkgbnd'],
-                $this->post['extension']['pkgbnd']
-            );
-            // 游戏权限
-            $this->post['extension']['gameids'] = $diffAuth(
-                $this->operinfo['extension']['gameids'],
-                $origin['gameids'],
-                $this->post['extension']['gameids']
-            );
-        }
-
-        parent::editPost();
-    }
-
-    public function modify()
+    protected function _modify($return = false)
     {
         $userInfo = $this->operinfo;
 
-        if ($this->isMethod('get')) {
+        if ($this->isMethod('GET')) {
             // role的关联数据也可以不用理会，ORM会处理
             unset($userInfo['password'], $userInfo['role']);
             // 默认首页treeSelect, 仅看有权限的菜单
@@ -208,37 +143,42 @@ trait AdminTrait
                 $where['id'] = [$menus, 'in'];
             }
             $menuList = $Menu->menuList($where);
-            $this->success(['menuList' => $menuList, 'result' => $userInfo]);
-        } elseif ($this->isMethod('post')) {
+            $data = ['menuList' => $menuList, 'result' => $userInfo];
+            return $return ? $data : $this->success($data);
+        } elseif ($this->isMethod('POST')) {
 			$id = $this->post['id'];
 			if (empty($id) || $userInfo['id'] != $id) {
                 // 仅允许管理员编辑自己的信息
-                return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_6);
+                throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_6));
             }
 
             if ($this->post['__password'] && ! password_verify($this->post['__password'], $userInfo['password'])) {
-                return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_7);
+                throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_7));
             }
 
-            parent::editPost();
+            if (empty($this->post['__password']) || empty($this->post['password'])) {
+                unset($this->post['password']);
+            }
+
+            return $this->_edit($return);
         }
     }
 
-    public function getToken()
+    protected function _getToken($return = false)
     {
         // 此接口比较重要，只允许超级管理员调用
         if ( ! $this->isSuper()) {
-            return $this->error(Code::CODE_FORBIDDEN);
+            throw new HttpParamException(lang(Dictionary::PERMISSION_DENIED));
         }
         if ( ! isset($this->get['id'])) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_8);
+            throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_8));
         }
         $id = $this->get['id'];
         $isExtsis = $this->Model->where(['id' => $id, 'status' => 1])->count();
         if ( ! $isExtsis) {
-            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_ADMINTRAIT_9);
+            throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_9));
         }
         $token = get_login_token($id, 3600);
-        $this->success($token);
+        return $return ? $token : $this->success($token);
     }
 }

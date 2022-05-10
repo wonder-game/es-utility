@@ -4,6 +4,7 @@ namespace WonderGame\EsUtility\HttpController;
 
 use EasySwoole\EasySwoole\Core;
 use EasySwoole\Http\AbstractInterface\Controller;
+use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
@@ -127,4 +128,23 @@ trait BaseControllerTrait
 		$array = explode('\\', static::class);
 		return end($array);
 	}
+
+    protected function actionNotFound(?string $action)
+    {
+        $method = "_$action";
+        if (method_exists($this, $method)) {
+            try {
+                
+                $this->$method();
+                
+            } catch (HttpParamException $e) {
+                $this->error(Code::ERROR_OTHER, $e->getMessage());
+            } catch (\Exception $e) {
+                $this->error(Code::CODE_INTERNAL_SERVER_ERROR, $e->getMessage());
+            }
+        } else {
+            $class = static::class;
+            $this->writeJson(Code::CODE_NOT_FOUND, null, "{$class} has not action for {$action}");
+        }
+    }
 }
