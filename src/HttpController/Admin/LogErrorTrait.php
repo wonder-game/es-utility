@@ -4,7 +4,7 @@ namespace WonderGame\EsUtility\HttpController\Admin;
 
 trait LogErrorTrait
 {
-	protected function _search()
+	protected function __search()
 	{
 		$filter = $this->filter();
 		
@@ -15,7 +15,7 @@ trait LogErrorTrait
 		return $where;
 	}
 	
-	public function multiple()
+	public function _multiple($return = false)
 	{
 		// 客户端是批量发送，成功后清空report, 为啥不调saveAll，避免因为单条失败，导致该用户error report永远失败
 		foreach ($this->post as $error) {
@@ -32,6 +32,6 @@ trait LogErrorTrait
 			} catch (\Exception | \Throwable $e) {
 			}
 		}
-		$this->success();
+		return $return ? true : $this->success();
 	}
 }

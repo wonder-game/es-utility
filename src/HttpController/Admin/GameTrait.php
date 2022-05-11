@@ -2,11 +2,13 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
+use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
+use WonderGame\EsUtility\Common\Languages\Dictionary;
 
 trait GameTrait
 {
-	protected function _search()
+	protected function __search()
 	{
 		$where = [];
 		$filter = $this->filter();
@@ -23,22 +25,22 @@ trait GameTrait
 		return $where;
 	}
 
-	public function gkey()
+    public function _gkey($return = false)
 	{
 		$rand = [
 			'logkey' => mt_rand(10, 20),
 			'paykey' => mt_rand(30, 40)
 		];
 		if ( ! isset($this->get['column']) || ! isset($rand[$this->get['column']])) {
-			return $this->error(Code::ERROR_OTHER);
+			throw new HttpParamException(lang(Dictionary::PARAMS_ERROR));
 		}
 
 		$sign = uniqid($rand[$this->get['column']]);
 
-		$this->success($sign);
+		return $return ? $sign : $this->success($sign);
 	}
 
-    public function options()
+    public function _options($return = false)
     {
         $options = $this->Model->where('status', 1)->order('sort', 'asc')->field(['id', 'name'])->all();
         $result = [];
@@ -48,6 +50,6 @@ trait GameTrait
                 'value' => $option->getAttr('id'),
             ];
         }
-        $this->success($result);
+        return $return ? $result : $this->success($result);
     }
 }

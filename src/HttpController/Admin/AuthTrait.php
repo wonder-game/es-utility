@@ -245,7 +245,7 @@ trait AuthTrait
         return $model;
     }
 
-    protected function _add($return = false)
+    public function _add($return = false)
     {
         if ($this->isMethod('POST')) {
             $result = $this->Model->data($this->post)->save();
@@ -257,13 +257,12 @@ trait AuthTrait
         }
     }
 
-    protected function _edit($return = false)
+    public function _edit($return = false)
     {
         $pk = $this->Model->getPk();
         $model = $this->__getModel();
         $request = array_merge($this->get, $this->post);
 
-        $data = [];
         if ($this->isMethod('POST')) {
 
             $where = null;
@@ -284,21 +283,21 @@ trait AuthTrait
             }
         }
 
-        return $return ? $model : $this->success($model);
+        return $return ? $model->toArray() : $this->success($model->toArray());
     }
 
-    protected function _del($return = false)
+    public function _del($return = false)
     {
         $model = $this->__getModel();
         $result = $model->destroy();
         if ($return) {
-            return $model;
+            return $model->toArray();
         } else {
             $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_14);
         }
     }
 
-    protected function _change($return = false)
+    public function _change($return = false)
     {
         $post = $this->post;
         $pk = $this->Model->getPk();
@@ -323,7 +322,7 @@ trait AuthTrait
         if ($upd === false) {
             throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_18));
         }
-        return $return ? $model : $this->success();
+        return $return ? $model->toArray() : $this->success();
     }
 
     // index在父类已经预定义了，不能使用actionNotFound模式
@@ -332,7 +331,7 @@ trait AuthTrait
         return $this->_index();
     }
 
-    protected function _index($return = false)
+    public function _index($return = false)
     {
         $page = $this->get[config('fetchSetting.pageField')] ?? 1;          // 当前页码
         $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
@@ -407,7 +406,7 @@ trait AuthTrait
 
         // todo 希望优化为fetch模式
         $items = $this->Model->all($where);
-        $data = $this->__after_index($items, 0)[config('fetchSetting.listField')];
+        $data = $this->__afterIndex($items, 0)[config('fetchSetting.listField')];
 
         // 是否需要合并合计行，如需合并，data为索引数组，为空字段需要占位
 
@@ -551,4 +550,17 @@ trait AuthTrait
         return $filter + $this->get;
     }
 
+    // 生成OptionsItem[]结构
+    protected function __options($where = null, $label = 'name', $value = 'id', $return = false)
+    {
+        $options = $this->Model->field([$label, $value])->all($where);
+        $result = [];
+        foreach ($options as $option) {
+            $result[] = [
+                'label' => $option->getAttr($label),
+                'value' => $option->getAttr($value),
+            ];
+        }
+        return $return ? $result : $this->success($result);
+    }
 }

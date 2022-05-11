@@ -6,7 +6,7 @@ use EasySwoole\ORM\AbstractModel;
 
 trait RoleTrait
 {
-	protected function _search()
+	protected function __search()
 	{
 		$where = [];
 		if ( ! empty($this->get['name'])) {
@@ -18,7 +18,7 @@ trait RoleTrait
 		return $where;
 	}
 
-	protected function _afterIndex($items, $total)
+	protected function __after_index($items, $total)
 	{
 		// 处理超级管理员菜单权限
 		/** @var AbstractModel $Menu */
@@ -41,10 +41,10 @@ trait RoleTrait
 				$val['menu'] = array_filter($val['menu']);
 			}
 		}
-		return parent::_afterIndex($items, $total);
+		return parent::__after_index($items, $total);
 	}
 
-    public function options()
+    public function _options($return = false)
     {
         $options = $this->Model->order('sort', 'asc')->field(['id', 'name'])->all();
         $result = [];
@@ -54,6 +54,6 @@ trait RoleTrait
                 'value' => $option->getAttr('id'),
             ];
         }
-        $this->success($result);
+        return $return ? $result : $this->success($result);
     }
 }
