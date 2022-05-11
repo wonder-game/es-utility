@@ -25,7 +25,7 @@ trait PackageTrait
 
     public function _add($return = false)
 	{
-		if ($this->isMethod('POST')) {
+		if ($this->isHttpPost()) {
             $pkgbnd = $this->post['pkgbnd'];
             $count = $this->Model->where('pkgbnd', $pkgbnd)->count();
             if ($count > 0) {

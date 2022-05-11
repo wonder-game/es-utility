@@ -247,7 +247,7 @@ trait AuthTrait
 
     public function _add($return = false)
     {
-        if ($this->isMethod('POST')) {
+        if ($this->isHttpPost()) {
             $result = $this->Model->data($this->post)->save();
             if ($return) {
                 return $result;
@@ -263,7 +263,7 @@ trait AuthTrait
         $model = $this->__getModel();
         $request = array_merge($this->get, $this->post);
 
-        if ($this->isMethod('POST')) {
+        if ($this->isHttpPost()) {
 
             $where = null;
             // 单独处理id为0值的情况，因为update传where后，data不会取差集，会每次update所有字段, 而不传$where时会走进preSetWhereFromExistModel用empty判断主键，0值会报错

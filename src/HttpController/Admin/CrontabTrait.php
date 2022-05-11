@@ -23,7 +23,7 @@ trait CrontabTrait
 
     public function edit()
     {
-        if ($this->isMethod('GET')) {
+        if ($this->isHttpGet()) {
             $this->success($this->fmtKeyValue($this->_edit(true)));
         } else {
             return $this->_edit();

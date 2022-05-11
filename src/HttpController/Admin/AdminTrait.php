@@ -131,7 +131,7 @@ trait AdminTrait
     {
         $userInfo = $this->operinfo;
 
-        if ($this->isMethod('GET')) {
+        if ($this->isHttpGet()) {
             // role的关联数据也可以不用理会，ORM会处理
             unset($userInfo['password'], $userInfo['role']);
             // 默认首页treeSelect, 仅看有权限的菜单
@@ -145,7 +145,7 @@ trait AdminTrait
             $menuList = $Menu->menuList($where);
             $data = ['menuList' => $menuList, 'result' => $userInfo];
             return $return ? $data : $this->success($data);
-        } elseif ($this->isMethod('POST')) {
+        } elseif ($this->isHttpPost()) {
 			$id = $this->post['id'];
 			if (empty($id) || $userInfo['id'] != $id) {
                 // 仅允许管理员编辑自己的信息
