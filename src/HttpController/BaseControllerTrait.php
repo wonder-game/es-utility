@@ -14,6 +14,8 @@ use WonderGame\EsUtility\Common\Languages\Dictionary;
 trait BaseControllerTrait
 {
 	private $langsConstants = [];
+    
+    protected $actionNotFoundPrefix = '_';
 
 	public function __construct()
 	{
@@ -138,10 +140,15 @@ trait BaseControllerTrait
 		$array = explode('\\', static::class);
 		return end($array);
 	}
+    
+    protected function actionNotFoundName()
+    {
+        return $this->actionNotFoundPrefix . $this->getActionName();
+    }
 
     protected function actionNotFound(?string $action)
     {
-        $actionName = "_$action";
+        $actionName = $this->actionNotFoundName();
         // 仅调用public，避免与普通方法混淆
         $publics = $this->getAllowMethodReflections();
 
