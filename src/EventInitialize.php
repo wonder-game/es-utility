@@ -57,7 +57,10 @@ class EventInitialize extends SplBean
             $this->ExceptionTrigger = ExceptionTrigger::class;
         }
         if (is_null($this->configDir)) {
-            $this->configDir = EASYSWOOLE_ROOT . '/App/Common/Config';
+            $this->configDir = [EASYSWOOLE_ROOT . '/App/Common/Config'];
+        }
+        if (is_string($this->configDir)) {
+            $this->configDir = [$this->configDir];
         }
         if (is_null($this->mysqlConfig)) {
             $this->mysqlConfig = config('MYSQL');
@@ -107,10 +110,11 @@ class EventInitialize extends SplBean
     protected function registerConfig()
     {
         $dirs = $this->configDir;
-        if (is_array($dirs)) {
-            foreach ($dirs as $dir) {
-                Config::getInstance()->loadDir($dir);
-            }
+        if ( ! is_array($dirs)) {
+            return;
+        }
+        foreach ($dirs as $dir) {
+            Config::getInstance()->loadDir($dir);
         }
     }
 
@@ -121,14 +125,15 @@ class EventInitialize extends SplBean
     protected function registerMysqlPool()
     {
         $config = $this->mysqlConfig;
-        if (is_array($config)) {
-            foreach ($config as $mname => $mvalue)
-            {
-                DbManager::getInstance()->addConnection(
-                    new \EasySwoole\ORM\Db\Connection(new \EasySwoole\ORM\Db\Config($mvalue)),
-                    $mname
-                );
-            }
+        if ( ! is_array($config)) {
+            return;
+        }
+        foreach ($config as $mname => $mvalue)
+        {
+            DbManager::getInstance()->addConnection(
+                new \EasySwoole\ORM\Db\Connection(new \EasySwoole\ORM\Db\Config($mvalue)),
+                $mname
+            );
         }
     }
 
@@ -141,14 +146,15 @@ class EventInitialize extends SplBean
     protected function registerRedisPool()
     {
         $config = $this->redisConfig;
-        if (is_array($config)) {
-            foreach ($config as $rname => $rvalue)
-            {
-                \EasySwoole\RedisPool\RedisPool::getInstance()->register(
-                    new \EasySwoole\Redis\Config\RedisConfig($rvalue),
-                    $rname
-                );
-            }
+        if ( ! is_array($config)) {
+            return;
+        }
+        foreach ($config as $rname => $rvalue)
+        {
+            \EasySwoole\RedisPool\RedisPool::getInstance()->register(
+                new \EasySwoole\Redis\Config\RedisConfig($rvalue),
+                $rname
+            );
         }
     }
 
@@ -158,62 +164,63 @@ class EventInitialize extends SplBean
      */
     protected function registerMysqlOnQuery()
     {
-        if ($this->mysqlOnQueryOpen) {
-            DbManager::getInstance()->onQuery(
-                function (\EasySwoole\ORM\Db\Result $result, \EasySwoole\Mysqli\QueryBuilder $builder, $start) {
-                    // 前置
-                    if (is_callable($this->mysqlOnQueryFunc['_before_func'])) {
-                        // 返回false不继续运行
-                        if ($this->mysqlOnQueryFunc['_before_func']($result, $builder, $start) === false) {
-                            return;
-                        }
+        if ( ! $this->mysqlOnQueryOpen) {
+            return;
+        }
+        DbManager::getInstance()->onQuery(
+            function (\EasySwoole\ORM\Db\Result $result, \EasySwoole\Mysqli\QueryBuilder $builder, $start) {
+                // 前置
+                if (is_callable($this->mysqlOnQueryFunc['_before_func'])) {
+                    // 返回false不继续运行
+                    if ($this->mysqlOnQueryFunc['_before_func']($result, $builder, $start) === false) {
+                        return;
                     }
-                    $sql = $builder->getLastQuery();
-                    if (empty($sql))
+                }
+                $sql = $builder->getLastQuery();
+                if (empty($sql))
+                {
+                    return;
+                }
+                trace($sql, 'info', 'sql');
+
+                // 不记录的SQL，表名
+                $logtable = config('NOT_WRITE_SQL.table');
+                foreach($logtable as $v)
+                {
+                    if (
+                        strpos($sql, "`$v`")
+                        ||
+                        // 支持  XXX*这种模糊匹配
+                        (strpos($v, '*') && strpos($sql, '`' . str_replace('*', '', $v)))
+                    )
                     {
                         return;
                     }
-                    trace($sql, 'info', 'sql');
-
-                    // 不记录的SQL，表名
-                    $logtable = config('NOT_WRITE_SQL.table');
-                    foreach($logtable as $v)
+                }
+                // 不记录的SQL，正则
+                $not = config('NOT_WRITE_SQL.pattern');
+                foreach ($not as $pattern)
+                {
+                    if (preg_match($pattern, $sql))
                     {
-                        if (
-                            strpos($sql, "`$v`")
-                            ||
-                            // 支持  XXX*这种模糊匹配
-                            (strpos($v, '*') && strpos($sql, '`' . str_replace('*', '', $v)))
-                        )
-                        {
-                            return;
-                        }
-                    }
-                    // 不记录的SQL，正则
-                    $not = config('NOT_WRITE_SQL.pattern');
-                    foreach ($not as $pattern)
-                    {
-                        if (preg_match($pattern, $sql))
-                        {
-                            return;
-                        }
-                    }
-
-                    if (is_callable($this->mysqlOnQueryFunc['_save_sql'])) {
-                        $this->mysqlOnQueryFunc['_save_sql']($sql);
-                    } else {
-                        /** @var \App\Model\Log $Log */
-                        $Log = model('Log');
-                        $Log->sqlWriteLog($sql);
-                    }
-
-                    // 后置
-                    if (is_callable($this->mysqlOnQueryFunc['_after_func'])) {
-                        $this->mysqlOnQueryFunc['_after_func']($result, $builder, $start);
+                        return;
                     }
                 }
-            );
-        }
+
+                if (is_callable($this->mysqlOnQueryFunc['_save_sql'])) {
+                    $this->mysqlOnQueryFunc['_save_sql']($sql);
+                } else {
+                    /** @var \App\Model\Log $Log */
+                    $Log = model('Log');
+                    $Log->sqlWriteLog($sql);
+                }
+
+                // 后置
+                if (is_callable($this->mysqlOnQueryFunc['_after_func'])) {
+                    $this->mysqlOnQueryFunc['_after_func']($result, $builder, $start);
+                }
+            }
+        );
     }
 
     /**
@@ -223,22 +230,23 @@ class EventInitialize extends SplBean
     protected function registerI18n()
     {
         $languages = $this->languageConfig;
-        if (is_array($languages)) {
-            foreach ($languages as $lang => $language)
-            {
-                $className = $language['class'];
-                if ( ! class_exists($className)) {
-                    continue;
-                }
-                I18N::getInstance()->addLanguage(new $className(), $lang);
-                if (isset($language['default']) && $language['default'] === true) {
-                    I18N::getInstance()->setDefaultLanguage($lang);
-                }
+        if ( ! is_array($languages)) {
+            return;
+        }
+        foreach ($languages as $lang => $language)
+        {
+            $className = $language['class'];
+            if ( ! class_exists($className)) {
+                continue;
             }
-            // ini优先级比Config.default高
-            if (($iniLang = get_cfg_var('env.language')) && in_array($iniLang, array_keys($languages))) {
-                I18N::getInstance()->setDefaultLanguage($iniLang);
+            I18N::getInstance()->addLanguage(new $className(), $lang);
+            if (isset($language['default']) && $language['default'] === true) {
+                I18N::getInstance()->setDefaultLanguage($lang);
             }
+        }
+        // ini优先级比Config.default高
+        if (($iniLang = get_cfg_var('env.language')) && in_array($iniLang, array_keys($languages))) {
+            I18N::getInstance()->setDefaultLanguage($iniLang);
         }
     }
 
@@ -248,33 +256,34 @@ class EventInitialize extends SplBean
      */
     protected function registerHttpOnRequest()
     {
-        if ($this->httpOnRequestOpen) {
-            \EasySwoole\Component\Di::getInstance()->set(
-                \EasySwoole\EasySwoole\SysConst::HTTP_GLOBAL_ON_REQUEST,
-                function (Request $request, Response $response) {
-                    // 前置
-                    if (is_callable($this->httpOnRequestFunc['_before_func'])) {
-                        // 返回false终止本次Request
-                        if ($this->httpOnRequestFunc['_before_func']($request, $response) === false) {
-                            return false;
-                        }
-                    }
-                    // 自定义协程单例Request
-                    CtxRequest::getInstance()->request = $request;
-
-                    LamUnit::setI18n($request);
-
-                    // 后置
-                    if (is_callable($this->httpOnRequestFunc['_after_func'])) {
-                        $return = $this->httpOnRequestFunc['_after_func']($request, $response);
-                        // 如果返回bool，则直接使用
-                        if (is_bool($return)) {
-                            return $return;
-                        }
-                    }
-                    return true;
-                }
-            );
+        if ( ! $this->httpOnRequestOpen) {
+            return;
         }
+        \EasySwoole\Component\Di::getInstance()->set(
+            \EasySwoole\EasySwoole\SysConst::HTTP_GLOBAL_ON_REQUEST,
+            function (Request $request, Response $response) {
+                // 前置
+                if (is_callable($this->httpOnRequestFunc['_before_func'])) {
+                    // 返回false终止本次Request
+                    if ($this->httpOnRequestFunc['_before_func']($request, $response) === false) {
+                        return false;
+                    }
+                }
+                // 自定义协程单例Request
+                CtxRequest::getInstance()->request = $request;
+
+                LamUnit::setI18n($request);
+
+                // 后置
+                if (is_callable($this->httpOnRequestFunc['_after_func'])) {
+                    $return = $this->httpOnRequestFunc['_after_func']($request, $response);
+                    // 如果返回bool，则直接使用
+                    if (is_bool($return)) {
+                        return $return;
+                    }
+                }
+                return true;
+            }
+        );
     }
 }
