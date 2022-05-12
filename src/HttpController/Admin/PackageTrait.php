@@ -37,7 +37,7 @@ trait PackageTrait
 
     public function _saveKeyValue($return = false)
 	{
-		$kv = $this->formatKeyValue($this->post['kv']);
+		$kv = $this->formatKeyValue($this->post['kv'] ?? []);
 		$model = $this->Model->where('id', $this->post['id'])->get();
 		$extension = $model->getAttr('extension');
 
