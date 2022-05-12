@@ -2,11 +2,12 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
+use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 
 trait PackageTrait
 {
-	protected function _search()
+	protected function __search()
 	{
 		$filter = $this->filter();
 		// 如果分配了包权限但没有分配该包所属的游戏权限，同样是看不到此包的
@@ -22,20 +23,21 @@ trait PackageTrait
 		return false;
 	}
 
-	public function addPost()
+    public function _add($return = false)
 	{
-		$pkgbnd = $this->post['pkgbnd'];
-		$count = $this->Model->where('pkgbnd', $pkgbnd)->count();
-		if ($count > 0) {
-			return $this->error(Code::ERROR_OTHER, 'pkgbnd已存在： ' . $pkgbnd);
-		}
-		parent::addPost();
+		if ($this->isHttpPost()) {
+            $pkgbnd = $this->post['pkgbnd'];
+            $count = $this->Model->where('pkgbnd', $pkgbnd)->count();
+            if ($count > 0) {
+                throw new HttpParamException('pkgbnd已存在： ' . $pkgbnd);
+            }
+        }
+		return parent::_add($return);
 	}
 
-	// 单纯的保存Key-Value类型
-	public function saveKeyValue($id = 0, $name = '', $kv = [])
+    public function _saveKeyValue($return = false)
 	{
-		$kv = $this->formatKeyValue($this->post['kv']);
+		$kv = $this->formatKeyValue($this->post['kv'] ?? []);
 		$model = $this->Model->where('id', $this->post['id'])->get();
 		$extension = $model->getAttr('extension');
 
@@ -45,19 +47,20 @@ trait PackageTrait
 
 		$model->extension = $extension;
 		$model->update();
-		$this->success();
+		return $return ? $model->toArray() : $this->success();
 	}
 
 
 	// 检查pkgbnd是否已存在了
-	public function pkgbndExist()
+    public function _pkgbndExist($return = false)
 	{
 		$pkgbnd = $this->get['pkgbnd'];
 		if (empty($pkgbnd)) {
-			return $this->error(Code::ERROR_OTHER, 'pkgbnd为空！');
+			throw new HttpParamException('pkgbnd为空！');
 		}
 		$count = $this->Model->where('pkgbnd', $pkgbnd)->count();
-		$this->success(['count' => $count]);
+        $data = ['count' => $count];
+		return $return ? $data : $this->success($data);
 	}
 
 	protected function formatKeyValue($kv = [])
@@ -84,10 +87,10 @@ trait PackageTrait
 		return $result;
 	}
 
-    public function options()
+    public function _options($return = false)
     {
         // 除了extension外的所有字段
         $options = $this->Model->order('gameid', 'desc')->order('sort', 'asc')->field(['id', 'name', 'gameid', 'pkgbnd', 'os', 'sort'])->all();
-        $this->success($options);
+        return $return ? $options : $this->success($options);
     }
 }

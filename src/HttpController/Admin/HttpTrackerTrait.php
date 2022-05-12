@@ -4,11 +4,12 @@ namespace WonderGame\EsUtility\HttpController\Admin;
 
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
+use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 
 trait HttpTrackerTrait
 {
-	protected function _search()
+	protected function __search()
 	{
 		if (empty($this->get['where'])) {
 			// 默认最近14天
@@ -20,7 +21,7 @@ trait HttpTrackerTrait
 			$this->Model->where($this->get['where']);
 		}
 		return null;
-		
+
 		// 已废弃
 		return function (QueryBuilder $builder) {
 			$filter = $this->filter();
@@ -28,7 +29,7 @@ trait HttpTrackerTrait
 			if (isset($filter['repeated']) && $filter['repeated'] !== '') {
 				$builder->where('repeated', $filter['repeated']);
 			}
-			
+
 			// envkey: {"one":"point_name","two":"point_id"}
 			// envvalue: {"one":"123","two":"4556"}
 			foreach (['envkey', 'envvalue'] as $col) {
@@ -36,7 +37,7 @@ trait HttpTrackerTrait
 					$filter[$col] = json_decode($filter[$col], true);
 				}
 			}
-			
+
 			if ( ! empty($filter['envkey'])) {
 				foreach ($filter['envkey'] as $key => $value) {
 					if ($like = $filter['envvalue'][$key]) {
@@ -63,7 +64,7 @@ trait HttpTrackerTrait
 					}
 				}
 			}
-			
+
 			$runtime = $filter['runtime'] ?? 0;
 			if ($runtime > 0) {
 				$builder->where('runtime', $runtime, '>=');
@@ -74,56 +75,62 @@ trait HttpTrackerTrait
 			 * */
 		};
 	}
-	
+
 	// 单条复发
-	public function repeat()
+    public function _repeat($return = false)
 	{
 		$pointId = $this->post['pointId'];
 		if (empty($pointId)) {
-			return $this->error(Code::ERROR_OTHER, 'PointId id empty.');
+			throw new HttpParamException('PointId id empty.');
 		}
 		$row = $this->Model->where('point_id', $pointId)->get();
 		if ( ! $row) {
-			return $this->error(Code::ERROR_OTHER, 'PointId id Error: ' . $pointId);
+			throw new HttpParamException('PointId id Error: ' . $pointId);
 		}
-		
+
 		$response = $row->repeatOne();
-		if ( ! $response) {
-			$this->error(Code::ERROR_OTHER, 'Http Error! ');
-		} else {
-			$this->success([
-				'httpStatusCode' => $response->getStatusCode(),
-				'data' => json_decode($response->getBody(), true)
-			]);
-		}
+        if ( ! $response) {
+            throw new HttpParamException('Http Error! ');
+        }
+
+        $data = [
+            'httpStatusCode' => $response->getStatusCode(),
+            'data' => json_decode($response->getBody(), true)
+        ];
+        return $return ? $data : $this->success($data);
 	}
-	
+
 	// 试运行，查询count
-	public function count()
+    public function _count($return = false)
 	{
 		$where = $this->post['where'];
 		if (empty($where)) {
-			return $this->error(Code::ERROR_OTHER, 'ERROR is Empty');
+			throw new HttpParamException('ERROR is Empty');
 		}
 		try {
 			$count = $this->Model->where($where)->count('point_id');
-			$this->success(['count' => $count]);
+            $data = ['count' => $count];
+			return $return ? $data : $this->success($data);
 		} catch (\Exception | \Throwable $e) {
-			$this->error(Code::ERROR_OTHER, $e->getMessage());
+            if ($return) {
+                throw $e;
+            } else {
+                $this->error(Code::ERROR_OTHER, $e->getMessage());
+            }
 		}
 	}
-	
+
 	// 确定运行
-	public function run()
+    public function _run($return = false)
 	{
 		$where = $this->post['where'];
 		if (empty($where)) {
-			return $this->error(Code::ERROR_OTHER, 'run ERROR is Empty');
+			throw new HttpParamException('run ERROR is Empty');
 		}
 		try {
 			$count = $this->Model->where($where)->count('point_id');
 			if ($count <= 0) {
-				return $this->error(Code::ERROR_OTHER, 'COUNT行数为0');
+				throw new HttpParamException('COUNT行数为0');
 			}
 			$task = \EasySwoole\EasySwoole\Task\TaskManager::getInstance();
 //            $status = $task->async(new \App\Task\HttpTracker([
@@ -132,7 +139,7 @@ trait HttpTrackerTrait
 //            ]));
 			$status = $task->async(function () use ($where) {
 				trace('HttpTracker 开始 ');
-				
+
 				/** @var AbstractModel $model */
 				$model = model('HttpTracker');
 				$model->where($where)->chunk(function ($item) {
@@ -141,12 +148,17 @@ trait HttpTrackerTrait
 				trace('HttpTracker 结束 ');
 			});
 			if ($status > 0) {
-				$this->success(['count' => $count, 'task' => $status]);
+                $data = ['count' => $count, 'task' => $status];
+				return $return ? $data : $this->success($data);
 			} else {
-				$this->error(Code::ERROR_OTHER, "投递异步任务失败: $status");
+				throw new HttpParamException("投递异步任务失败: $status");
 			}
-		} catch (\Exception | \Throwable $e) {
-			$this->error(Code::ERROR_OTHER, $e->getMessage());
+		} catch (HttpParamException | \Exception | \Throwable $e) {
+			if ($return) {
+                throw $e;
+            } else {
+                $this->error(Code::ERROR_OTHER, $e->getMessage());
+            }
 		}
 	}
 }

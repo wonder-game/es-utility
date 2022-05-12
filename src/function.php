@@ -736,21 +736,16 @@ if ( ! function_exists('is_env')) {
 	}
 }
 
-if ( ! function_exists('memory_unit')) {
+if ( ! function_exists('memory_convert')) {
     /**
      * 转换内存单位
-     * @param $memory
-     * @param $join
-     * @param $i
-     * @return array|string
+     * @param $bytes
+     * @return string
      */
-    function memory_unit($memory, $join = true, $i = 0) {
-        $base = 1024;
-        $unit = ['Byte', 'KB', 'MB', 'GB', 'TB'];
-        if ($memory / $base < 1) {
-            return $join ? (sprintf('%.2f', $memory) . $unit[$i]) : [$memory, $unit[$i]];
-        } else {
-            return memory_unit($memory / $base, $join, ++$i);
-        }
+    function memory_convert($bytes) {
+        $s = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+        $e = floor(log($bytes) / log(1024));
+
+        return sprintf('%.2f ' . $s[$e], ($bytes / pow(1024, floor($e))));
     }
 }

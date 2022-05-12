@@ -35,7 +35,7 @@ trait AdminTrait
         return parent::__after_index(['items' => $items, 'roleList' => $roleList], $total);
     }
 
-    protected function _getUserInfo($return = false)
+    public function _getUserInfo($return = false)
     {
         $upload = config('UPLOAD');
 
@@ -112,7 +112,7 @@ trait AdminTrait
     /**
      * 用户权限码
      */
-    protected function _getPermCode($return = false)
+    public function _getPermCode($return = false)
     {
         $model = model('Menu');
         $code = $model->permCode($this->operinfo['rid']);
@@ -127,11 +127,11 @@ trait AdminTrait
         return $this->_edit();
     }
 
-    protected function _modify($return = false)
+    public function _modify($return = false)
     {
         $userInfo = $this->operinfo;
 
-        if ($this->isMethod('GET')) {
+        if ($this->isHttpGet()) {
             // role的关联数据也可以不用理会，ORM会处理
             unset($userInfo['password'], $userInfo['role']);
             // 默认首页treeSelect, 仅看有权限的菜单
@@ -145,7 +145,7 @@ trait AdminTrait
             $menuList = $Menu->menuList($where);
             $data = ['menuList' => $menuList, 'result' => $userInfo];
             return $return ? $data : $this->success($data);
-        } elseif ($this->isMethod('POST')) {
+        } elseif ($this->isHttpPost()) {
 			$id = $this->post['id'];
 			if (empty($id) || $userInfo['id'] != $id) {
                 // 仅允许管理员编辑自己的信息
@@ -164,7 +164,7 @@ trait AdminTrait
         }
     }
 
-    protected function _getToken($return = false)
+    public function _getToken($return = false)
     {
         // 此接口比较重要，只允许超级管理员调用
         if ( ! $this->isSuper()) {
