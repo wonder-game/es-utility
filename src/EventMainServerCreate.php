@@ -132,28 +132,29 @@ class EventMainServerCreate extends SplBean
     protected function registerConsumer()
     {
         $jobs = $this->consumerJobs;
-        if (is_array($jobs)) {
-            $group = config('SERVER_NAME') . '.my';
-            foreach ($jobs as $value) {
+        if ( ! is_array($jobs)) {
+            return;
+        }
+        $group = config('SERVER_NAME') . '.my';
+        foreach ($jobs as $value) {
 
-                $proName = $group . '.' . $value['name'];
+            $proName = $group . '.' . $value['name'];
 
-                $class = $value['class'];
-                if (empty($class) || ! class_exists($class)) {
-                    continue;
-                }
-                $psnum = intval($value['psnum'] ?? 1);
+            $class = $value['class'];
+            if (empty($class) || ! class_exists($class)) {
+                continue;
+            }
+            $psnum = intval($value['psnum'] ?? 1);
 
-                for ($i = 0; $i < $psnum; ++$i) {
-                    $cfg = array_merge([
-                        'processName' => $proName . '.' . $i,
-                        'processGroup' => $group,
-                        'arg' => $value,
-                        'enableCoroutine' => true,
-                    ]);
-                    $processConfig = new \EasySwoole\Component\Process\Config($cfg);
-                    \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
-                }
+            for ($i = 0; $i < $psnum; ++$i) {
+                $cfg = array_merge([
+                    'processName' => $proName . '.' . $i,
+                    'processGroup' => $group,
+                    'arg' => $value,
+                    'enableCoroutine' => true,
+                ]);
+                $processConfig = new \EasySwoole\Component\Process\Config($cfg);
+                \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
             }
         }
     }
@@ -220,13 +221,14 @@ class EventMainServerCreate extends SplBean
     protected function registerNotify()
     {
         $config = $this->notifyConfig;
-        if (is_array($config)) {
-            foreach ($config as $name => $cfg) {
-                if ($cfg instanceof ConfigInterface) {
-                    EsNotify::getInstance()->register($cfg, $name);
-                } else {
-                    trace("EsNotify 注册失败: $name");
-                }
+        if ( ! is_array($config)) {
+            return;
+        }
+        foreach ($config as $name => $cfg) {
+            if ($cfg instanceof ConfigInterface) {
+                EsNotify::getInstance()->register($cfg, $name);
+            } else {
+                trace("EsNotify 注册失败: $name");
             }
         }
     }
