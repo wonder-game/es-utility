@@ -61,6 +61,7 @@ class EventInitialize extends SplBean
      * @var null | string
      */
     protected $httpTracker = null;
+    protected $httpTrackerConfig = [];
 
     /**
      * 设置属性默认值
@@ -296,7 +297,7 @@ class EventInitialize extends SplBean
                 if ( ! is_null($this->httpTracker)) {
                     $repeated = intval(stripos($request->getHeaderLine('user-agent'), ';HttpTracker') !== false);
                     // 开启链路追踪
-                    $point = HttpTracker::getInstance()->createStart($this->httpTracker);
+                    $point = HttpTracker::getInstance($this->httpTrackerConfig)->createStart($this->httpTracker);
                     $point && $point->setStartArg(
                         HttpTracker::startArgsRequest($request, ['repeated' => $repeated])
                     );

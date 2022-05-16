@@ -44,7 +44,7 @@ class LamUnit
     static public function utilityParam(Request $request, $key = '一堆通用参数！！')
     {
         // 获取IP
-        $utility['ip'] = ip($request);
+        $utility = ['ip' => ip($request)];
 
         if ($comval = $request->getRequestParam($key)) {
             $comval = json_decode($comval, true);
