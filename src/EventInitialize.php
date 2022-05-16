@@ -2,7 +2,9 @@
 
 namespace WonderGame\EsUtility;
 
+use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\SysConst;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\I18N\I18N;
@@ -12,6 +14,7 @@ use EasySwoole\Trigger\TriggerInterface;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\ExceptionTrigger;
 use WonderGame\EsUtility\Common\Classes\LamUnit;
+use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
 
 class EventInitialize extends SplBean
 {
@@ -47,6 +50,18 @@ class EventInitialize extends SplBean
         '_after_func' => null, // 后置
     ];
 
+    protected $httpAfterRequestOpen = null;
+    protected $httpAfterRequestFunc = [
+        '_before_func' => null, // 前置
+        '_after_func' => null, // 后置
+    ];
+
+    /**
+     * 开启链路追踪，string-根节点名称, empty=false 不开启
+     * @var null | string
+     */
+    protected $httpTracker = null;
+
     /**
      * 设置属性默认值
      * @return void
@@ -77,6 +92,9 @@ class EventInitialize extends SplBean
         if (is_null($this->httpOnRequestOpen)) {
             $this->httpOnRequestOpen = true;
         }
+        if (is_null($this->httpAfterRequestOpen)) {
+            $this->httpAfterRequestOpen = true;
+        }
     }
 
     public function run()
@@ -88,6 +106,7 @@ class EventInitialize extends SplBean
         $this->registerMysqlOnQuery();
         $this->registerI18n();
         $this->registerHttpOnRequest();
+        $this->registerAfterRequest();
     }
 
     /**
@@ -169,6 +188,11 @@ class EventInitialize extends SplBean
         }
         DbManager::getInstance()->onQuery(
             function (\EasySwoole\ORM\Db\Result $result, \EasySwoole\Mysqli\QueryBuilder $builder, $start) {
+                $sql = $builder->getLastQuery();
+                if (empty($sql)) {
+                    return;
+                }
+                trace($sql, 'info', 'sql');
                 // 前置
                 if (is_callable($this->mysqlOnQueryFunc['_before_func'])) {
                     // 返回false不继续运行
@@ -176,34 +200,29 @@ class EventInitialize extends SplBean
                         return;
                     }
                 }
-                $sql = $builder->getLastQuery();
-                if (empty($sql))
-                {
-                    return;
-                }
-                trace($sql, 'info', 'sql');
 
                 // 不记录的SQL，表名
                 $logtable = config('NOT_WRITE_SQL.table');
-                foreach($logtable as $v)
-                {
-                    if (
-                        strpos($sql, "`$v`")
-                        ||
-                        // 支持  XXX*这种模糊匹配
-                        (strpos($v, '*') && strpos($sql, '`' . str_replace('*', '', $v)))
-                    )
-                    {
-                        return;
+                if (is_array($logtable)) {
+                    foreach($logtable as $v) {
+                        if (
+                            strpos($sql, "`$v`")
+                            ||
+                            // 支持  XXX*这种模糊匹配
+                            (strpos($v, '*') && strpos($sql, '`' . str_replace('*', '', $v)))
+                        )
+                        {
+                            return;
+                        }
                     }
                 }
                 // 不记录的SQL，正则
                 $not = config('NOT_WRITE_SQL.pattern');
-                foreach ($not as $pattern)
-                {
-                    if (preg_match($pattern, $sql))
-                    {
-                        return;
+                if (is_array($not)) {
+                    foreach ($not as $pattern) {
+                        if (preg_match($pattern, $sql)) {
+                            return;
+                        }
                     }
                 }
 
@@ -259,8 +278,8 @@ class EventInitialize extends SplBean
         if ( ! $this->httpOnRequestOpen) {
             return;
         }
-        \EasySwoole\Component\Di::getInstance()->set(
-            \EasySwoole\EasySwoole\SysConst::HTTP_GLOBAL_ON_REQUEST,
+        Di::getInstance()->set(
+            SysConst::HTTP_GLOBAL_ON_REQUEST,
             function (Request $request, Response $response) {
                 // 前置
                 if (is_callable($this->httpOnRequestFunc['_before_func'])) {
@@ -274,6 +293,15 @@ class EventInitialize extends SplBean
 
                 LamUnit::setI18n($request);
 
+                if ( ! is_null($this->httpTracker)) {
+                    $repeated = intval(stripos($request->getHeaderLine('user-agent'), ';HttpTracker') !== false);
+                    // 开启链路追踪
+                    $point = HttpTracker::getInstance()->createStart($this->httpTracker);
+                    $point && $point->setStartArg(
+                        HttpTracker::startArgsRequest($request, ['repeated' => $repeated])
+                    );
+                }
+
                 // 后置
                 if (is_callable($this->httpOnRequestFunc['_after_func'])) {
                     $return = $this->httpOnRequestFunc['_after_func']($request, $response);
@@ -283,6 +311,36 @@ class EventInitialize extends SplBean
                     }
                 }
                 return true;
+            }
+        );
+    }
+
+    protected function registerAfterRequest()
+    {
+        if ( ! ($this->httpAfterRequestOpen || ! is_null($this->httpTracker))) {
+            return;
+        }
+
+        Di::getInstance()->set(
+            SysConst::HTTP_GLOBAL_AFTER_REQUEST,
+            function (Request $request, Response $response) {
+                // 前置
+                if (is_callable($this->httpAfterRequestFunc['_before_func'])) {
+                    // 返回false结束运行
+                    if ($this->httpAfterRequestFunc['_before_func']($request, $response) === false) {
+                        return;
+                    }
+                }
+
+                if ( ! is_null($this->httpTracker)) {
+                    $point = HttpTracker::getInstance()->startPoint();
+                    $point && $point->setEndArg(HttpTracker::endArgsResponse($response))->end();
+                }
+
+                // 后置
+                if (is_callable($this->httpAfterRequestFunc['_after_func'])) {
+                    $this->httpAfterRequestFunc['_after_func']($request, $response);
+                }
             }
         );
     }

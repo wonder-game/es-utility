@@ -68,11 +68,14 @@ class EventMainServerCreate extends SplBean
 
     public function run()
     {
-        $this->registerWebSocketServer();
+        // 仅在开启的是WebSocket服务时
+        if (config('MAIN_SERVER.SERVER_TYPE') === EASYSWOOLE_WEB_SOCKET_SERVER) {
+            $this->registerWebSocketServer();
+        }
         $this->registerCrontab();
+        $this->registerConsumer();
         $this->watchHotReload();
         $this->registerNotify();
-        $this->registerConsumer();
     }
 
     protected function registerWebSocketServer()

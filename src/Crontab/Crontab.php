@@ -33,6 +33,10 @@ class Crontab extends AbstractCronTask
 	{
 		$file = config('CRONTAB_BACKUP_FILE') ?: (config('LOG.dir') . '/crontab.object.data');
 		try {
+            if ( ! find_model('Crontab', false)) {
+                trace('Crontab Model Class Not Found! ', 'error');
+                return;
+            }
 			/** @var \App\Model\Crontab $model */
 			$model = model('Crontab');
 			// 获取执行Crontab列表
@@ -43,7 +47,8 @@ class Crontab extends AbstractCronTask
 		} catch (\Exception | \Throwable $e) {
 			// 失败降级从文件读取
 			if ( ! file_exists($file) || ! ($str = file_get_contents($file))) {
-				return;
+                // 连文件都没有，说明从未正常运行过
+				throw $e;
 			}
 
 			$cron = json_decode($str, true);

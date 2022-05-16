@@ -8,19 +8,8 @@
 
 namespace WonderGame\EsUtility\Common\Classes;
 
-
-use EasySwoole\Command\Color;
-use EasySwoole\EasySwoole\Command\Utility;
-use EasySwoole\EasySwoole\Config;
-use EasySwoole\EasySwoole\ServerManager;
-use EasySwoole\EasySwoole\Swoole\EventRegister;
-use EasySwoole\Http\GlobalParam\Hook;
-use EasySwoole\Http\GlobalParamHook;
 use EasySwoole\Http\Request;
-use EasySwoole\Http\Response;
 use EasySwoole\I18N\I18N;
-use EasySwoole\ORM\DbManager;
-use WonderGame\EsNotify\EsNotify;
 
 class LamUnit
 {
@@ -33,7 +22,17 @@ class LamUnit
             }
             $languages = config('LANGUAGES') ?: [];
             foreach ($languages as $lang => $value) {
-                if(preg_match($value['match'], $langage)) {
+                // 回调
+                if (is_callable($value['match'])) {
+                    $match = $value['match']($langage);
+                    if ($match === true) {
+                        I18N::getInstance()->setLanguage($lang);
+                        break;
+                    }
+                }
+                // 正则
+                elseif(is_string($value['match']) && preg_match($value['match'], $langage))
+                {
                     I18N::getInstance()->setLanguage($lang);
                     break;
                 }
@@ -86,7 +85,6 @@ class LamUnit
     static public function withParams(Request $request, $array = [], $merge = true, $unset = '')
     {
         $method = $request->getMethod();
-        // $_GET or $_POST
         $params = $method == 'GET' ? $request->getQueryParams() : $request->getParsedBody();
         if (is_array($array)) {
             if ($merge) {
