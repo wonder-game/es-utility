@@ -15,7 +15,7 @@ trait BaseTrait
 {
 	/** @var AbstractModel $Model */
 	protected $Model;
-	
+
 	/**
 	 * 实例化模型类
 	 *   1.为空字符串自动实例化
@@ -25,12 +25,12 @@ trait BaseTrait
 	 * @var string
 	 */
 	protected $modelName = '';
-	
-	protected function onRequest(?string $action): bool
+
+    protected function onRequest(?string $action): ?bool
 	{
-		return $this->_initialize();
+		return parent::onRequest($action) && $this->_initialize();
 	}
-	
+
 	protected function _initialize()
 	{
 		// 设置组件属性
@@ -38,25 +38,25 @@ trait BaseTrait
 		// 实例化模型
 		return $this->instanceModel();
 	}
-	
+
 	protected function setBaseTraitProptected()
 	{
 	}
-	
+
 	protected function getAuthorization()
 	{
 		$tokenKey = config('TOKEN_KEY');
 		if ( ! $this->request()->hasHeader($tokenKey)) {
 			return false;
 		}
-		
+
 		$authorization = $this->request()->getHeader($tokenKey);
 		if (is_array($authorization)) {
 			$authorization = current($authorization);
 		}
 		return $authorization;
 	}
-	
+
 	protected function success($result = null, $msg = null)
 	{
 		// 合计行antdv的rowKey
@@ -71,12 +71,12 @@ trait BaseTrait
 		}
 		$this->writeJson(Code::CODE_OK, $result, $msg);
 	}
-	
+
 	protected function instanceModel()
 	{
 		if ( ! is_null($this->modelName)) {
 			$className = ucfirst($this->getStaticClassName());
-			
+
 			if ($this->modelName === '') {
 				$this->Model = model($className);
 			} // 需要gameid的模型
@@ -97,7 +97,7 @@ trait BaseTrait
 		}
 		return true;
 	}
-	
+
 	/**
 	 * [1 => 'a', 2 => 'b', 4 => 'c']
 	 * 这种数组传给前端会被识别为object
@@ -113,7 +113,7 @@ trait BaseTrait
 		}
 		return $result;
 	}
-	
+
 	// 零值元素转为空字符
 	protected function zeroToEmpty($array = [], $filterCols = [], $setCols = true, $toArray = true)
 	{
@@ -128,7 +128,7 @@ trait BaseTrait
 				}
 				$row[$k] = (((is_bool($setCols) && $setCols) || (is_array($setCols) && in_array($k, $setCols))) && $v == 0) ? $defaultValue : $v;
 			}
-			
+
 			if ($toArray) {
 				$result[] = $row;
 			} else {
