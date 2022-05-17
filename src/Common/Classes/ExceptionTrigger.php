@@ -18,7 +18,7 @@ class ExceptionTrigger implements TriggerInterface
 		if (in_array($errorCode, [E_NOTICE])) {
 			return;
 		}
-		
+
 		$trace = debug_backtrace();
 		if ($location == null) {
 			$location = new Location();
@@ -34,7 +34,7 @@ class ExceptionTrigger implements TriggerInterface
 		];
 		$this->doTrigger(__FUNCTION__, $eMsg);
 	}
-	
+
 	public function throwable(\Throwable $throwable)
 	{
 		$eMsg = [
@@ -45,7 +45,7 @@ class ExceptionTrigger implements TriggerInterface
 		];
 		$this->doTrigger(__FUNCTION__, $eMsg);
 	}
-	
+
 	protected function doTrigger($trigger, $eMsg = [])
 	{
 		trace($eMsg, 'error', $trigger);
@@ -56,14 +56,14 @@ class ExceptionTrigger implements TriggerInterface
 			$task->async(new \WonderGame\EsUtility\Task\Error($eMsg));
 		}
 	}
-	
+
 	protected function doError($trigger, $eMsg = [])
 	{
 		trace($eMsg, 'error', $trigger);
-		
+
 		$wg = new WaitGroup();
 		$wg->add();
-		
+
 		go(function () use ($eMsg, $wg) {
 			if (is_string($eMsg)) {
 				$eMsg = [$eMsg];
@@ -74,7 +74,7 @@ class ExceptionTrigger implements TriggerInterface
 			$eMsg['servername'] = config('SERVNAME');
 			// trace通过常规文件记录
 			unset($eMsg['trace']);
-			
+
 			try {
 				if ($config = config('EXCEPTION_REPORT')) {
 					if (isset($config['type']) && $config['type'] === 'http' && $config['url']) {
@@ -84,7 +84,7 @@ class ExceptionTrigger implements TriggerInterface
 						$httpCode = $response->getStatusCode();
 						$httpBody = $response->getBody();
 					} else {
-						$redis = defer_redis($config['poolname'], $config['db']);
+						$redis = defer_redis($config['poolname']);
 						$redis->lPush($config['queue'], json_encode($eMsg));
 					}
 				}
@@ -93,7 +93,7 @@ class ExceptionTrigger implements TriggerInterface
 			}
 			$wg->done();
 		});
-		
+
 		// 协程等待
 		$wg->wait();
 		// 关闭

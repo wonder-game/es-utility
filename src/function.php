@@ -119,15 +119,12 @@ if ( ! function_exists('defer_redis')) {
 	/**
 	 * 返回redis句柄资源
 	 * @param string $poolname 标识
-	 * @param number $db 数据库编号
 	 * @return \EasySwoole\Redis\Redis
 	 */
-	function defer_redis($poolname = 'default', $db = null)
+	function defer_redis($poolname = 'default')
 	{
 		// defer方式获取连接
-		$Redis = RedisPool::defer($poolname);
-		is_numeric($db) && $Redis->select($db); // 切换到指定序号
-		return $Redis;
+		return RedisPool::defer($poolname);
 	}
 }
 

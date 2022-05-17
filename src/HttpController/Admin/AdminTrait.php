@@ -16,6 +16,9 @@ trait AdminTrait
 		if ( ! empty($this->get['rid'])) {
 			$where['rid'] = $this->get['rid'];
 		}
+        if (is_numeric($this->get['status'])) {
+            $where['status'] = $this->get['status'];
+        }
 		foreach (['username', 'realname'] as $val) {
 			if ( ! empty($this->get[$val])) {
 				$where[$val] = ["%{$this->get[$val]}%", 'like'];
@@ -23,7 +26,7 @@ trait AdminTrait
 		}
 		return $where;
 	}
-	
+
 	protected function __after_index($items, $total)
 	{
 		/** @var \App\Model\Role $Role */
@@ -35,20 +38,20 @@ trait AdminTrait
 		}
 		return parent::__after_index(['items' => $items, 'roleList' => $roleList], $total);
 	}
-	
+
 	public function _getUserInfo($return = false)
 	{
 		$upload = config('UPLOAD');
-		
+
 		$config = [
 			// 图片上传路径
 			'imageDomain' => $upload['domain'],
 			// 充值枚举
 			'pay' => config('pay')
 		];
-		
+
 		$config['sysinfo'] = sysinfo();
-		
+
 		// 客户端进入页,应存id
 		if ( ! empty($this->operinfo['extension']['homePath'])) {
 			$Tree = new Tree();
@@ -58,9 +61,9 @@ trait AdminTrait
 		if ($avatar) {
 			$avatar = $config['imageDomain'] . $avatar;
 		}
-		
+
 		$super = $this->isSuper();
-		
+
 		$result = [
 			'id' => $this->operinfo['id'],
 			'username' => $this->operinfo['username'],
@@ -75,10 +78,10 @@ trait AdminTrait
 				]
 			]
 		];
-		
+
 		$gameids = $this->operinfo['extension']['gameids'] ?? [];
 		is_string($gameids) && $gameids = explode(',', $gameids);
-		
+
 		// 默认选择游戏，管理员级别 > 系统级别
 		if (isset($config['sysinfo']['default_select_gameid']) && $config['sysinfo']['default_select_gameid'] !== '') {
 			// 权限
@@ -90,7 +93,7 @@ trait AdminTrait
 		if (isset($this->operinfo['extension']['gid']) && $this->operinfo['extension']['gid'] !== '') {
 			$result['sleGid'] = $this->operinfo['extension']['gid'];
 		}
-		
+
 		// 游戏和包
 		/** @var \App\Model\Game $Game */
 		$Game = model('Game');
@@ -98,20 +101,20 @@ trait AdminTrait
 		$Package = model('Package');
 		if ( ! $super) {
 			$Game->where(['id' => [$gameids, 'in']]);
-			
+
 			$pkgbnd = $this->operinfo['extension']['pkgbnd'] ?? [];
 			is_string($pkgbnd) && $pkgbnd = explode(',', $pkgbnd);
 			$Package->where(['pkgbnd' => [$pkgbnd, 'in']]);
 		}
-		
+
 		$result['gameList'] = $Game->where('status', 1)->setOrder()->field(['id', 'name'])->all();
 		$result['pkgList'] = $Package->field(['gameid', 'pkgbnd', 'name', 'id'])->setOrder()->all();
-		
+
 		$result['config'] = $config;
-		
+
 		return $return ? $result : $this->success($result);
 	}
-	
+
 	/**
 	 * 用户权限码
 	 */
@@ -122,7 +125,7 @@ trait AdminTrait
 		$code = $model->permCode($this->operinfo['rid']);
 		return $return ? $code : $this->success($code);
 	}
-	
+
 	public function edit()
 	{
 		if (empty($this->post['password'])) {
@@ -130,18 +133,18 @@ trait AdminTrait
 		}
 		return $this->_edit();
 	}
-	
+
 	public function _modify($return = false)
 	{
 		$userInfo = $this->operinfo;
-		
+
 		if ($this->isHttpGet()) {
 			// role的关联数据也可以不用理会，ORM会处理
 			unset($userInfo['password'], $userInfo['role']);
 			// 默认首页treeSelect, 仅看有权限的菜单
 			/** @var \App\Model\Menu $Menu */
 			$Menu = model('Menu');
-			
+
 			$where = [];
 			$menus = $this->getUserMenus();
 			if (is_array($menus)) {
@@ -156,19 +159,19 @@ trait AdminTrait
 				// 仅允许管理员编辑自己的信息
 				throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_6));
 			}
-			
+
 			if ($this->post['__password'] && ! password_verify($this->post['__password'], $userInfo['password'])) {
 				throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_7));
 			}
-			
+
 			if (empty($this->post['__password']) || empty($this->post['password'])) {
 				unset($this->post['password']);
 			}
-			
+
 			return $this->_edit($return);
 		}
 	}
-	
+
 	public function _getToken($return = false)
 	{
 		// 此接口比较重要，只允许超级管理员调用

@@ -53,6 +53,8 @@
      │     ├── Crontab 通用的异步任务模板
      │     └── ... 异步任务类
      ├── ... 其他业务
+     ├── EventInitialize 对EasySwooleEvent::initialize事件的一些封装
+     ├── EventMainServerCreate  对EasySwooleEvent::mainServerCreate事件的一些封装
      └── function.php 常用函数，项目可预定义对应函数以实现不同逻辑
 
 Controller
@@ -103,7 +105,7 @@ trait有哪些坑
 - [x] 创建定时任务Crontab和消费任务Consumer，src/Common/Classes/Crontab移动至src/Crontab目录
 - [ ] 自定义Log处理器改为onLog + Event方式
 - [ ] 重写Tree类
-- [ ] WebSocket相关类，事件、解析、Caller、连接符管理等
+- [x] WebSocket相关类，事件、解析、Caller、连接符管理等
 - [ ] Crontab支持database、file、http等方式获取
 
 ### 其他
