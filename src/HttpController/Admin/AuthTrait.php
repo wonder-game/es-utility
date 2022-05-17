@@ -43,7 +43,7 @@ trait AuthTrait
 
     protected $isExport = false;
 
-    protected function onRequest(?string $action): bool
+    protected function onRequest(?string $action): ?bool
     {
         $this->setAuthTraitProptected();
 

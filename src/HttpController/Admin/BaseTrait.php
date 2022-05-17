@@ -26,10 +26,6 @@ trait BaseTrait
 	 */
 	protected $modelName = '';
 	
-	protected $get = [];
-	
-	protected $post = [];
-	
 	protected function onRequest(?string $action): bool
 	{
 		return $this->_initialize();
@@ -39,8 +35,6 @@ trait BaseTrait
 	{
 		// 设置组件属性
 		$this->setBaseTraitProptected();
-		// 请求参数
-		$this->requestParams();
 		// 实例化模型
 		return $this->instanceModel();
 	}
@@ -102,17 +96,6 @@ trait BaseTrait
 			}
 		}
 		return true;
-	}
-	
-	protected function requestParams()
-	{
-		$this->get = $this->request()->getQueryParams();
-		
-		$post = $this->request()->getParsedBody();
-		if (empty($post)) {
-			$post = $this->json();
-		}
-		$this->post = $post ?: [];
 	}
 	
 	/**

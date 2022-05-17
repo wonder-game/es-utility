@@ -13,8 +13,26 @@ use WonderGame\EsUtility\Common\Languages\Dictionary;
  */
 trait BaseControllerTrait
 {
+    /**
+     * onRequest GET 参数
+     * @var array
+     */
+    protected $get = [];
+
+    /**
+     * onRequest POST 参数
+     * @var array
+     */
+    protected $post = [];
+
+    /**
+     * onRequest GET + POST 参数
+     * @var array
+     */
+    protected $input = [];
+
 	private $langsConstants = [];
-    
+
     protected $actionNotFoundPrefix = '_';
 
 	public function __construct()
@@ -23,6 +41,24 @@ trait BaseControllerTrait
 
 		$this->setLanguageConstants();
 	}
+
+    protected function onRequest(?string $action): ?bool
+    {
+        $this->requestParams();
+        return parent::onRequest($action);
+    }
+
+    protected function requestParams()
+    {
+        $this->get = $this->request()->getQueryParams();
+
+        $post = $this->request()->getParsedBody();
+        if (empty($post)) {
+            $post = $this->json();
+        }
+        $this->post = is_array($post) ? $post : [];
+        $this->input = array_merge($this->get, $this->post);
+    }
 
 	protected function setLanguageConstants()
 	{
@@ -140,7 +176,7 @@ trait BaseControllerTrait
 		$array = explode('\\', static::class);
 		return end($array);
 	}
-    
+
     protected function actionNotFoundName()
     {
         return $this->actionNotFoundPrefix . $this->getActionName();
