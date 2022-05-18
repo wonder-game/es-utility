@@ -56,47 +56,4 @@ class ExceptionTrigger implements TriggerInterface
 			$task->async(new \WonderGame\EsUtility\Task\Error($eMsg));
 		}
 	}
-
-	protected function doError($trigger, $eMsg = [])
-	{
-		trace($eMsg, 'error', $trigger);
-
-		$wg = new WaitGroup();
-		$wg->add();
-
-		go(function () use ($eMsg, $wg) {
-			if (is_string($eMsg)) {
-				$eMsg = [$eMsg];
-			}
-			// 错误类型
-			$eMsg['type'] = 'program';
-			// 报错服务器
-			$eMsg['servername'] = config('SERVNAME');
-			// trace通过常规文件记录
-			unset($eMsg['trace']);
-
-			try {
-				if ($config = config('EXCEPTION_REPORT')) {
-					if (isset($config['type']) && $config['type'] === 'http' && $config['url']) {
-						$encrypt = LamOpenssl::getInstance()->publicEncrypt(json_encode($eMsg));
-						$client = new HttpClient($config['url']);
-						$response = $client->post(['envkeydata' => $encrypt]);
-						$httpCode = $response->getStatusCode();
-						$httpBody = $response->getBody();
-					} else {
-						$redis = defer_redis($config['poolname']);
-						$redis->lPush($config['queue'], json_encode($eMsg));
-					}
-				}
-			} catch (InvalidUrl | RedisException | \Exception | \Throwable $e) {
-				trace($eMsg, 'info', 'lowlevel');
-			}
-			$wg->done();
-		});
-
-		// 协程等待
-		$wg->wait();
-		// 关闭
-		$wg->close();
-	}
 }
