@@ -182,6 +182,27 @@ trait BaseControllerTrait
         return $this->actionNotFoundPrefix . $this->getActionName();
     }
 
+    /**
+     * 去除了公共前缀的 $this->getAllowMethodReflections() key列表
+     * @param null $call
+     * @return array|false[]|int[]|string[]
+     */
+    protected function getAllowMethods($call = null)
+    {
+        return array_map(
+            function ($val) use ($call) {
+                if (strpos($val, $this->actionNotFoundPrefix) === 0) {
+                    $val = substr($val, strlen($this->actionNotFoundPrefix));
+                }
+                return (is_callable($call) || (is_string($call) && function_exists($call))) ? $call($val) : $val;
+            },
+            array_keys($this->getAllowMethodReflections())
+        );
+    }
+
+    /**
+     * @param string|null $action
+     */
     protected function actionNotFound(?string $action)
     {
         $actionName = $this->actionNotFoundName();

@@ -113,16 +113,7 @@ trait AuthTrait
             return true;
         }
 
-        $publicMethods = array_map(
-            function ($val) {
-                // 判断public前缀, 兼容actionNotFound逻辑
-                if (strpos($val, $this->actionNotFoundPrefix) === 0) {
-                    $val = substr($val, strlen($this->actionNotFoundPrefix));
-                }
-                return strtolower($val);
-            },
-            array_keys($this->getAllowMethodReflections())
-        );
+        $publicMethods = $this->getAllowMethods('strtolower');
 
         $currentAction = strtolower($this->getActionName());
         if ( ! in_array($currentAction, $publicMethods)) {
