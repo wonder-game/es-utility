@@ -126,7 +126,7 @@ trait BaseControllerTrait
 			$data = [
 				'code' => $statusCode,
 				'result' => $result,
-				'message' => $msg ?? ''
+				'msg' => $msg ?? ''
 			];
 			$this->response()->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 			$this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
@@ -145,7 +145,7 @@ trait BaseControllerTrait
 			$data = [
 				'code' => $code,
 				'url' => $url,
-				'message' => $msg
+				'msg' => $msg
 			];
 			$this->response()->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 			$this->response()->withHeader('Content-type', 'application/json;charset=utf-8');
