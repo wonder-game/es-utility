@@ -38,14 +38,17 @@ trait AdminTrait
 		}
 		return parent::__after_index(['items' => $items, 'roleList' => $roleList], $total);
 	}
-
-	public function _getUserInfo($return = false)
+	
+	/**
+	 * @param false $return 是否返回数据，而不是输出
+	 * @param bool $gp game & package 是否查询游戏与包的数据
+	 * @return array
+	 */
+	public function _getUserInfo($return = false, $gp = true)
 	{
 		$upload = config('UPLOAD');
 
 		$config = [
-			// 图片上传路径
-			'imageDomain' => $upload['domain'],
 			// 充值枚举
 			'pay' => config('pay')
 		];
@@ -78,38 +81,41 @@ trait AdminTrait
 				]
 			]
 		];
-
-		$gameids = $this->operinfo['extension']['gameids'] ?? [];
-		is_string($gameids) && $gameids = explode(',', $gameids);
-
-		// 默认选择游戏，管理员级别 > 系统级别
-		if (isset($config['sysinfo']['default_select_gameid']) && $config['sysinfo']['default_select_gameid'] !== '') {
-			// 权限
-			if ($super || in_array($config['sysinfo']['default_select_gameid'], $gameids)) {
-				$result['sleGid'] = $config['sysinfo']['default_select_gameid'];
+		
+		if($gp)
+		{
+			$gameids = $this->operinfo['extension']['gameids'] ?? [];
+			is_string($gameids) && $gameids = explode(',', $gameids);
+			
+			// 默认选择游戏，管理员级别 > 系统级别
+			if (isset($config['sysinfo']['default_select_gameid']) && $config['sysinfo']['default_select_gameid'] !== '') {
+				// 权限
+				if ($super || in_array($config['sysinfo']['default_select_gameid'], $gameids)) {
+					$result['sleGid'] = $config['sysinfo']['default_select_gameid'];
+				}
+				// todo 设置多个，返回有权限的部分，前端如果是单选，要改为选中第一个
 			}
-			// todo 设置多个，返回有权限的部分，前端如果是单选，要改为选中第一个
+			if (isset($this->operinfo['extension']['gid']) && $this->operinfo['extension']['gid'] !== '') {
+				$result['sleGid'] = $this->operinfo['extension']['gid'];
+			}
+			
+			// 游戏和包
+			/** @var \App\Model\Game $Game */
+			$Game = model('Game');
+			/** @var \App\Model\Package $Package */
+			$Package = model('Package');
+			if ( ! $super) {
+				$Game->where(['id' => [$gameids, 'in']]);
+				
+				$pkgbnd = $this->operinfo['extension']['pkgbnd'] ?? [];
+				is_string($pkgbnd) && $pkgbnd = explode(',', $pkgbnd);
+				$Package->where(['pkgbnd' => [$pkgbnd, 'in']]);
+			}
+			
+			$result['gameList'] = $Game->where('status', 1)->setOrder()->field(['id', 'name'])->all();
+			$result['pkgList'] = $Package->field(['gameid', 'pkgbnd', 'name', 'id'])->setOrder()->all();
 		}
-		if (isset($this->operinfo['extension']['gid']) && $this->operinfo['extension']['gid'] !== '') {
-			$result['sleGid'] = $this->operinfo['extension']['gid'];
-		}
-
-		// 游戏和包
-		/** @var \App\Model\Game $Game */
-		$Game = model('Game');
-		/** @var \App\Model\Package $Package */
-		$Package = model('Package');
-		if ( ! $super) {
-			$Game->where(['id' => [$gameids, 'in']]);
-
-			$pkgbnd = $this->operinfo['extension']['pkgbnd'] ?? [];
-			is_string($pkgbnd) && $pkgbnd = explode(',', $pkgbnd);
-			$Package->where(['pkgbnd' => [$pkgbnd, 'in']]);
-		}
-
-		$result['gameList'] = $Game->where('status', 1)->setOrder()->field(['id', 'name'])->all();
-		$result['pkgList'] = $Package->field(['gameid', 'pkgbnd', 'name', 'id'])->setOrder()->all();
-
+		
 		$result['config'] = $config;
 
 		return $return ? $result : $this->success($result);
