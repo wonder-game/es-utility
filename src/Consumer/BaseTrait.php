@@ -18,6 +18,7 @@ trait BaseTrait
                 'tick' => 1000,                                // 多久运行一次，单位毫秒, 默认1000毫秒
                 'limit' => 200,                                // 单次出队列的阈值, 默认200
                 'coroutine' => false                            // 是否为每条数据开启协程
+                'pool' => 'default'                             // redis连接池名称
             ],
      * }
      */
@@ -66,7 +67,7 @@ trait BaseTrait
                         \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
                     }
                 }
-            });
+            }, $this->args['pool'] ?? 'default');
         });
     }
 }
