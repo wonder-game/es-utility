@@ -38,7 +38,7 @@ trait AdminTrait
 		}
 		return parent::__after_index(['items' => $items, 'roleList' => $roleList], $total);
 	}
-	
+
 	/**
 	 * @param false $return 是否返回数据，而不是输出
 	 * @param bool $gp game & package 是否查询游戏与包的数据
@@ -46,8 +46,6 @@ trait AdminTrait
 	 */
 	public function _getUserInfo($return = false, $gp = true)
 	{
-		$upload = config('UPLOAD');
-
 		$config = [
 			// 充值枚举
 			'pay' => config('pay')
@@ -61,9 +59,6 @@ trait AdminTrait
 			$homePage = $Tree->originData(['type' => [[0, 1], 'in']])->getHomePath($this->operinfo['extension']['homePath']);
 		}
 		$avatar = $this->operinfo['avatar'] ?? '';
-		if ($avatar) {
-			$avatar = $config['imageDomain'] . $avatar;
-		}
 
 		$super = $this->isSuper();
 
@@ -81,12 +76,12 @@ trait AdminTrait
 				]
 			]
 		];
-		
+
 		if($gp)
 		{
 			$gameids = $this->operinfo['extension']['gameids'] ?? [];
 			is_string($gameids) && $gameids = explode(',', $gameids);
-			
+
 			// 默认选择游戏，管理员级别 > 系统级别
 			if (isset($config['sysinfo']['default_select_gameid']) && $config['sysinfo']['default_select_gameid'] !== '') {
 				// 权限
@@ -98,7 +93,7 @@ trait AdminTrait
 			if (isset($this->operinfo['extension']['gid']) && $this->operinfo['extension']['gid'] !== '') {
 				$result['sleGid'] = $this->operinfo['extension']['gid'];
 			}
-			
+
 			// 游戏和包
 			/** @var \App\Model\Game $Game */
 			$Game = model('Game');
@@ -106,16 +101,16 @@ trait AdminTrait
 			$Package = model('Package');
 			if ( ! $super) {
 				$Game->where(['id' => [$gameids, 'in']]);
-				
+
 				$pkgbnd = $this->operinfo['extension']['pkgbnd'] ?? [];
 				is_string($pkgbnd) && $pkgbnd = explode(',', $pkgbnd);
 				$Package->where(['pkgbnd' => [$pkgbnd, 'in']]);
 			}
-			
+
 			$result['gameList'] = $Game->where('status', 1)->setOrder()->field(['id', 'name'])->all();
 			$result['pkgList'] = $Package->field(['gameid', 'pkgbnd', 'name', 'id'])->setOrder()->all();
 		}
-		
+
 		$result['config'] = $config;
 
 		return $return ? $result : $this->success($result);
