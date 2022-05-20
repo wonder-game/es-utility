@@ -23,12 +23,6 @@ trait BaseTrait
      */
     protected $args = [];
 
-    /**
-     * redis配置
-     * @var array
-     */
-    protected $rcfg = [];
-
     protected function onException(\Throwable $throwable,...$args)
     {
         // 消费的consume是运行在回调内的，在consume发生的异常基本走不到这里
@@ -50,13 +44,9 @@ trait BaseTrait
     {
         $this->args = $this->getArg();
 
-        $this->rcfg = config('REDIS.default');
-
         $this->addTick($this->args['tick'] ?? 1000, function () {
 
             RedisPool::invoke(function (Redis $Redis) {
-
-                $Redis->select($this->rcfg['db']);
 
                 for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i)
                 {
