@@ -94,12 +94,13 @@ trait BaseControllerTrait
 
 	protected function onException(\Throwable $throwable): void
 	{
-		$message = Core::getInstance()->runMode() !== 'produce'
-			? $throwable->getMessage()
-			: Dictionary::BASECONTROLLERTRAIT_1;
-
-		// 交给异常处理器
-		\EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+        if ($throwable instanceof HttpParamException) {
+            $message = $throwable->getMessage();
+        } else {
+            $message = ! is_env('produce') ? $throwable->getMessage() : lang(Dictionary::BASECONTROLLERTRAIT_1);
+            // 交给异常处理器
+            \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+        }
 		$this->error($throwable->getCode() ?: Code::CODE_INTERNAL_SERVER_ERROR, $message);
 	}
 
