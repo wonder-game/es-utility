@@ -64,7 +64,16 @@ if ( ! function_exists('model')) {
 	 */
 	function model($name = '', $data = [])
 	{
-		$guid = $name = parse_name($name, 1);
+        // 允许传递多级命名空间
+        $space = '';
+        $name = str_replace('/', '\\', $name);
+        if (strpos($name, '\\')) {
+            $list = explode('\\', $name);
+            $name = array_pop($list);
+            $space = implode('\\', array_map('ucfirst', $list)) . '\\';
+        }
+
+		$name = parse_name($name, 1);
 
 		$gameid = '';
 		// 实例化XXX_gid模型
@@ -73,7 +82,7 @@ if ( ! function_exists('model')) {
 		}
 		$tableName = $gameid != '' ? parse_name($name, 0, false) . "_$gameid" : '';
 
-		$className = find_model($name);
+		$className = find_model($space . $name);
 
 		return new $className($data, $tableName, $gameid);
 	}

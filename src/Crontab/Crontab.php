@@ -6,6 +6,7 @@ namespace WonderGame\EsUtility\Crontab;
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
+use EasySwoole\ORM\AbstractModel;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EasySwoole\Utility\File;
 use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
@@ -31,28 +32,7 @@ class Crontab extends AbstractCronTask
 
 	public function run(int $taskId, int $workerIndex)
 	{
-		$file = config('CRONTAB_BACKUP_FILE') ?: (config('LOG.dir') . '/crontab.object.data');
-		try {
-            if ( ! find_model('Crontab', false)) {
-                trace('Crontab Model Class Not Found! ', 'error');
-                return;
-            }
-			/** @var \App\Model\Crontab $model */
-			$model = model('Crontab');
-			// 获取执行Crontab列表
-			$cron = $model->getCrontab(explode('-', config('SERVNAME'))[3]);
-
-			// 成功记录到文件
-			File::createFile($file, json_encode($cron, JSON_UNESCAPED_UNICODE));
-		} catch (\Exception | \Throwable $e) {
-			// 失败降级从文件读取
-			if ( ! file_exists($file) || ! ($str = file_get_contents($file))) {
-                // 连文件都没有，说明从未正常运行过
-				throw $e;
-			}
-
-			$cron = json_decode($str, true);
-		}
+        $cron = $this->getTaskList();
 
 		if (empty($cron) || ! is_array($cron)) {
 			return;
@@ -65,19 +45,6 @@ class Crontab extends AbstractCronTask
 				trace($msg, 'error');
 				dingtalk_text($msg);
 				continue;
-			}
-
-			$className = $value['rclass'] ?? 'Crontab';
-			// 异步任务模板类
-			if ($className && strpos($className, '\\') === false) {
-				$className = '\\WonderGame\\EsUtility\\Task\\' . ucfirst($className);
-			}
-
-			if ( ! class_exists($className) || ( ! $className instanceof TaskInterface)) {
-//                trace("{$className} 不存在", 'error');
-//                continue;
-				// 2022-04-06 为兼容旧版本
-				$className = CrontabTemplate::class;
 			}
 
 			if ( ! (CronExpression::factory($value['rule'])->isDue())) {
@@ -96,6 +63,7 @@ class Crontab extends AbstractCronTask
 				continue;
 			}
 
+            $className = $this->getTemplateClass($value['rclass'] ?? 'Crontab');
 			$class = new $className([$value['eclass'], $value['method']], $args);
 			// 投递给异步任务
 			$finish = $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
@@ -103,7 +71,7 @@ class Crontab extends AbstractCronTask
 			});
 			// 只运行一次的任务
 			if ($finish > 0 && $value['status'] == 2) {
-				$model->update(['status' => 1], ['id' => $value['id']]);
+				$this->taskModel()->update(['status' => 1], ['id' => $value['id']]);
 			}
 
 			if ($finish <= 0) {
@@ -111,4 +79,55 @@ class Crontab extends AbstractCronTask
 			}
 		}
 	}
+
+    /**
+     * @return AbstractModel
+     */
+    protected function taskModel()
+    {
+        return model('Crontab');
+    }
+
+    // 获取任务列表
+    protected function getTaskList()
+    {
+        $file = config('CRONTAB_BACKUP_FILE') ?: (config('LOG.dir') . '/crontab.object.data');
+        try {
+            $model = $this->taskModel();
+            // 获取执行Crontab列表
+            $cron = $model->getCrontab(explode('-', config('SERVNAME'))[3]);
+
+            // 成功记录到文件
+            File::createFile($file, json_encode($cron, JSON_UNESCAPED_UNICODE));
+        } catch (\Exception | \Throwable $e) {
+            // 失败降级从文件读取
+            if ( ! file_exists($file) || ! ($str = file_get_contents($file))) {
+                // 连文件都没有，说明从未正常运行过
+                throw $e;
+            }
+
+            $cron = json_decode($str, true);
+        }
+        return $cron;
+    }
+
+    // 获取模板类名
+    protected function getTemplateClass($className)
+    {
+        if (empty($className)) {
+            $className = 'Crontab';
+        }
+        // 异步任务模板类
+        if ($className && strpos($className, '\\') === false) {
+            $className = '\\WonderGame\\EsUtility\\Task\\' . ucfirst($className);
+        }
+
+        if ( ! class_exists($className) || ( ! $className instanceof TaskInterface)) {
+//                trace("{$className} 不存在", 'error');
+//                continue;
+            // 2022-04-06 为兼容旧版本
+            $className = CrontabTemplate::class;
+        }
+        return $className;
+    }
 }
