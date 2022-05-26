@@ -189,11 +189,6 @@ class EventInitialize extends SplBean
         }
         DbManager::getInstance()->onQuery(
             function (\EasySwoole\ORM\Db\Result $result, \EasySwoole\Mysqli\QueryBuilder $builder, $start) {
-                $sql = $builder->getLastQuery();
-                if (empty($sql)) {
-                    return;
-                }
-                trace($sql, 'info', 'sql');
                 // 前置
                 if (is_callable($this->mysqlOnQueryFunc['_before_func'])) {
                     // 返回false不继续运行
@@ -201,6 +196,11 @@ class EventInitialize extends SplBean
                         return;
                     }
                 }
+                $sql = $builder->getLastQuery();
+                if (empty($sql)) {
+                    return;
+                }
+                trace($sql, 'info', 'sql');
 
                 // 不记录的SQL，表名
                 $logtable = config('NOT_WRITE_SQL.table');
