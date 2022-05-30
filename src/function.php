@@ -327,79 +327,35 @@ if ( ! function_exists('verify_token')) {
 
 
 if ( ! function_exists('ip')) {
-	/**
-	 * 验证jwt并读取用户信息
-	 */
-	function ip($request = null)
+    /**
+     * 获取http客户端ip
+     * @param \EasySwoole\Http\Request | null $Request
+     * @param string $default
+     * @return string
+     */
+	function ip($Request = null, $default = '')
 	{
-		if ($request) {
-			$arr = $request->getHeaders();
-			// IP1,IP2
-			$iparr = ! empty($arr['x-forwarded-for'][0]) ? $arr['x-forwarded-for'][0] : (
-			! empty($arr['x-real-ip'][0]) ? $arr['x-real-ip'][0] : (
-				$request->getServerParams()['remote_addr'] ?? ''
-			)
-			);
-		} else {
-			// IP1,IP2
-			$iparr = ! empty($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : (
-			! empty($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : (
-				$_SERVER['REMOTE_ADDR'] ?? ''
-			)
-			);
-		}
+        // Request继承 \EasySwoole\Http\Message\Message 皆可
+        if ( ! $Request instanceof \EasySwoole\Http\Request) {
+            $Request = \WonderGame\EsUtility\Common\Classes\CtxRequest::getInstance()->request;
+            if (empty($Request)) {
+                return $default;
+            }
+        }
 
-		return explode(',', $iparr)[0];
+        if ($xForwardedFor = $Request->getHeaderLine('x-forwarded-for')) {
+            return $xForwardedFor;
+        }
+        if ($xRealIp = $Request->getHeaderLine('x-real-ip')) {
+            return $xRealIp;
+        }
 
-		/*
-		 *
-		$request->getHeaders()如下
-		Array
-		(
-			[connection] => Array ([0] => keep-alive)
-			[x-real-ip] => Array ([0] => 172.28.48.1)
-		    [x-forwarded-for] => Array ([0] => 172.28.48.1)
-			[host] => Array	([0] => 127.0.0.1:8503)
-			[content-length] => Array ([0] => 148)
-			[accept] => Array ([0] => application/json)
-			[cross-request-open-sign] => Array([0] => 1)
-			[user-agent] => Array ([0] => Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Safari/537.36)
-		    [token] => Array([0] => ZX2KaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFNU1UazBPVGN4T0RNc0luTjFZaUk2SWlJc0ltNWlaaUk2TVRZd016STNNekU0TXl3aVlYVmtJam9pSWl3aWFXRjBJam94TmpBek1qY3pNVGd6TENKcWRHa2lPaUkxWmprd01ERmtaalpsTWprNElpd2lhWE56SWpvaUlpd2ljM1JoZEhWeklqb3hMQ0prWVhSaElqcDdJblZwWkNJNklqRWlMQ0oxYzJWeWJtRnRaU0k2SW14aGJYTnZiaUlzSW1kaGJXVnBaQ0k2SWpBaWZYMC5FcE5fN0gwNWtlX2RQWTNJWmxFMmxUQUtoSi1vdmVHRVgxQ2duMGNQdzNJ)
-			[content-type] => Array([0] => application/x-www-form-urlencoded)
-			[origin] => Array	([0] => chrome-extension://bbddljjploajjcembfomccpkbnmfapcj)
-			[accept-encoding] => Array	([0] => gzip, deflate)
-			[accept-language] => Array (	[0] => zh-CN,zh;q=0.9)
-		)
+        $servers = $Request->getServerParams();
+        if ( ! empty($servers['remote_addr'])) {
+            return $servers['remote_addr'];
+        }
 
-		$_SERVER 如下
-		Array
-		(
-			[HTTP_CONNECTION] => keep-alive
-			[HTTP_X_REAL_IP] => 172.19.160.1
-			[HTTP_X_FORWARDED_FOR] => 172.19.160.1
-			[HTTP_HOST] => api-pay.hk.com
-			[HTTP_CONTENT_LENGTH] => 148
-			[HTTP_ACCEPT] => application/json
-			[HTTP_CROSS_REQUEST_OPEN_SIGN] => 1
-			[HTTP_USER_AGENT] => Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4302.0 Safari/537.36
-			[HTTP_TOKEN] => ZXlKaGJHX2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFNU1UazBPVGN4T0RNc0luTjFZaUk2SWlJc0ltNWlaaUk2TVRZd016STNNekU0TXl3aVlYVmtJam9pSWl3aWFXRjBJam94TmpBek1qY3pNVGd6TENKcWRHa2lPaUkxWmprd01ERmtaalpsTWprNElpd2lhWE56SWpvaUlpd2ljM1JoZEhWeklqb3hMQ0prWVhSaElqcDdJblZwWkNJNklqRWlMQ0oxYzJWeWJtRnRaU0k2SW14aGJYTnZiaUlzSW1kaGJXVnBaQ0k2SWpBaWZYMC5FcE5fN0gwNWtlX2RQWTNJWmxFMmxUQUtoSi1vdmVHRVgxQ2duMGNQdzNJ
-			[HTTP_CONTENT_TYPE] => application/x-www-form-urlencoded
-			[HTTP_ORIGIN] => chrome-extension://jlclmgonaaejmkhcknfafaflodkfjcdd
-			[HTTP_ACCEPT_ENCODING] => gzip, deflate
-			[HTTP_ACCEPT_LANGUAGE] => zh-CN,zh;q=0.9
-			[REQUEST_METHOD] => POST
-			[REQUEST_URI] => /v1/orders/create
-			[PATH_INFO] => /v1/orders/create
-			[REQUEST_TIME] => 1609377238
-			[REQUEST_TIME_FLOAT] => 1609377238.751
-			[SERVER_PROTOCOL] => HTTP/1.1
-			[SERVER_PORT] => 8503
-			[REMOTE_PORT] => 37982
-			[REMOTE_ADDR] => 127.0.0.1
-			[MASTER_TIME] => 1609377238
-		)
-
-		*/
+        return $default;
 	}
 }
 
