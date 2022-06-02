@@ -85,14 +85,7 @@ class ShardTable extends SplBean
 
 				// 获取此表当前的分区情况
 				$oldpt = $newpt = [];
-				$partitions = $this->query("
-					select 
-						partition_description descr
-					from
-						INFORMATION_SCHEMA.partitions 
-					where 
-						TABLE_SCHEMA=schema() and TABLE_NAME='$table';
-				");
+				$partitions = $this->query("SELECT partition_description descr FROM INFORMATION_SCHEMA.partitions WHERE TABLE_SCHEMA=schema() AND TABLE_NAME='$table';");
 				// halt($partitions);
 
 				// 还没有分区
@@ -158,7 +151,7 @@ class ShardTable extends SplBean
 		foreach ($alltable as $item) {
 			$tname = current($item);
 			// RANGE分区
-			$sql = "select partition_description descr from INFORMATION_SCHEMA.partitions where TABLE_SCHEMA=schema() and TABLE_NAME='{$tname}' and PARTITION_METHOD='RANGE'";
+			$sql = "SELECT partition_description descr FROM INFORMATION_SCHEMA.partitions WHERE TABLE_SCHEMA=schema() AND TABLE_NAME='{$tname}' AND PARTITION_METHOD='RANGE'";
 			$partition = $this->execute($sql)->getResultColumn('descr');
 			if (empty($partition) || empty($partition[0])) {
 				continue;

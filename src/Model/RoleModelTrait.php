@@ -2,6 +2,7 @@
 
 namespace WonderGame\EsUtility\Model;
 
+use EasySwoole\ORM\AbstractModel;
 
 trait RoleModelTrait
 {
@@ -10,7 +11,7 @@ trait RoleModelTrait
 		$this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'asc'];
 	}
-	
+
 	protected function setMenuAttr($data, $alldata)
 	{
 		if (is_array($data)) {
@@ -22,13 +23,13 @@ trait RoleModelTrait
 		}
 		return $data;
 	}
-	
-	protected static function onBeforeDelete(Role $model)
+
+	protected static function onBeforeDelete(AbstractModel $model)
 	{
 		// 超级管理员不可删除
 		return ! is_super($model['id']);
 	}
-	
+
 	public function getRoleListAll()
 	{
 		// 如果id不连续，indexBy返回给客户端就是一个json
