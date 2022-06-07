@@ -18,9 +18,8 @@ trait BaseTrait
 
 	/**
 	 * 实例化模型类
-	 *   1.为空字符串自动实例化
+	 *   1.为空字符串自动实例化admin相关模型
 	 *   2.为null不实例化
-	 *   3.为true实例化游戏模型
 	 *   4.不为空字符串，实例化指定模型
 	 * @var string
 	 */
@@ -79,18 +78,6 @@ trait BaseTrait
 
 			if ($this->modelName === '') {
 				$this->Model = model_admin($className);
-			} // 需要分表的模型
-			elseif ($this->modelName === true) {
-//                trace('--get:' . var_export($this->get, true) . ', --post:' . var_export($this->post, true));
-				if ((isset($this->get['gameid']) && $this->get['gameid'] !== '')
-					|| isset($this->post['gameid']) && $this->post['gameid'] !== '') {
-					$gameid = $this->get['gameid'] ?? $this->post['gameid'];
-					$this->Model = model_admin($className . ':' . $gameid);
-				} else {
-					// gamid必传，否则会报错
-					$this->error(Code::ERROR_OTHER, Dictionary::ADMIN_BASETRAIT_1);
-					return false;
-				}
 			} else {
 				$this->Model = model($this->modelName);
 			}
