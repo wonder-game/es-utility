@@ -1,7 +1,7 @@
 <?php
 
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 
 trait LogErrorTrait
@@ -18,7 +18,7 @@ trait LogErrorTrait
 		}
 		return $value;
 	}
-	
+
 	protected function getTimeAttr($value, $alldata)
 	{
 		return is_numeric($value) ? date('Y-m-d H:i:s', $value) : $value;

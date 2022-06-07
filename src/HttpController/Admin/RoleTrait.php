@@ -22,7 +22,7 @@ trait RoleTrait
 	{
 		// 处理超级管理员菜单权限
 		/** @var AbstractModel $Menu */
-		$Menu = model('Menu');
+		$Menu = model_admin('Menu');
 		$allMenu = $Menu->column('id');
 
 		foreach ($items as $key => &$val) {

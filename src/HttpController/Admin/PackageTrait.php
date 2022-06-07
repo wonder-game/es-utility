@@ -5,6 +5,9 @@ namespace WonderGame\EsUtility\HttpController\Admin;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 
+/**
+ * @property \App\Model\Admin\Package $Model
+ */
 trait PackageTrait
 {
 	protected function __search()

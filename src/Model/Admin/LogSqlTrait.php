@@ -1,7 +1,7 @@
 <?php
 
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 
 use EasySwoole\Mysqli\QueryBuilder;
@@ -13,7 +13,7 @@ trait LogSqlTrait
 	{
 		$this->autoTimeStamp = true;
 	}
-	
+
 	/**
 	 * 关联
 	 * @return array|mixed|null
@@ -25,20 +25,20 @@ trait LogSqlTrait
 			$query->fields(['id', 'username', 'realname', 'avatar', 'status']);
 			return $query;
 		};
-		return $this->hasOne(find_model('Admin'), $callback, 'admid', 'id');
+		return $this->hasOne(find_model('Admin\Admin'), $callback, 'admid', 'id');
 	}
-	
+
 	public function sqlWriteLog($sql = '')
 	{
 		$Ctx = CtxRequest::getInstance();
 		$operinfo = $Ctx->getOperinfo();
-		
+
 		$data = [
 			'admid' => $operinfo['id'] ?? 0,
 			'content' => $sql,
 			'ip' => ip($Ctx->request)
 		];
-		
+
 		$this->data($data)->save();
 	}
 }

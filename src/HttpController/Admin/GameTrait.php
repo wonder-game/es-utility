@@ -3,9 +3,11 @@
 namespace WonderGame\EsUtility\HttpController\Admin;
 
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
-use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
+/**
+ * @property \App\Model\Admin\Game $Model
+ */
 trait GameTrait
 {
 	protected function __search()

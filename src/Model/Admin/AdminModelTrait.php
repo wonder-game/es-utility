@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 use EasySwoole\Mysqli\QueryBuilder;
 
@@ -13,13 +13,13 @@ trait AdminModelTrait
 	 * @return mixed
 	 */
 	abstract public function signInLog($data = []);
-	
+
 	protected function setBaseTraitProptected()
 	{
 		$this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'asc'];
 	}
-	
+
 	protected function setPasswordAttr($password = '', $alldata = [])
 	{
 		if ($password != '') {
@@ -27,15 +27,15 @@ trait AdminModelTrait
 		}
 		return false;
 	}
-	
+
 	protected function getExtensionAttr($extension = '', $alldata = [])
 	{
 		$array = is_array($extension) ? $extension : json_decode($extension, true);
-		
+
 		if (isset($array['gameids']) && is_string($array['gameids'])) {
 			$array['gameids'] = explode(',', $array['gameids']);
 		}
-		
+
 		// 如果是超级管理员可能是空数组或字符串
 		$array['gameids'] = array_map('intval', $array['gameids'] ?? []);
 		// package和gameid固定返回数组，gameid转整型
@@ -48,10 +48,10 @@ trait AdminModelTrait
 		}
 		// 强类型限制, 游戏id有0
 		$array['gid'] = ! empty($array['gid']) ? intval($array['gid']) : '';
-		
+
 		return $array;
 	}
-	
+
 	/**
 	 * 关联Role分组模型
 	 * @return array|mixed|null
@@ -63,7 +63,7 @@ trait AdminModelTrait
 			$query->where('status', 1);
 			return $query;
 		};
-		
-		return $this->hasOne(find_model('role'), $callback, 'rid', 'id');
+
+		return $this->hasOne(find_model('Admin\Role'), $callback, 'rid', 'id');
 	}
 }

@@ -2,12 +2,13 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
-use EasySwoole\ORM\AbstractModel;
 use WonderGame\EsUtility\Common\Classes\Tree;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
-use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
+/**
+ * @property \App\Model\Admin\Admin $Model
+ */
 trait AdminTrait
 {
 	protected function __search()
@@ -29,8 +30,8 @@ trait AdminTrait
 
 	protected function __after_index($items, $total)
 	{
-		/** @var \App\Model\Role $Role */
-		$Role = model('Role');
+		/** @var \App\Model\Admin\Role $Role */
+		$Role = model_admin('Role');
 		$roleList = $Role->getRoleListAll();
 		foreach ($items as &$value) {
 			unset($value['password']);
@@ -95,10 +96,10 @@ trait AdminTrait
 			}
 
 			// 游戏和包
-			/** @var \App\Model\Game $Game */
-			$Game = model('Game');
-			/** @var \App\Model\Package $Package */
-			$Package = model('Package');
+			/** @var \App\Model\Admin\Game $Game */
+			$Game = model_admin('Game');
+			/** @var \App\Model\Admin\Package $Package */
+			$Package = model_admin('Package');
 			if ( ! $super) {
 				$Game->where(['id' => [$gameids, 'in']]);
 
@@ -121,8 +122,8 @@ trait AdminTrait
 	 */
 	public function _getPermCode($return = false)
 	{
-		/** @var \App\Model\Menu $model */
-		$model = model('Menu');
+		/** @var \App\Model\Admin\Menu $model */
+		$model = model_admin('Menu');
 		$code = $model->permCode($this->operinfo['rid']);
 		return $return ? $code : $this->success($code);
 	}
@@ -143,8 +144,8 @@ trait AdminTrait
 			// role的关联数据也可以不用理会，ORM会处理
 			unset($userInfo['password'], $userInfo['role']);
 			// 默认首页treeSelect, 仅看有权限的菜单
-			/** @var \App\Model\Menu $Menu */
-			$Menu = model('Menu');
+			/** @var \App\Model\Admin\Menu $Menu */
+			$Menu = model_admin('Menu');
 
 			$where = [];
 			$menus = $this->getUserMenus();

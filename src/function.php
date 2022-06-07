@@ -60,9 +60,9 @@ if ( ! function_exists('model')) {
 	/**
 	 * 实例化Model
 	 * @param string $name Model名称
-	 * @return \App\Model\$model
+	 * @return \EasySwoole\ORM\AbstractModel
 	 */
-	function model($name = '', $data = [])
+	function model(string $name = '',array $data = [])
 	{
         // 允许传递多级命名空间
         $space = '';
@@ -88,6 +88,29 @@ if ( ! function_exists('model')) {
 	}
 }
 
+if ( ! function_exists('model_admin')) {
+    /**
+     * @param string $name
+     * @param array $data
+     * @return \EasySwoole\ORM\AbstractModel
+     */
+    function model_admin(string $name = '', array $data = [])
+    {
+        return model('Admin\\' . ucfirst($name), $data);
+    }
+}
+
+if ( ! function_exists('model_log')) {
+    /**
+     * @param string $name
+     * @param array $data
+     * @return \EasySwoole\ORM\AbstractModel
+     */
+    function model_log(string $name = '', array $data = [])
+    {
+        return model('Log\\' . ucfirst($name), $data);
+    }
+}
 
 if ( ! function_exists('config')) {
 	/**
@@ -621,7 +644,7 @@ if ( ! function_exists('sysinfo')) {
 		/** @var SplArray $Spl */
 		$Spl = RedisPool::invoke(function (Redis $redis) {
 
-			$model = model('sysinfo');
+			$model = model_admin('sysinfo');
 
 			$redisKey = $model->getCacheKey();
 

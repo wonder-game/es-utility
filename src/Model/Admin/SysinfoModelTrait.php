@@ -1,22 +1,22 @@
 <?php
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 trait SysinfoModelTrait
 {
 	// 缓存key
 	abstract public function getCacheKey(): string;
-	
+
 	protected function setValueAttr($value, $all)
 	{
 		return $this->setValue($value, $all['type'], false);
 	}
-	
+
 	protected function getValueAttr($value, $all)
 	{
 		return $this->setValue($value, $all['type'], true);
 	}
-	
+
 	protected function setValue($value, $type, $decode = true)
 	{
 		if ($type == 0) {
@@ -33,12 +33,12 @@ trait SysinfoModelTrait
 		}
 		return $value;
 	}
-	
+
 	protected function _after_write($res = false)
 	{
 		$this->delRedisKey($this->getCacheKey());
 	}
-	
+
 	protected function _after_delete($res)
 	{
 		$this->delRedisKey($this->getCacheKey());

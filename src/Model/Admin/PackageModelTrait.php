@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 trait PackageModelTrait
 {
@@ -8,7 +8,7 @@ trait PackageModelTrait
 	{
 		$this->sort = ['sort' => 'asc', 'id' => 'desc'];
 	}
-	
+
 	public function getPackageAll($where = [])
 	{
 		if ($where) {
@@ -16,11 +16,11 @@ trait PackageModelTrait
 		}
 		return $this->setOrder()->all();
 	}
-	
+
 	public function getPackageKeyValue()
 	{
 		$all = $this->getPackageAll();
-		
+
 		$pkg = [];
 		foreach ($all as $key => $value) {
 			$pkg[$value['pkgbnd']] = $value['name'];

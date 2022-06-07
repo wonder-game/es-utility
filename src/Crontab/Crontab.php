@@ -85,7 +85,7 @@ class Crontab extends AbstractCronTask
      */
     protected function taskModel()
     {
-        return model('Crontab');
+        return model_admin('Crontab');
     }
 
     // 获取任务列表

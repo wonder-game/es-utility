@@ -78,14 +78,14 @@ trait BaseTrait
 			$className = ucfirst($this->getStaticClassName());
 
 			if ($this->modelName === '') {
-				$this->Model = model($className);
-			} // 需要gameid的模型
+				$this->Model = model_admin($className);
+			} // 需要分表的模型
 			elseif ($this->modelName === true) {
 //                trace('--get:' . var_export($this->get, true) . ', --post:' . var_export($this->post, true));
 				if ((isset($this->get['gameid']) && $this->get['gameid'] !== '')
 					|| isset($this->post['gameid']) && $this->post['gameid'] !== '') {
 					$gameid = $this->get['gameid'] ?? $this->post['gameid'];
-					$this->Model = model($className . ':' . $gameid);
+					$this->Model = model_admin($className . ':' . $gameid);
 				} else {
 					// gamid必传，否则会报错
 					$this->error(Code::ERROR_OTHER, Dictionary::ADMIN_BASETRAIT_1);

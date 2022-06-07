@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 use EasySwoole\ORM\AbstractModel;
 

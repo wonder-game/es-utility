@@ -11,7 +11,7 @@ use WonderGame\EsUtility\Common\Languages\Dictionary;
 
 /**
  * Class Menu
- * @property \App\Model\Menu $Model
+ * @property \App\Model\Admin\Menu $Model
  * @package App\HttpController\Admin
  */
 trait MenuTrait
@@ -37,8 +37,7 @@ trait MenuTrait
 		// 如果name不为空，检查唯一性
 		$name = $this->post['name'] ?? '';
 		if ( ! empty($name)) {
-			/** @var \App\Model\Menu $model */
-			$model = model('Menu');
+			$model = $this->Model->_clone();
 			if ($model->where('name', $name)->count()) {
 				return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_MENUTRAIT_1);
 			}

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 
 trait CrontabTrait
@@ -10,27 +10,27 @@ trait CrontabTrait
 	{
 		$this->autoTimeStamp = true;
 	}
-	
+
 	protected function setServerAttr($data)
 	{
 		return is_array($data) ? implode(',', $data) : $data;
 	}
-	
+
 	protected function setSysAttr($data)
 	{
 		return is_array($data) ? implode(',', $data) : $data;
 	}
-	
+
 	protected function getServerAttr($value, $alldata)
 	{
 		return $this->getIntArray($value);
 	}
-	
+
 	protected function getSysAttr($value, $alldata)
 	{
 		return $this->getIntArray($value);
 	}
-	
+
 	protected function getIntArray($value)
 	{
 		if (is_string($value)) {
@@ -40,7 +40,7 @@ trait CrontabTrait
 			return $value;
 		}
 	}
-	
+
 	protected function setArgsAttr($data)
 	{
 		$result = [];
@@ -57,13 +57,13 @@ trait CrontabTrait
 		}
 		return json_encode($result);
 	}
-	
+
 	protected function getArgsAttr($data)
 	{
 		$json = json_decode($data, true);
 		return $json ? $json : [];
 	}
-	
+
 	public function getCrontab($svr = '')
 	{
 		// 0-启用,2-运行一次

@@ -78,7 +78,7 @@ trait AuthTrait
 
         // uid验证
         /** @var AbstractModel $Admin */
-        $Admin = model('Admin');
+        $Admin = model_admin('Admin');
         // 当前用户信息
         $data = $Admin->where('id', $id)->get();
         if (empty($data)) {
@@ -130,8 +130,8 @@ trait AuthTrait
             return false;
         }
 
-        /** @var \App\Model\Menu $Menu */
-        $Menu = model('Menu');
+        /** @var \App\Model\Admin\Menu $Menu */
+        $Menu = model_admin('Menu');
         $priv = $Menu->where('id', $userMenu, 'IN')->where('permission', '', '<>')->where('status', 1)->column('permission');
         if (empty($priv)) {
             return true;

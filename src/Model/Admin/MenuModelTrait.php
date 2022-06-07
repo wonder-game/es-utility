@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 use EasySwoole\ORM\AbstractModel;
 use WonderGame\EsUtility\Common\Classes\Tree;
@@ -14,22 +14,22 @@ trait MenuModelTrait
 	{
 		$this->sort = ['sort' => 'asc', 'id' => 'desc'];
 	}
-	
+
 	protected function setRedirectAttr($data, $alldata)
 	{
 		return $data ? '/' . ltrim($data, '/') : '';
 	}
-	
+
 	/*protected function setComponentAttr($data, $alldata)
 	{
 		return ltrim($data, '/');
 	}*/
-	
+
 	protected function setNameAttr($data, $alldata)
 	{
 		return ucfirst(ltrim($data, '/'));
 	}
-	
+
 	public function getRouter($userMenus = [])
 	{
 		$tree = new Tree($userMenus);
@@ -40,7 +40,7 @@ trait MenuModelTrait
 		$router = $tree->originData($where)->getTree(0, true);
 		return $router;
 	}
-	
+
 	public function menuList($where = [])
 	{
 		$Tree = new Tree();
@@ -48,13 +48,13 @@ trait MenuModelTrait
 		$where['type'] = [[0, 1], 'in'];
 		return $Tree->originData($where)->getTree();
 	}
-	
+
 	public function menuAll($where = [])
 	{
 		$Tree = new Tree();
 		return $Tree->originData($where)->getAll();
 	}
-	
+
 	/**
 	 * 角色组权限码
 	 * @param int $rid
@@ -66,15 +66,15 @@ trait MenuModelTrait
 	public function permCode($rid): array
 	{
 		$where = ['permission' => ['', '<>']];
-		
+
 		if ( ! is_super($rid)) {
 			/** @var Role $Role */
-			$Role = model('Role');
+			$Role = model_admin('Role');
 			$menuIds = $Role->where('id', $rid)->val('menu');
 			if (empty($menuIds)) {
 				return [];
 			}
-			
+
 			$where['id'] = [explode(',', $menuIds), 'in'];
 		}
 		$permission = $this->where($where)->column('permission');

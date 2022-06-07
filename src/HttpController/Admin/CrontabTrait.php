@@ -4,6 +4,9 @@ namespace WonderGame\EsUtility\HttpController\Admin;
 
 use EasySwoole\ORM\AbstractModel;
 
+/**
+ * @property \App\Model\Admin\Crontab $Model
+ */
 trait CrontabTrait
 {
 	protected function __search()

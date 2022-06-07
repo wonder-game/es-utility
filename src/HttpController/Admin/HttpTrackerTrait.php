@@ -7,9 +7,18 @@ use EasySwoole\ORM\AbstractModel;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 
+/**
+ * @property \App\Model\Log\HttpTracker $Model
+ */
 trait HttpTrackerTrait
 {
-	protected function __search()
+    protected function instanceModel()
+    {
+        $this->Model = model_log($this->getStaticClassName());
+        return true;
+    }
+
+    protected function __search()
 	{
 		if (empty($this->get['where'])) {
 			// 默认最近14天
@@ -141,7 +150,7 @@ trait HttpTrackerTrait
 				trace('HttpTracker 开始 ');
 
 				/** @var AbstractModel $model */
-				$model = model('HttpTracker');
+				$model = model_log('HttpTracker');
 				$model->where($where)->chunk(function ($item) {
 					$item->repeatOne();
 				}, 300);

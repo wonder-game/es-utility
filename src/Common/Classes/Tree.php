@@ -12,19 +12,19 @@ class Tree
 	 * @var array
 	 */
 	protected $menu = [];
-	
+
 	/**
 	 * 表示下级菜单的key
 	 * @var string
 	 */
 	protected $childName = 'children';
-	
+
 	/**
 	 * 返回的tree限制在固定的id范围内, null 不限制
 	 * @var array|null
 	 */
 	protected $ids = null;
-	
+
 	public function __construct($ids = null, $child = '', $data = [])
 	{
 		if ( ! is_null($ids)) {
@@ -33,17 +33,17 @@ class Tree
 		$child && $this->childName = $child;
 		$data && $this->menu = $data;
 	}
-	
+
 	public function originData($where = [])
 	{
-		$Menu = model('Menu');
+		$Menu = model_admin('Menu');
 		if ($where) {
 			$Menu->where($where);
 		}
 		$this->menu = $Menu->setOrder()->all();
 		return $this;
 	}
-	
+
 	/**
 	 * 获取树形数据
 	 * @return array
@@ -53,7 +53,7 @@ class Tree
 		$tree = $this->buildMenuTree($pid);
 		return $isRouter ? $this->toRouter($tree) : $tree;
 	}
-	
+
 	public function getAll()
 	{
 		$arr = [];
@@ -63,7 +63,7 @@ class Tree
 		$min = min($arr);
 		return $this->buildMenuTree($min);
 	}
-	
+
 	/**
 	 * 多级菜单树
 	 * @param int $pid
@@ -82,17 +82,17 @@ class Tree
 				if ($children = $this->buildMenuTree($value['id'])) {
 					$value[$this->childName] = $children;
 				}
-				
+
 				// 儿子在id列表爸爸不在，把爸爸也算上, 适用于 treeSelect 当子节点未选满时不会返回父节点的场景
 				if (is_null($this->ids) || (is_array($this->ids) && in_array($value['id'], $this->ids) || $children)) {
 					$result[] = $value;
 				}
 			}
 		}
-		
+
 		return $result;
 	}
-	
+
 	/**
 	 * 转化为客户端Router结构
 	 */
@@ -104,7 +104,7 @@ class Tree
 			foreach (['path', 'component', 'name', 'redirect',] as $col) {
 				$router[$col] = $value[$col] ?? '';
 			}
-			
+
 			// meta,强类型,对应types/vue-router.d.ts
 			$meta = [
 				'orderNo' => intval($value['sort']),
@@ -127,7 +127,7 @@ class Tree
 				$router['path'] = $router['name'] ?? '';
 			}
 			$router['meta'] = $meta;
-			
+
 			if ( ! empty($value['children'])) {
 				$router['children'] = $this->toRouter($value['children']);
 			}
@@ -135,7 +135,7 @@ class Tree
 		}
 		return $result;
 	}
-	
+
 	/**
 	 * 获取某一个子菜单的完整path(拼接父级)
 	 * @param $id
@@ -148,7 +148,7 @@ class Tree
 		$path = array_reverse($path);
 		return '/' . implode('/', $path);
 	}
-	
+
 	protected function buildPath($id = 0)
 	{
 		$result = [];
@@ -156,7 +156,7 @@ class Tree
 			if ($value instanceof \EasySwoole\ORM\AbstractModel) {
 				$value = $value->toArray();
 			}
-			
+
 			if ($value['id'] == $id) {
 				$result[] = trim($value['path'], '/');
 				if ( ! empty($value['pid'])) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 
 trait GameModelTrait
@@ -10,7 +10,7 @@ trait GameModelTrait
 		$this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'desc'];
 	}
-	
+
 	public static function onAfterInsert($model, $res)
 	{
 		if ($res) {
@@ -18,7 +18,7 @@ trait GameModelTrait
 			$model->__after_write('create');
 		}
 	}
-	
+
 	public static function onAfterUpdate($model, $res)
 	{
 		if ($res) {
@@ -26,11 +26,11 @@ trait GameModelTrait
 			$model->__after_write('update');
 		}
 	}
-	
+
 	protected function _delCache()
 	{
 	}
-	
+
 	public function getGameAll($where = [])
 	{
 		if ($where) {
@@ -38,7 +38,7 @@ trait GameModelTrait
 		}
 		return $this->where('status', 1)->setOrder()->all('id');
 	}
-	
+
 	/**
 	 * 获取id => name 键值对
 	 * @param array $where
@@ -59,7 +59,7 @@ trait GameModelTrait
 		}
 		return $all;
 	}
-	
+
 	protected function getExtensionAttr($extension = '', $all = [])
 	{
 		$extension = is_array($extension) ? $extension : json_decode($extension, true);

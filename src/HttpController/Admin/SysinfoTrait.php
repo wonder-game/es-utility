@@ -3,8 +3,10 @@
 namespace WonderGame\EsUtility\HttpController\Admin;
 
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
-use WonderGame\EsUtility\Common\Http\Code;
 
+/**
+ * @property \App\Model\Admin\Sysinfo $Model
+ */
 trait SysinfoTrait
 {
 	protected function __search()

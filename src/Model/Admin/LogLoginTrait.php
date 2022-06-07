@@ -1,7 +1,7 @@
 <?php
 
 
-namespace WonderGame\EsUtility\Model;
+namespace WonderGame\EsUtility\Model\Admin;
 
 
 use EasySwoole\Mysqli\QueryBuilder;
@@ -12,7 +12,7 @@ trait LogLoginTrait
 	{
 		$this->autoTimeStamp = true;
 	}
-	
+
 	/**
 	 * 关联
 	 * @return array|mixed|null
@@ -24,6 +24,6 @@ trait LogLoginTrait
 			$query->fields(['id', 'username', 'realname', 'avatar', 'status']);
 			return $query;
 		};
-		return $this->hasOne(find_model('Admin'), $callback, 'uid', 'id');
+		return $this->hasOne(find_model('Admin\Admin'), $callback, 'uid', 'id');
 	}
 }
