@@ -590,8 +590,9 @@ if ( ! function_exists('area')) {
 			if (preg_match('/台湾|香港|澳门/', $str)) {
 				$str = '中国' . mb_substr(trim($str), 0, 2);
 			} else {
-				$str = "中国 $str";
-			}
+                // 可根据业务需求，添加后缀字，例如大陆
+                $str = '中国' . config('INLAND'). " $str";
+            }
 		}
 		$arr = explode(' ', $str);
 		// 删除国家外的多余内容
