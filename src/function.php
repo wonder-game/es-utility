@@ -40,14 +40,14 @@ if ( ! function_exists('find_model')) {
 		if ( ! $namespaces = config('MODEL_NAMESPACES')) {
 			$namespaces = ['\\App\\Model'];
 		}
-
+		
 		foreach ($namespaces as $namespace) {
 			$className = rtrim($namespace, '\\') . '\\' . ucfirst($name);
 			if (class_exists($className)) {
 				return $className;
 			}
 		}
-
+		
 		if ($thorw) {
 			throw new \Exception('Class Not Found: ' . $name);
 		}
@@ -60,34 +60,57 @@ if ( ! function_exists('model')) {
 	/**
 	 * 实例化Model
 	 * @param string $name Model名称
-	 * @return \App\Model\$model
+	 * @return \EasySwoole\ORM\AbstractModel
 	 */
-	function model($name = '', $data = [])
+	function model(string $name = '', array $data = [])
 	{
-        // 允许传递多级命名空间
-        $space = '';
-        $name = str_replace('/', '\\', $name);
-        if (strpos($name, '\\')) {
-            $list = explode('\\', $name);
-            $name = array_pop($list);
-            $space = implode('\\', array_map('ucfirst', $list)) . '\\';
-        }
-
+		// 允许传递多级命名空间
+		$space = '';
+		$name = str_replace('/', '\\', $name);
+		if (strpos($name, '\\')) {
+			$list = explode('\\', $name);
+			$name = array_pop($list);
+			$space = implode('\\', array_map('ucfirst', $list)) . '\\';
+		}
+		
 		$name = parse_name($name, 1);
-
+		
 		$gameid = '';
 		// 实例化XXX_gid模型
 		if (strpos($name, ':')) {
 			list($name, $gameid) = explode(':', $name);
 		}
 		$tableName = $gameid != '' ? parse_name($name, 0, false) . "_$gameid" : '';
-
+		
 		$className = find_model($space . $name);
-
+		
 		return new $className($data, $tableName, $gameid);
 	}
 }
 
+if ( ! function_exists('model_admin')) {
+	/**
+	 * @param string $name
+	 * @param array $data
+	 * @return \EasySwoole\ORM\AbstractModel
+	 */
+	function model_admin(string $name = '', array $data = [])
+	{
+		return model('Admin\\' . ucfirst($name), $data);
+	}
+}
+
+if ( ! function_exists('model_log')) {
+	/**
+	 * @param string $name
+	 * @param array $data
+	 * @return \EasySwoole\ORM\AbstractModel
+	 */
+	function model_log(string $name = '', array $data = [])
+	{
+		return model('Log\\' . ucfirst($name), $data);
+	}
+}
 
 if ( ! function_exists('config')) {
 	/**
@@ -218,7 +241,7 @@ if ( ! function_exists('listdate')) {
 	function listdate($beginday, $endday, $type = 2)
 	{
 		$dif = difdate($beginday, $endday, $type != 2);
-
+		
 		// 季
 		if ($type == 3) {
 			// 开始的年份, 结束的年份
@@ -226,7 +249,7 @@ if ( ! function_exists('listdate')) {
 			// 开始的月份, 结束的月份
 			$arrm = [date('m', strtotime($beginday)), date('m', strtotime($endday))];
 			$arrym = [];
-
+			
 			$quarter = ['04', '07', 10, '01'];
 			$come = false; // 入栈的标识
 			$by = $arry[0]; // 开始的年份
@@ -235,14 +258,14 @@ if ( ! function_exists('listdate')) {
 					if ($arrm[0] < $v || $k == 3) {
 						$come = true;
 					}
-
+					
 					$key = substr($by, 2) . str_pad($k + 1, 2, '0', STR_PAD_LEFT);
-
+					
 					// 下一年度
 					if ($k == 3) {
 						++$by;
 					}
-
+					
 					if ($come) {
 						$arr[$key] = $by . $v . '01'; // p1803=>strtotime(20181001)
 					}
@@ -267,7 +290,7 @@ if ( ! function_exists('listdate')) {
 				$unit = 'month';
 				$d = '01';
 			}
-
+			
 			$begintime = strtotime(date($format, strtotime($beginday)));
 			for ($i = 0; $i <= $dif; ++$i) {
 				$key = strtotime("+$i $unit", $begintime);
@@ -288,14 +311,14 @@ if ( ! function_exists('difdate')) {
 	{
 		$beginstamp = strtotime($beginday);
 		$endstamp = strtotime($endday);
-
+		
 		// 相差多少个月
 		if ( ! $d) {
 			list($date_1['y'], $date_1['m']) = explode('-', date('Y-m', $beginstamp));
 			list($date_2['y'], $date_2['m']) = explode('-', date('Y-m', $endstamp));
 			return ($date_2['y'] - $date_1['y']) * 12 + $date_2['m'] - $date_1['m'];
 		}
-
+		
 		// 相差多少天
 		return ceil(($endstamp - $beginstamp) / (3600 * 24));
 	}
@@ -318,44 +341,44 @@ if ( ! function_exists('verify_token')) {
 		if ($jwt['status'] != 1 || ! isset($jwt['data'][$key]) || ! isset($orgs[$key]) || $jwt['data'][$key] != $orgs[$key]) {
 			return ['INVERTOKEN' => 1, 'code' => 400, 'msg' => 'jwt有误'];
 		}
-
+		
 		$jwt['data']['token'] = $token;
-
+		
 		return $jwt['data'];
 	}
 }
 
 
 if ( ! function_exists('ip')) {
-    /**
-     * 获取http客户端ip
-     * @param \EasySwoole\Http\Request | null $Request
-     * @param string $default
-     * @return string
-     */
+	/**
+	 * 获取http客户端ip
+	 * @param \EasySwoole\Http\Request | null $Request
+	 * @param string $default
+	 * @return string
+	 */
 	function ip($Request = null, $default = '')
 	{
-        // Request继承 \EasySwoole\Http\Message\Message 皆可
-        if ( ! $Request instanceof \EasySwoole\Http\Request) {
-            $Request = \WonderGame\EsUtility\Common\Classes\CtxRequest::getInstance()->request;
-            if (empty($Request)) {
-                return $default;
-            }
-        }
-
-        if ($xForwardedFor = $Request->getHeaderLine('x-forwarded-for')) {
-            return $xForwardedFor;
-        }
-        if ($xRealIp = $Request->getHeaderLine('x-real-ip')) {
-            return $xRealIp;
-        }
-
-        $servers = $Request->getServerParams();
-        if ( ! empty($servers['remote_addr'])) {
-            return $servers['remote_addr'];
-        }
-
-        return $default;
+		// Request继承 \EasySwoole\Http\Message\Message 皆可
+		if ( ! $Request instanceof \EasySwoole\Http\Request) {
+			$Request = \WonderGame\EsUtility\Common\Classes\CtxRequest::getInstance()->request;
+			if (empty($Request)) {
+				return $default;
+			}
+		}
+		
+		if ($xForwardedFor = $Request->getHeaderLine('x-forwarded-for')) {
+			return $xForwardedFor;
+		}
+		if ($xRealIp = $Request->getHeaderLine('x-real-ip')) {
+			return $xRealIp;
+		}
+		
+		$servers = $Request->getServerParams();
+		if ( ! empty($servers['remote_addr'])) {
+			return $servers['remote_addr'];
+		}
+		
+		return $default;
 	}
 }
 
@@ -451,24 +474,24 @@ if ( ! function_exists('convertip')) {
 		if ( ! $fd = @fopen($ipdatafile, 'rb')) {
 			return '- Invalid IP data file';
 		}
-
+		
 		$ip = explode('.', $ip);
 		$ipNum = $ip[0] * 16777216 + $ip[1] * 65536 + $ip[2] * 256 + $ip[3];
-
+		
 		if ( ! ($DataBegin = fread($fd, 4)) || ! ($DataEnd = fread($fd, 4))) return;
 		@$ipbegin = implode('', unpack('L', $DataBegin));
 		if ($ipbegin < 0) $ipbegin += pow(2, 32);
 		@$ipend = implode('', unpack('L', $DataEnd));
 		if ($ipend < 0) $ipend += pow(2, 32);
 		$ipAllNum = ($ipend - $ipbegin) / 7 + 1;
-
+		
 		$BeginNum = $ip2num = $ip1num = 0;
 		$ipAddr1 = $ipAddr2 = '';
 		$EndNum = $ipAllNum;
-
+		
 		while ($ip1num > $ipNum || $ip2num < $ipNum) {
 			$Middle = intval(($EndNum + $BeginNum) / 2);
-
+			
 			fseek($fd, $ipbegin + 7 * $Middle);
 			$ipData1 = fread($fd, 4);
 			if (strlen($ipData1) < 4) {
@@ -477,12 +500,12 @@ if ( ! function_exists('convertip')) {
 			}
 			$ip1num = implode('', unpack('L', $ipData1));
 			if ($ip1num < 0) $ip1num += pow(2, 32);
-
+			
 			if ($ip1num > $ipNum) {
 				$EndNum = $Middle;
 				continue;
 			}
-
+			
 			$DataSeek = fread($fd, 3);
 			if (strlen($DataSeek) < 3) {
 				fclose($fd);
@@ -497,7 +520,7 @@ if ( ! function_exists('convertip')) {
 			}
 			$ip2num = implode('', unpack('L', $ipData2));
 			if ($ip2num < 0) $ip2num += pow(2, 32);
-
+			
 			if ($ip2num < $ipNum) {
 				if ($Middle == $BeginNum) {
 					fclose($fd);
@@ -506,7 +529,7 @@ if ( ! function_exists('convertip')) {
 				$BeginNum = $Middle;
 			}
 		}
-
+		
 		$ipFlag = fread($fd, 1);
 		if ($ipFlag == chr(1)) {
 			$ipSeek = fread($fd, 3);
@@ -518,7 +541,7 @@ if ( ! function_exists('convertip')) {
 			fseek($fd, $ipSeek);
 			$ipFlag = fread($fd, 1);
 		}
-
+		
 		if ($ipFlag == chr(2)) {
 			$AddrSeek = fread($fd, 3);
 			if (strlen($AddrSeek) < 3) {
@@ -537,20 +560,20 @@ if ( ! function_exists('convertip')) {
 			} else {
 				fseek($fd, -1, SEEK_CUR);
 			}
-
+			
 			while (($char = fread($fd, 1)) != chr(0))
 				$ipAddr2 .= $char;
-
+			
 			$AddrSeek = implode('', unpack('L', $AddrSeek . chr(0)));
 			fseek($fd, $AddrSeek);
-
+			
 			while (($char = fread($fd, 1)) != chr(0))
 				$ipAddr1 .= $char;
 		} else {
 			fseek($fd, -1, SEEK_CUR);
 			while (($char = fread($fd, 1)) != chr(0))
 				$ipAddr1 .= $char;
-
+			
 			$ipFlag = fread($fd, 1);
 			if ($ipFlag == chr(2)) {
 				$AddrSeek2 = fread($fd, 3);
@@ -567,7 +590,7 @@ if ( ! function_exists('convertip')) {
 				$ipAddr2 .= $char;
 		}
 		fclose($fd);
-
+		
 		if (preg_match('/http/i', $ipAddr2)) {
 			$ipAddr2 = '';
 		}
@@ -585,24 +608,24 @@ if ( ! function_exists('area')) {
 	function area($ip = '', $num = 'all')
 	{
 		$str = convertip($ip);
-		if (preg_match('/北京市|上海市|天津市|重庆市|河北省|山西省|辽宁省|吉林省|黑龙江省|江苏省|浙江省|安徽省|福建省|江西省|山东省|河南省|湖北省|湖南省|广东省|海南省|四川省|贵州省|云南省|陕西省|甘肃省|青海省|台湾省|香港|澳门|内蒙古|广西|宁夏|新疆|西藏/', $str)) {
+		if (preg_match('/中国|北京市|上海市|天津市|重庆市|河北省|山西省|辽宁省|吉林省|黑龙江省|江苏省|浙江省|安徽省|福建省|江西省|山东省|河南省|湖北省|湖南省|广东省|海南省|四川省|贵州省|云南省|陕西省|甘肃省|青海省|台湾省|香港|澳门|内蒙古|广西|宁夏|新疆|西藏/', $str)) {
 			// 业务需求：非大陆需要单独记录
 			if (preg_match('/台湾|香港|澳门/', $str)) {
 				$str = '中国' . mb_substr(trim($str), 0, 2);
 			} else {
-                // 可根据业务需求，添加后缀字，例如大陆
-                $str = '中国' . config('INLAND'). " $str";
-            }
+				// 可根据业务需求，添加后缀字，例如大陆
+				$str = '中国' . config('INLAND') . " $str";
+			}
 		}
 		$arr = explode(' ', $str);
 		// 删除国家外的多余内容
-		foreach (['美国' => '美国', '加拿大' => '加拿大', '荷兰' => '荷兰', '法属' => '法国', '荷属' => '荷兰', '美属' => '美国', '德国' => '德国', '日本' => '日本'] as $k => $v) {
+		foreach (['美国' => '美国', '加拿大' => '加拿大', '荷兰' => '荷兰', '法属' => '法国', '荷属' => '荷兰', '美属' => '美国', '德国' => '德国', '日本' => '日本', '俄罗斯' => '俄罗斯', '南非' => '南非', '欧洲' => '欧洲地区', '泰国' => '泰国', '英国' => '英国'] as $k => $v) {
 			if (stripos($arr[0], $k) === 0) {
 				$arr[0] = $v;
 				break;
 			}
 		}
-
+		
 		return is_numeric($num) ? $arr[$num] : $arr;
 	}
 }
@@ -618,14 +641,14 @@ if ( ! function_exists('sysinfo')) {
 	 */
 	function sysinfo($key = null, $default = null)
 	{
-
+		
 		/** @var SplArray $Spl */
 		$Spl = RedisPool::invoke(function (Redis $redis) {
-
-			$model = model('sysinfo');
-
+			
+			$model = model_admin('sysinfo');
+			
 			$redisKey = $model->getCacheKey();
-
+			
 			$cache = $redis->get($redisKey);
 			if ($cache !== false && ! is_null($cache)) {
 				$slz = unserialize($cache);
@@ -633,20 +656,20 @@ if ( ! function_exists('sysinfo')) {
 					return $slz;
 				}
 			}
-
+			
 			$data = $model->where('status', 1)->all();
-
+			
 			$array = [];
 			/** @var Sysinfo $item */
 			foreach ($data as $item) {
 				$array[$item->getAttr('varname')] = $item->getAttr('value');
 			}
-
+			
 			$Spl = new SplArray($array);
 			$redis->set($redisKey, serialize($Spl));
 			return $Spl;
 		});
-
+		
 		return $key === true ? $Spl : $Spl->get($key, $default);
 	}
 }
@@ -700,15 +723,16 @@ if ( ! function_exists('is_env')) {
 }
 
 if ( ! function_exists('memory_convert')) {
-    /**
-     * 转换内存单位
-     * @param $bytes
-     * @return string
-     */
-    function memory_convert($bytes) {
-        $s = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-        $e = floor(log($bytes) / log(1024));
-
-        return sprintf('%.2f ' . $s[$e], ($bytes / pow(1024, floor($e))));
-    }
+	/**
+	 * 转换内存单位
+	 * @param $bytes
+	 * @return string
+	 */
+	function memory_convert($bytes)
+	{
+		$s = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+		$e = floor(log($bytes) / log(1024));
+		
+		return sprintf('%.2f ' . $s[$e], ($bytes / pow(1024, floor($e))));
+	}
 }
