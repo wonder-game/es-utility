@@ -350,35 +350,39 @@ if ( ! function_exists('verify_token')) {
 
 
 if ( ! function_exists('ip')) {
-	/**
-	 * 获取http客户端ip
-	 * @param \EasySwoole\Http\Request | null $Request
-	 * @param string $default
-	 * @return string
-	 */
-	function ip($Request = null, $default = '')
+    /**
+     * 获取http客户端ip
+     * @param null $Request
+     * @return false|string
+     */
+	function ip($Request = null)
 	{
 		// Request继承 \EasySwoole\Http\Message\Message 皆可
 		if ( ! $Request instanceof \EasySwoole\Http\Request) {
 			$Request = \WonderGame\EsUtility\Common\Classes\CtxRequest::getInstance()->request;
 			if (empty($Request)) {
-				return $default;
+				return false;
 			}
 		}
 
-		if ($xForwardedFor = $Request->getHeaderLine('x-forwarded-for')) {
-			return $xForwardedFor;
-		}
-		if ($xRealIp = $Request->getHeaderLine('x-real-ip')) {
-			return $xRealIp;
-		}
+        $ip = ($xForwardedFor = $Request->getHeaderLine('x-forwarded-for')) ? $xForwardedFor : $Request->getHeaderLine('x-real-ip');
 
-		$servers = $Request->getServerParams();
-		if ( ! empty($servers['remote_addr'])) {
-			return $servers['remote_addr'];
-		}
+        if (empty($ip)) {
+            $servers = $Request->getServerParams();
+            if ( ! empty($servers['remote_addr'])) {
+                $ip = $servers['remote_addr'];
+            }
+        }
 
-		return $default;
+        // 其中“;”为getHeaderLine拼接, “, ”为代理拼接
+        foreach ([';', ','] as $delimiter)
+        {
+            if (strpos($ip, $delimiter) !== false) {
+                $ip = trim(explode($delimiter, $ip)[0]);
+            }
+        }
+
+        return $ip;
 	}
 }
 
