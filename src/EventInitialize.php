@@ -38,6 +38,7 @@ class EventInitialize extends SplBean
     protected $mysqlOnQueryOpen = null;
     protected $mysqlOnQueryFunc = [
         '_before_func' => null, // 前置
+        '_save_log' => true, // 保存日志 
         '_save_sql' => null, // 自定义保存
         '_after_func' => null, // 后置
     ];
@@ -200,7 +201,11 @@ class EventInitialize extends SplBean
                 if (empty($sql)) {
                     return;
                 }
-                trace($sql, 'info', 'sql');
+                
+                // 除非显示声明_save_log不记录日志
+                if (! isset($this->mysqlOnQueryFunc['_save_log']) || $this->mysqlOnQueryFunc['_save_log'] !== false) {
+                    trace($sql, 'info', 'sql');
+                }
 
                 // 不记录的SQL，表名
                 $logtable = config('NOT_WRITE_SQL.table');
