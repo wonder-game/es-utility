@@ -81,7 +81,7 @@ class LamLog implements LoggerInterface
 		$msg = str_replace(["\n", "\r"], '', $msg);
 
         // 不在东8区则拼接上东8区的时间
-        $tznInt = substr((int) date('O'), 0, -2);
+        $tznInt = intval(substr((int) date('O'), 0, -2));
         if ($tznInt !== 8) {
             $date = "{$tznInt}区: " . date(DateUtils::FULL);
             $date .= ', +8区: ' . date(DateUtils::FULL, DateUtils::getTimeZoneStamp(time(), 'PRC'));
