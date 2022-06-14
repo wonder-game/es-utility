@@ -148,6 +148,11 @@ class EventMainServerCreate extends SplBean
                 continue;
             }
             $psnum = intval($value['psnum'] ?? 1);
+            $proCfg = [];
+            if (isset($value['process_config']) && is_array($value['process_config'])) {
+                $proCfg = $value['process_config'];
+                unset($value['process_config']);
+            }
 
             for ($i = 0; $i < $psnum; ++$i) {
                 $cfg = array_merge([
@@ -155,7 +160,7 @@ class EventMainServerCreate extends SplBean
                     'processGroup' => $group,
                     'arg' => $value,
                     'enableCoroutine' => true,
-                ]);
+                ], $proCfg);
                 $processConfig = new \EasySwoole\Component\Process\Config($cfg);
                 \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
             }
