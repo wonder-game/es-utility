@@ -99,6 +99,7 @@ trait有哪些坑
 
     1. 不允许重写属性，所以基本都定义了一个setTraitProtected方法去修改trait属性
     2. 不允许重载方法，当某些项目可能比方法多一个小逻辑时，需要及时调整代码的封装，否则需要整个复制多一份，日积月累，反而可能更难维护
+    3. 由于 2 的限制，现将普通控制器方法的public方法名默认添加一个固定前缀，通过基础控制器 /src/HttpController/BaseControllerTrait.php 的 actionNotFound 方法来实现更加灵活的调用方式
 
 ### TODO
 
