@@ -10,7 +10,7 @@ class DateUtils
 	const FULL = 'Y-m-d H:i:s';
 	const YmdHis = 'YmdHis';
 	const FMT_1 = 'Y-m-d';
-	
+
 	public static function format($time, $fmt = '')
 	{
 		if ( ! is_numeric($time)) {
@@ -21,7 +21,7 @@ class DateUtils
 		}
 		return date($fmt, $time);
 	}
-	
+
 	/**
 	 * 当前系统时区与指定时区之间的差值,单位秒
 	 * @param string $tzs Asia/Shanghai
@@ -33,18 +33,18 @@ class DateUtils
 		$currentRunTimeZone = date_default_timezone_get();
 		$currTimeZone = new \DateTimeZone($currentRunTimeZone);
 		$currentOffset = $currTimeZone->getOffset(new \DateTime($date));
-		
+
 		$toTimeZone = new \DateTimeZone($tzs);
 		$toOffset = $toTimeZone->getOffset(new \DateTime($date));
-		
+
 		return $currentOffset - $toOffset;
 	}
-	
+
 	public static function getTimeZoneStamp(int $time, $tzs): int
 	{
-		return $time + self::timeZoneOffsetSec($tzs);
+		return $time - self::timeZoneOffsetSec($tzs);
 	}
-	
+
 	/**
 	 * 转换, -5 -> America/Bogota
 	 * @param $tzn
@@ -67,7 +67,7 @@ class DateUtils
 		}
 		return $tzn;
 	}
-	
+
 	/**
 	 * 将时间戳格式化为对应时区的时间
 	 * @param $time
@@ -81,7 +81,7 @@ class DateUtils
 		$DateTime->setTimestamp($time)->setTimezone(new \DateTimeZone($tz));
 		return $DateTime->format($format);
 	}
-	
+
 	/**
 	 * 将指定时区的一个日期格式转换为另一个时区的时间戳（或格式化后的值）
 	 * @param $timeStamp
@@ -96,7 +96,7 @@ class DateUtils
 		$fmt = self::formatTimeByTz($timeStamp, $ttz, self::FULL);
 		return self::timeChangeZoneByDate($fmt, $tz, $format);
 	}
-	
+
 	/**
 	 * todo 是否也需要指定时区??
 	 * 将一个日期格式转换为另一个时区的时间戳（或格式化后的值）
@@ -111,7 +111,7 @@ class DateUtils
 		$DateTime = new \DateTime($date, new \DateTimeZone($tz));
 		return empty($format) ? $DateTime->getTimestamp() : $DateTime->format($format);
 	}
-	
+
 	/**
 	 * 将ymd 转换为客户端展示的Y-m-d格式，如果在客户端转换，会误杀合计行
 	 */
