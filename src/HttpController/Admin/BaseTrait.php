@@ -35,7 +35,8 @@ trait BaseTrait
 		// 设置组件属性
 		$this->setBaseTraitProptected();
 		// 实例化模型
-		return $this->instanceModel();
+		$this->instanceModel();
+        return true;
 	}
 
 	protected function setBaseTraitProptected()
@@ -71,19 +72,23 @@ trait BaseTrait
 		$this->writeJson(Code::CODE_OK, $result, $msg);
 	}
 
-	protected function instanceModel()
-	{
-		if ( ! is_null($this->modelName)) {
-			$className = ucfirst($this->getStaticClassName());
+    /**
+     * 如果GET有传tzn参数，自动注入连接并切时区
+     * @return bool
+     */
+    protected function instanceModel()
+    {
+        if ( ! is_null($this->modelName)) {
+            $className = ucfirst($this->getStaticClassName());
 
-			if ($this->modelName === '') {
-				$this->Model = model_admin($className);
-			} else {
-				$this->Model = model($this->modelName);
-			}
-		}
-		return true;
-	}
+            if ($this->modelName === '') {
+                $this->Model = model_admin($className, [], $this->get['tzn']);
+            } else {
+                $this->Model = model($this->modelName, [], $this->get['tzn']);
+            }
+        }
+        return true;
+    }
 
 	/**
 	 * [1 => 'a', 2 => 'b', 4 => 'c']

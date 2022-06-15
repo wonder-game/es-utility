@@ -60,9 +60,11 @@ if ( ! function_exists('model')) {
 	/**
 	 * 实例化Model
 	 * @param string $name Model名称
+     * @param array $data
+     * @param bool|numeric $inject bool:注入连接, numeric: 注入连接并切换到指定时区
 	 * @return \EasySwoole\ORM\AbstractModel
 	 */
-	function model(string $name = '', array $data = [])
+	function model(string $name = '', array $data = [], $inject = false)
 	{
 		// 允许传递多级命名空间
 		$space = '';
@@ -84,31 +86,49 @@ if ( ! function_exists('model')) {
 
 		$className = find_model($space . $name);
 
-		return new $className($data, $tableName, $gameid);
+        /** @var \EasySwoole\ORM\AbstractModel $model */
+		$model = new $className($data, $tableName, $gameid);
+
+        if ($inject === true || is_numeric($inject)) {
+            // 注入连接
+            $connectName = $model->getConnectionName();
+            /** @var \EasySwoole\ORM\Db\MysqliClient $Client */
+            $Client = \EasySwoole\ORM\DbManager::getInstance()->getConnection($connectName)->defer();
+            $Client->connectionName($connectName);
+            $model->setExecClient($Client);
+
+            // 切换时区
+            if (is_numeric($inject) && method_exists($model, 'setTimeZone')) {
+                $model->setTimeZone($inject);
+            }
+        }
+        return $model;
 	}
 }
 
 if ( ! function_exists('model_admin')) {
-	/**
-	 * @param string $name
-	 * @param array $data
-	 * @return \EasySwoole\ORM\AbstractModel
-	 */
-	function model_admin(string $name = '', array $data = [])
+    /**
+     * @param string $name
+     * @param array $data
+     * @param bool|numeric $inject
+     * @return \EasySwoole\ORM\AbstractModel
+     */
+	function model_admin(string $name = '', array $data = [], $inject = false)
 	{
-		return model('Admin\\' . ucfirst($name), $data);
+		return model('Admin\\' . ucfirst($name), $data, $inject);
 	}
 }
 
 if ( ! function_exists('model_log')) {
-	/**
-	 * @param string $name
-	 * @param array $data
-	 * @return \EasySwoole\ORM\AbstractModel
-	 */
-	function model_log(string $name = '', array $data = [])
+    /**
+     * @param string $name
+     * @param array $data
+     * @param bool|numeric $inject
+     * @return \EasySwoole\ORM\AbstractModel
+     */
+	function model_log(string $name = '', array $data = [], $inject = false)
 	{
-		return model('Log\\' . ucfirst($name), $data);
+		return model('Log\\' . ucfirst($name), $data, $inject);
 	}
 }
 

@@ -81,7 +81,7 @@ class Mysqli
     /**
      * @param $tableName
      * @param array $data 数据，批量时为二维数组
-     * @param false $multiple 默认true-批量, false-单条
+     * @param false $multiple true-批量, false-单条
      * @return array|bool|mixed
      * @throws \EasySwoole\Mysqli\Exception\Exception
      */
@@ -108,14 +108,13 @@ class Mysqli
 
     /**
      * 设置连接时区
-     * @param $tzn 格式为: -5 或 -5:00 或 8 或 +8:00
+     * @param $tzn 格式为: -5 或 -5:00 或 8 或 +8:00 ...
      * @throws \EasySwoole\Mysqli\Exception\Exception
      */
     public function setTimeZone($tzn)
     {
-        // 允许传int
         if (strpos($tzn, ':') === false) {
-            $tznInt  =intval($tzn);
+            $tznInt = intval($tzn);
             $tzn = ($tznInt > 0 ? "+$tznInt" : $tznInt) . ':00';
         }
 

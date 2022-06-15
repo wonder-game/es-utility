@@ -507,31 +507,22 @@ trait AuthTrait
     {
         $filter = [];
 
-        if (isset($this->get['tzn'])) {
-            $tzn = $this->get['tzn'];
-            foreach (sysinfo('region_domain.region') as $k => $v) {
-                if ($v['tzn'] == $tzn) {
-                    $filter['tzs'] = $v['tzs'];
-                    break;
-                }
+        if (isset($this->get['begintime'])) {
+            if ((strpos($this->get['begintime'], ':') !== false)) {
+                $this->get['begintime'] .= ' 00:00:00';
             }
-            $filter['tzn'] = $tzn;
+
+            $filter['begintime'] = strtotime($this->get['begintime']);
+            $filter['beginday'] = date(DateUtils::_ymd, $filter['begintime']);
         }
 
-        // begintime, beginday
-        $begintime = $this->get['begintime'] ?? '';
-        if ($begintime) {
-            $begintime = strtotime($begintime . (strpos($begintime, ':') !== false ? '' : ' 00:00:00'));
-            $filter['begintime'] = DateUtils::timeChangeZoneByTimeStamp($begintime, '', $filter['tzs']);
-            $filter['beginday'] = DateUtils::timeChangeZoneByTimeStamp($begintime, '', $filter['tzs'], DateUtils::_ymd);
-        }
-
-        // endtime, endday
         if (isset($this->get['endtime'])) {
-            $endtime = $this->get['endtime'];
-            $endtime = strtotime($endtime . (strpos($endtime, ':') !== false ? '' : ' 23:59:59'));
-            $filter['endtime'] = DateUtils::timeChangeZoneByTimeStamp($endtime, '', $filter['tzs']);
-            $filter['endday'] = DateUtils::timeChangeZoneByTimeStamp($endtime, '', $filter['tzs'], DateUtils::_ymd);
+            if (strpos($this->get['endtime'], ':') !== false) {
+                $this->get['endtime'] .= ' 23:59:59';
+            }
+
+            $filter['endtime'] = strtotime($this->get['endtime']);
+            $filter['endday'] = date(DateUtils::_ymd, $filter['endtime']);
         }
 
         // gameid, pkgbnd
