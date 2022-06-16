@@ -28,6 +28,8 @@ class Mysqli extends MysqliClient
         $this->_config = config('MYSQL.' . $name);
         $this->_config = array_merge($this->_config, $config);
 
+        $this->connectionName($name);
+
         parent::__construct(new Config($this->_config));
 
         if ( ! isset($this->_config['save_log']) || $this->_config['save_log'] !== false) {
