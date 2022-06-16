@@ -6,14 +6,11 @@ namespace WonderGame\EsUtility\Common\Classes;
 use EasySwoole\Mysqli\Client;
 use EasySwoole\Mysqli\Config;
 use EasySwoole\Mysqli\QueryBuilder;
-use Swoole\Coroutine;
+use EasySwoole\ORM\Db\MysqliClient;
 
-class Mysqli
+class Mysqli extends MysqliClient
 {
-    protected $config = [];
-
-    /** @var Client|null $MysqliClient */
-    protected $MysqliClient = null;
+    protected $_config = [];
 
     /**
      * 存储数据表字段列表 ['hourly' => ['gameid', 'login', 'reg', ...]]
@@ -21,31 +18,22 @@ class Mysqli
      */
     protected $tableStruct = [];
 
-    public function __construct($name = 'default', $config = [])
+    /**
+     * @param string $name 连接池名
+     * @param array $config 需要合并的配置项
+     */
+    public function __construct(string $name = 'default', array $config = [])
     {
-        if (Coroutine::getCid() < 0) {
-            throw new \Exception('请在协程环境运行Mysqli');
+        $this->_config = config('MYSQL.' . $name);
+        $this->_config = array_merge($this->_config, $config);
+
+        parent::__construct(new Config($this->_config));
+
+        if ( ! isset($this->_config['save_log']) || $this->_config['save_log'] !== false) {
+            $this->onQuery(function ($res, Client $client, $start) {
+                trace($client->lastQueryBuilder()->getLastQuery(), 'info', 'sql');
+            });
         }
-        $this->config = config('MYSQL.' . $name);
-        $this->config = array_merge($this->config, $config);
-
-        $this->initClient();
-    }
-
-    protected function initClient()
-    {
-        if (is_null($this->MysqliClient)) {
-            $this->MysqliClient = new Client(new Config($this->config));
-
-            // 除非主动声明为false，否则默认是记录日志的
-            if ( ! isset($this->config['save_log']) || $this->config['save_log'] !== false) {
-                // 注意回调callback第二个参数与全局DBManager不同
-                $this->MysqliClient->onQuery(function ($res, Client $client, $start) {
-                    trace($client->lastQueryBuilder()->getLastQuery(), 'info', 'sql');
-                });
-            }
-        }
-        return $this;
     }
 
     /**
@@ -57,7 +45,7 @@ class Mysqli
     public function fullColumns($tableName): array
     {
         if ( ! isset($this->tableStruct[$tableName])) {
-            $data = $this->MysqliClient->rawQuery("show full columns from {$tableName} where Extra<>'VIRTUAL GENERATED'");
+            $data = $this->rawQuery("show full columns from {$tableName} where Extra<>'VIRTUAL GENERATED'");
             $this->tableStruct[$tableName] = array_column($data, 'Field');
         }
         return $this->tableStruct[$tableName];
@@ -73,37 +61,29 @@ class Mysqli
         // 构建SQL
         $Builder = new QueryBuilder();
         $Builder->onDuplicate($duplicate)->insert($tableName, $data);
-        $sql = $Builder->getLastQuery();
 
-        return $this->MysqliClient->rawQuery($sql);
+        return $this->query($Builder, true);
     }
 
-    /**
-     * @param $tableName
-     * @param array $data 数据，批量时为二维数组
-     * @param false $multiple true-批量, false-单条
-     * @return array|bool|mixed
-     * @throws \EasySwoole\Mysqli\Exception\Exception
-     */
-    public function insert($tableName, $data = [], $multiple = false)
+    public function insert($tableName, $data = [])
     {
         $columns = array_flip($this->fullColumns($tableName));
-
         // 构建SQL
         $Builder = new QueryBuilder();
+        $data = array_intersect_key($data, $columns);
+        $Builder->insert($tableName, $data);
 
-        if ($multiple) {
-            // 批量
-            $Builder->insertAll($tableName, $data, ['field' => $columns]);
-        } else {
-            // 单条
-            $data = array_intersect_key($data, $columns);
-            $Builder->insert($tableName, $data);
-        }
+        return $this->query($Builder, true);
+    }
 
-        $sql = $Builder->getLastQuery();
+    public function insertAll($tableName, $data = [])
+    {
+        $columns = array_flip($this->fullColumns($tableName));
+        // 构建SQL
+        $Builder = new QueryBuilder();
+        $Builder->insertAll($tableName, $data, ['field' => $columns]);
 
-        return $this->MysqliClient->rawQuery($sql);
+        return $this->query($Builder, true);
     }
 
     /**
@@ -118,66 +98,14 @@ class Mysqli
             $tzn = ($tznInt > 0 ? "+$tznInt" : $tznInt) . ':00';
         }
 
-        $this->MysqliClient->rawQuery("set time_zone = '{$tzn}'");
+        $this->rawQuery("set time_zone = '{$tzn}'");
     }
 
     public function getTimeZone()
     {
-        $dbTimeZone = $this->MysqliClient->rawQuery("SHOW VARIABLES LIKE '%time_zone%'");
+        $dbTimeZone = $this->rawQuery("SHOW VARIABLES LIKE 'time_zone'");
         $PhpTimeZone = date_default_timezone_get();
 
         return [$dbTimeZone, $PhpTimeZone];
-    }
-
-    public function parseWhere($where = [])
-    {
-        $builder = $this->MysqliClient->queryBuilder();
-        foreach ($where as $whereFiled => $whereProp) {
-            if (is_array($whereProp)) {
-                $builder->where($whereFiled, ...$whereProp);
-            } else {
-                $builder->where($whereFiled, $whereProp);
-            }
-        }
-        return $this;
-    }
-
-    public function order($order)
-    {
-        $builder = $this->MysqliClient->queryBuilder();
-        // 'id desc'
-        if (is_string($order)) {
-            list($sortField, $sortValue) = explode(' ', $order);
-            $builder->orderBy($sortField, $sortValue);
-        } // ['sort' => 'desc'] || ['sort' => 'desc', 'id' => 'asc']
-        else if (is_array($order)) {
-            // 保证传值的最高优先级
-            foreach ($order as $k => $v) {
-                $builder->orderBy($k, $v);
-            }
-        }
-        return $this;
-    }
-
-    public function get($tableName)
-    {
-        $this->MysqliClient->queryBuilder()->get($tableName);
-        return $this->exec();
-    }
-
-    public function exec()
-    {
-        return $this->MysqliClient->execBuilder();
-    }
-
-    public function getClient()
-    {
-        return $this->MysqliClient;
-    }
-
-    public function close()
-    {
-//        $this->MysqliClient->reset();
-        $this->MysqliClient->close();
     }
 }
