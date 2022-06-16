@@ -508,7 +508,7 @@ trait AuthTrait
         $filter = [];
 
         if (isset($this->get['begintime'])) {
-            if ((strpos($this->get['begintime'], ':') !== false)) {
+            if ((strpos($this->get['begintime'], ':') === false)) {
                 $this->get['begintime'] .= ' 00:00:00';
             }
 
@@ -517,7 +517,7 @@ trait AuthTrait
         }
 
         if (isset($this->get['endtime'])) {
-            if (strpos($this->get['endtime'], ':') !== false) {
+            if (strpos($this->get['endtime'], ':') === false) {
                 $this->get['endtime'] .= ' 23:59:59';
             }
 

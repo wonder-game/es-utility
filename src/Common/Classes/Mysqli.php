@@ -76,9 +76,9 @@ class Mysqli extends MysqliClient
     public function insert($tableName, $data = [])
     {
         $columns = array_flip($this->fullColumns($tableName));
+        $data = array_intersect_key($data, $columns);
         // 构建SQL
         $Builder = new QueryBuilder();
-        $data = array_intersect_key($data, $columns);
         $Builder->insert($tableName, $data);
 
         return $this->query($Builder, true);
