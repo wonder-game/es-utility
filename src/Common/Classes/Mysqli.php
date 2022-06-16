@@ -7,6 +7,7 @@ use EasySwoole\Mysqli\Client;
 use EasySwoole\Mysqli\Config;
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\Db\MysqliClient;
+use EasySwoole\ORM\Db\Result;
 
 class Mysqli extends MysqliClient
 {
@@ -34,6 +35,11 @@ class Mysqli extends MysqliClient
                 trace($client->lastQueryBuilder()->getLastQuery(), 'info', 'sql');
             });
         }
+    }
+
+    public function query(QueryBuilder $builder, bool $rawQuery = true): Result
+    {
+        return parent::query($builder, $rawQuery);
     }
 
     /**

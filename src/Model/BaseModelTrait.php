@@ -2,6 +2,7 @@
 
 namespace WonderGame\EsUtility\Model;
 
+use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\ORM\DbManager;
 use EasySwoole\RedisPool\RedisPool;
@@ -140,6 +141,26 @@ trait BaseModelTrait
 		}
 		return $toArray ? $result->toArray() : $result;
 	}
+
+    /**
+     * 设置连接时区
+     * @param $tzn  格式为: -5 或 -5:00 或 8 或 +8:00 ...
+     * @param bool $raw 是否原样设置，用于设置SYSTEM, UTC等
+     */
+    public function setTimeZone($tzn, $raw = false)
+    {
+        // 设置时区只在注入链接时有效，否则每次query后都会被回收，一旦被回收，会造成连接池污染!
+        if ($tzn && $this->getExecClient()) {
+            if ( ! $raw && strpos($tzn, ':') === false) {
+                $tznInt = intval($tzn);
+                $tzn = ($tznInt > 0 ? "+$tznInt" : $tznInt) . ':00';
+            }
+
+            $Builder = new QueryBuilder();
+            $Builder->raw("set time_zone = '{$tzn}'");
+            $this->query($Builder, true);
+        }
+    }
 
 	/**
 	 * 删除rediskey
