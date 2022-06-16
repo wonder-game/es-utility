@@ -6,12 +6,17 @@ use EasySwoole\I18N\I18N;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
+use EasySwoole\ORM\DbManager;
+use EasySwoole\ORM\AbstractModel;
+use EasySwoole\ORM\Db\MysqliClient;
+
 use WonderGame\EsNotify\DingTalk\Message\Markdown;
 use WonderGame\EsNotify\DingTalk\Message\Text;
 use WonderGame\EsNotify\EsNotify;
 use WonderGame\EsNotify\WeChat\Message\Notice;
 use WonderGame\EsNotify\WeChat\Message\Warning;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
+use WonderGame\EsUtility\Common\Classes\Mysqli;
 
 
 if ( ! function_exists('is_super')) {
@@ -55,55 +60,57 @@ if ( ! function_exists('find_model')) {
 	}
 }
 
-
 if ( ! function_exists('model')) {
-	/**
-	 * 实例化Model
-	 * @param string $name Model名称
+    /**
+     * 实例化Model
+     * @param string $name Model名称
      * @param array $data
      * @param bool|numeric $inject bool:注入连接, numeric: 注入连接并切换到指定时区
-	 * @return \EasySwoole\ORM\AbstractModel
-	 */
-	function model(string $name = '', array $data = [], $inject = false)
-	{
-		// 允许传递多级命名空间
-		$space = '';
-		$name = str_replace('/', '\\', $name);
-		if (strpos($name, '\\')) {
-			$list = explode('\\', $name);
-			$name = array_pop($list);
-			$space = implode('\\', array_map('ucfirst', $list)) . '\\';
-		}
+     * @return AbstractModel
+     */
+    function model(string $name = '', array $data = [], $inject = false)
+    {
+        // 允许传递多级命名空间
+        $space = '';
+        $name = str_replace('/', '\\', $name);
+        if (strpos($name, '\\')) {
+            $list = explode('\\', $name);
+            $name = array_pop($list);
+            $space = implode('\\', array_map('ucfirst', $list)) . '\\';
+        }
 
-		$name = parse_name($name, 1);
+        $name = parse_name($name, 1);
 
-		$gameid = '';
-		// 实例化XXX_gid模型
-		if (strpos($name, ':')) {
-			list($name, $gameid) = explode(':', $name);
-		}
-		$tableName = $gameid != '' ? parse_name($name, 0, false) . "_$gameid" : '';
+        $gameid = '';
+        // 实例化XXX_gid模型
+        if (strpos($name, ':')) {
+            list($name, $gameid) = explode(':', $name);
+        }
+        $tableName = $gameid != '' ? parse_name($name, 0, false) . "_$gameid" : '';
 
-		$className = find_model($space . $name);
+        $className = find_model($space . $name);
 
-        /** @var \EasySwoole\ORM\AbstractModel $model */
-		$model = new $className($data, $tableName, $gameid);
+        /** @var AbstractModel $model */
+        $model = new $className($data, $tableName, $gameid);
 
-        if ($inject === true || is_numeric($inject)) {
-            // 注入连接
-            $connectName = $model->getConnectionName();
-            /** @var \EasySwoole\ORM\Db\MysqliClient $Client */
-            $Client = \EasySwoole\ORM\DbManager::getInstance()->getConnection($connectName)->defer();
+        $connectName = $model->getConnectionName();
+        // 注入连接(连接池连接)
+        if (is_bool($inject) && $inject) {
+            /** @var MysqliClient $Client */
+            $Client = DbManager::getInstance()->getConnection($connectName)->defer();
             $Client->connectionName($connectName);
             $model->setExecClient($Client);
-
-            // 切换时区
-            if (is_numeric($inject) && method_exists($model, 'setTimeZone')) {
-                $model->setTimeZone($inject);
-            }
+        }
+        // 注入连接(新连接) + 切换时区
+        else if (is_numeric($inject) && method_exists($model, 'setTimeZone')) {
+            // 请不要从连接池获取连接, 否则连接回收后会污染连接池
+            $Client = new Mysqli($connectName);
+            $Client->connectionName($connectName);
+            $model->setExecClient($Client);
+            $model->setTimeZone($inject);
         }
         return $model;
-	}
+    }
 }
 
 if ( ! function_exists('model_admin')) {

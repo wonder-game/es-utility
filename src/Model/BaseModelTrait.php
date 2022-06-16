@@ -158,7 +158,7 @@ trait BaseModelTrait
 
            $Builder = new QueryBuilder();
            $Builder->raw("set time_zone = '{$tzn}'");
-           $this->query($Builder, $raw);
+           $this->query($Builder, true);
        }
     }
 
