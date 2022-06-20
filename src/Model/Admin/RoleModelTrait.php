@@ -8,7 +8,6 @@ trait RoleModelTrait
 {
 	protected function setBaseTraitProptected()
 	{
-		$this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'asc'];
 	}
 
