@@ -30,14 +30,11 @@ trait AdminTrait
 
 	protected function __after_index($items, $total)
 	{
-		/** @var \App\Model\Admin\Role $Role */
-		$Role = model_admin('Role');
-		$roleList = $Role->getRoleListAll();
 		foreach ($items as &$value) {
 			unset($value['password']);
 			$value->relation;
 		}
-		return parent::__after_index(['items' => $items, 'roleList' => $roleList], $total);
+		return parent::__after_index($items, $total);
 	}
 
 	/**

@@ -194,17 +194,6 @@ trait BaseModelTrait
 	}
 
 	/**
-	 * data中一定要有主键
-	 * @access public
-	 * @param array $unique 唯一性约束的条件
-	 * @return integer|false
-	 */
-	public function replace($unique = [])
-	{
-		return $this->data($unique)->duplicate($unique)->save();
-	}
-
-	/**
 	 * 更新缓存
 	 */
 	public function resetCache()

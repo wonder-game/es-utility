@@ -30,6 +30,16 @@ trait MenuModelTrait
 		return ucfirst(ltrim($data, '/'));
 	}
 
+    // 如果是第一级路由，path必须以 / 开头
+    protected function setPathAttr($data, $alldata)
+    {
+        $value = ltrim($data, '/');
+        if (intval($alldata['pid']) === 0) {
+            $value = '/' . $value;
+        }
+        return $value;
+    }
+
 	public function getRouter($userMenus = [])
 	{
 		$tree = new Tree($userMenus);
