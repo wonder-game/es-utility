@@ -108,6 +108,7 @@ trait有哪些坑
 - [ ] 重写Tree类
 - [x] WebSocket相关类，事件、解析、Caller、连接符管理等
 - [ ] Crontab支持database、file、http等方式获取
+- [ ] es-orm-cache 组件封装，替换原有的cacheinfo系列方法
 
 ### 其他
 
