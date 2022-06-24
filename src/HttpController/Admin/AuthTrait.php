@@ -451,7 +451,7 @@ trait AuthTrait
             $arr = explode('.', $clientFileName);
             $suffix = end($arr);
 
-            $ymd = DateUtils::timeChangeZoneByTimeStamp(time(), '', '', DateUtils::_ymd);
+            $ymd = date(DateUtils::_ymd);
             $join = "/{$ymd}/";
 
             $dir = rtrim(config('UPLOAD.dir'), '/') . $join;
