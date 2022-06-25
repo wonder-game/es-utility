@@ -13,15 +13,11 @@ trait CrontabTrait
 	{
 		$where = [];
 		foreach (['status'] as $col) {
-			if (isset($this->get[$col]) && $this->get[$col] !== '') {
-				$where[$col] = $this->get[$col];
-			}
+            empty($this->get[$col]) or $where[$col] = $this->get[$col];
 		}
-		if ( ! empty($this->get['name'])) {
-			$this->Model->where("(name like '%{$this->get['name']}%' OR eclass like '%{$this->get['name']}%' OR method like '%{$this->get['name']}%')");
-		}
+        empty($this->get['name']) or $where['concat(name," ",eclass," ",method)'] = ["%{$this->get['name']}%", 'like'];
 
-		return $where;
+		return $this->_search($where);
 	}
 
     public function edit()

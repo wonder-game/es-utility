@@ -11,22 +11,16 @@ use WonderGame\EsUtility\Common\Languages\Dictionary;
  */
 trait AdminTrait
 {
-	protected function __search()
-	{
-		$where = [];
-		if ( ! empty($this->get['rid'])) {
-			$where['rid'] = $this->get['rid'];
-		}
-        if (is_numeric($this->get['status'])) {
-            $where['status'] = $this->get['status'];
-        }
-		foreach (['username', 'realname'] as $val) {
-			if ( ! empty($this->get[$val])) {
-				$where[$val] = ["%{$this->get[$val]}%", 'like'];
-			}
-		}
-		return $where;
-	}
+    protected function __search()
+    {
+        $where = [];
+
+        empty($this->get['rid']) or $where['rid'] = $this->get['rid'];
+        isset($this->get['status']) && is_numeric($this->get['status']) && $where['status'] = $this->get['status'];
+        empty($this->get['name']) or $where['concat(username," ",realname)'] = ["%{$this->get['name']}%", 'like'];
+
+        return $this->_search($where);
+    }
 
 	protected function __after_index($items, $total)
 	{

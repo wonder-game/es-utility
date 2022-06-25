@@ -451,7 +451,7 @@ trait AuthTrait
             $arr = explode('.', $clientFileName);
             $suffix = end($arr);
 
-            $ymd = date(DateUtils::_ymd);
+            $ymd = DateUtils::timeChangeZoneByTimeStamp(time(), '', '', DateUtils::_ymd);
             $join = "/{$ymd}/";
 
             $dir = rtrim(config('UPLOAD.dir'), '/') . $join;
@@ -492,11 +492,24 @@ trait AuthTrait
 
     /**
      * 构造查询数据
+     * 可在具体的控制器的【基本组件里(即：use xxxTrait 的 xxxTrait里)】重写此方法以实现如有个性化的搜索条件
      * @return array
      */
     protected function __search()
     {
-        return null;
+        // 。。。。这里一般是基本组件的构造where数组的代码
+        return $this->_search([]);
+    }
+
+    /**
+     * 构造查询数据
+     * 可在具体的控制器【内部】重写此方法以实现如有个性化的搜索条件
+     * @return array
+     */
+    protected function _search($where = [])
+    {
+        // 。。。。这里一般是控制器的构造where数组的代码
+        return $where;
     }
 
     /**

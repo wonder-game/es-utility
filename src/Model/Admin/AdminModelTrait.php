@@ -59,11 +59,6 @@ trait AdminModelTrait
 	 */
 	public function relation()
 	{
-		$callback = function (QueryBuilder $query) {
-			$query->where('status', 1);
-			return $query;
-		};
-
-		return $this->hasOne(find_model('Admin\Role'), $callback, 'rid', 'id');
+		return $this->hasOne(find_model('Admin\Role'), null, 'rid', 'id');
 	}
 }
