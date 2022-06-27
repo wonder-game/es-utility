@@ -12,18 +12,16 @@ trait PackageTrait
 {
 	protected function __search()
 	{
+        $where = [];
+
 		$filter = $this->filter();
 		// 如果分配了包权限但没有分配该包所属的游戏权限，同样是看不到此包的
 		foreach (['gameid', 'pkgbnd'] as $col) {
-			if ( ! empty($filter[$col])) {
-				$this->Model->where($col, $filter[$col], 'IN');
-			}
+            empty($filter[$col]) or $where[$col] = [$filter[$col], 'IN'];
 		}
-		if (isset($this->get['name'])) {
-			$name = "%{$this->get['name']}%";
-			$this->Model->where("(name like ? or pkgbnd like ?)", [$name, $name]);
-		}
-		return false;
+        empty($this->get['name']) or $where['concat(name," ",pkgbnd)'] = ["%{$this->get['name']}%", 'like'];
+
+        return $this->_search($where);
 	}
 
     public function _add($return = false)

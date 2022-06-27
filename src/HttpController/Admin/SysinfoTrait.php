@@ -9,18 +9,15 @@ use WonderGame\EsUtility\Common\Exception\HttpParamException;
  */
 trait SysinfoTrait
 {
-	protected function __search()
-	{
-		$where = [];
-		if (isset($this->get['status']) && $this->get['status'] !== '') {
-			$where['status'] = $this->get['status'];
-		}
+    protected function __search()
+    {
+        $where = [];
+        isset($this->get['status']) && $this->get['status'] !== '' && $where['status'] = $this->get['status'];
 		foreach (['varname', 'remark'] as $col) {
-			if ( ! empty($this->get[$col])) {
-				$where[$col] = ["%{$this->get[$col]}%", 'like'];
-			}
+            empty($this->get[$col]) or $where[$col] = ["%{$this->get[$col]}%", 'like'];
 		}
-		return $where;
+
+        return $this->_search($where);
 	}
 
     public function _add($return = false)

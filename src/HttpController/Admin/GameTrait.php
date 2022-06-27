@@ -13,18 +13,13 @@ trait GameTrait
 	protected function __search()
 	{
 		$where = [];
-		$filter = $this->filter();
-		if ( ! empty($filter['gameid'])) {
-			$where['id'] = [$filter['gameid'], 'IN'];
-		}
 
-		if (isset($this->get['status']) && $this->get['status'] !== '') {
-			$where['status'] = $this->get['status'];
-		}
-		if ( ! empty($this->get['name'])) {
-			$where['name'] = ["%{$this->get['name']}%", 'like'];
-		}
-		return $where;
+		$filter = $this->filter();
+        empty($filter['gameid']) or $where['id'] = [$filter['gameid'], 'IN'];
+        isset($this->get['status']) && $this->get['status'] !== '' && $where['status'] = $this->get['status'];
+        empty($this->get['name']) or $where['name'] = ["%{$this->get['name']}%", 'like'];
+
+		return $this->_search($where);
 	}
 
     public function _gkey($return = false)

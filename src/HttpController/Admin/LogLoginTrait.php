@@ -9,11 +9,9 @@ trait LogLoginTrait
 		$filter = $this->filter();
 
 		$where = ['instime' => [[$filter['begintime'], $filter['endtime']], 'between']];
-		if (isset($this->get['uid'])) {
-			$uid = $this->get['uid'];
-			$this->Model->where("(uid=? OR name like ? )", [$uid, "%{$uid}%"]);
-		}
-		return $where;
+        empty($this->get['uid']) or $where['concat(uid," ",name)'] = ["%{$this->get['uid']}%", 'like'];
+
+        return $this->_search($where);
 	}
 
 	protected function __after_index($items, $total)

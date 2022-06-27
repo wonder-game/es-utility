@@ -6,16 +6,14 @@ use EasySwoole\ORM\AbstractModel;
 
 trait RoleTrait
 {
-	protected function __search()
-	{
-		$where = [];
-		if ( ! empty($this->get['name'])) {
-			$where['name'] = ["%{$this->get['name']}%", 'like'];
-		}
-		if (isset($this->get['status']) && $this->get['status'] !== '') {
-			$where['status'] = $this->get['status'];
-		}
-		return $where;
+    protected function __search()
+    {
+        $where = [];
+
+        empty($this->get['name']) or $where['name'] = ["%{$this->get['name']}%", 'like'];
+        isset($this->get['status']) && $this->get['status'] !== '' && $where['status'] = $this->get['status'];
+
+        return $this->_search($where);
 	}
 
 	protected function __after_index($items, $total)
