@@ -28,17 +28,17 @@ class EventMainServerCreate extends SplBean
      * WebSocket解释器
      * @var null
      */
-    protected $WebSocketParser = null;
+    protected $WebSocketParser = WebSocket\Parser::class;
 
     /**
      *
      * @var null
      */
-    protected $crontabClass = null;
-    protected $crontabRunEnv = null;
+    protected $crontabClass = Crontab\Crontab::class;
+    protected $crontabRunEnv = ['dev', 'produce'];
 
 
-    protected $hotReloadWatchDirs = null;
+    protected $hotReloadWatchDirs = [EASYSWOOLE_ROOT . '/App', EASYSWOOLE_ROOT . '/vendor/wonder-game'];
 
     /**
      * @var null ['key' => new EsNotify/Config([])]
@@ -49,18 +49,6 @@ class EventMainServerCreate extends SplBean
 
     protected function initialize(): void
     {
-        if (is_null($this->WebSocketParser)) {
-            $this->WebSocketParser = \WonderGame\EsUtility\WebSocket\Parser::class;
-        }
-        if (is_null($this->crontabClass)) {
-            $this->crontabClass = \WonderGame\EsUtility\Crontab\Crontab::class;
-        }
-        if (is_null($this->crontabRunEnv)) {
-            $this->crontabRunEnv = ['dev', 'produce'];
-        }
-        if (is_null($this->hotReloadWatchDirs)) {
-            $this->hotReloadWatchDirs = [EASYSWOOLE_ROOT . '/App', EASYSWOOLE_ROOT . '/vendor/wonder-game'];
-        }
         if (is_null($this->notifyConfig)) {
             $this->notifyConfig = config('ES_NOTIFY');
         }

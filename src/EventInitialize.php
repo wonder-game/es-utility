@@ -21,12 +21,12 @@ class EventInitialize extends SplBean
     /**
      * @var TriggerInterface
      */
-    protected $ExceptionTrigger = null;
+    protected $ExceptionTrigger = ExceptionTrigger::class;
 
     /**
      * @var string[]
      */
-    protected $configDir = null;
+    protected $configDir = [EASYSWOOLE_ROOT . '/App/Common/Config'];
 
     /**
      * @var array
@@ -35,7 +35,7 @@ class EventInitialize extends SplBean
 
     protected $redisConfig = null;
 
-    protected $mysqlOnQueryOpen = null;
+    protected $mysqlOnQueryOpen = true;
     protected $mysqlOnQueryFunc = [
         '_before_func' => null, // 前置
         '_save_log' => true, // 保存日志
@@ -45,13 +45,13 @@ class EventInitialize extends SplBean
 
     protected $languageConfig = null;
 
-    protected $httpOnRequestOpen = null;
+    protected $httpOnRequestOpen = true;
     protected $httpOnRequestFunc = [
         '_before_func' => null, // 前置
         '_after_func' => null, // 后置
     ];
 
-    protected $httpAfterRequestOpen = null;
+    protected $httpAfterRequestOpen = true;
     protected $httpAfterRequestFunc = [
         '_before_func' => null, // 前置
         '_after_func' => null, // 后置
@@ -70,32 +70,15 @@ class EventInitialize extends SplBean
      */
     protected function initialize(): void
     {
-        if ( is_null($this->ExceptionTrigger)) {
-            $this->ExceptionTrigger = ExceptionTrigger::class;
-        }
-        if (is_null($this->configDir)) {
-            $this->configDir = [EASYSWOOLE_ROOT . '/App/Common/Config'];
-        }
-        if (is_string($this->configDir)) {
-            $this->configDir = [$this->configDir];
-        }
         if (is_null($this->mysqlConfig)) {
             $this->mysqlConfig = config('MYSQL');
         }
         if (is_null($this->redisConfig)) {
             $this->redisConfig = config('REDIS');
         }
-        if (is_null($this->mysqlOnQueryOpen)) {
-            $this->mysqlOnQueryOpen = true;
-        }
+
         if (is_null($this->languageConfig)) {
             $this->languageConfig = config('LANGUAGES') ?: [];
-        }
-        if (is_null($this->httpOnRequestOpen)) {
-            $this->httpOnRequestOpen = true;
-        }
-        if (is_null($this->httpAfterRequestOpen)) {
-            $this->httpAfterRequestOpen = true;
         }
     }
 
