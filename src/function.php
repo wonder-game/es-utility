@@ -268,7 +268,6 @@ if ( ! function_exists('array_sort_multi')) {
 	}
 }
 
-
 if ( ! function_exists('listdate')) {
 	/**
 	 * 返回两个日期之间的具体日期或月份
@@ -779,4 +778,19 @@ if ( ! function_exists('memory_convert')) {
 
 		return sprintf('%.2f ' . $s[$e], ($bytes / pow(1024, floor($e))));
 	}
+}
+
+if ( ! function_exists('json_decode_ext'))
+{
+    /**
+     * json_decode的加强版，自动将extension字段处理为数组类型
+     * @param string $data
+     * @return array|mixed|string
+     */
+    function json_decode_ext($data = '')
+    {
+        $data = is_scalar($data) ? json_decode($data, true) : $data;
+        is_array($data) && isset($data['extension']) && ! is_array($data['extension']) && ($data['extension'] = json_decode($data['extension'], true));
+        return $data;
+    }
 }

@@ -249,6 +249,7 @@ trait BaseModelTrait
 	protected function _cacheInfo($id = 0, $prefix = null, $data = '')
 	{
 		$isarray = is_array($id);
+        /* @var $Redis \EasySwoole\Redis\Redis */
 		list($Redis, $key, $pk, $id, $condition) = $this->redisAndKey($id, $prefix);
 
 		$con = true;
