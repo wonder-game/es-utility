@@ -19,6 +19,9 @@ class LamLog implements LoggerInterface
 	// 非独立日志的存储key
 	private $dfKey = 'dfLog';
 
+    // 立即写日志的分类标识
+    const CATE_IMMEDIATE = 'immediate';
+
 	public function __construct(string $logDir = null)
 	{
 		$this->logDir = $logDir ?: '';
@@ -28,17 +31,16 @@ class LamLog implements LoggerInterface
 	{
 		$str = $this->_preAct($msg, $level, $category, 'log');
 
-		// TODO 此if代码段按理应该写到EasySwooleEvent的onRequest，但由于官方Logger没有提供返回logger对象的接口，所以只能写到这
-
-		// 协程环境，注册defer
-		if (Coroutine::getCid() > 0) {
-			Coroutine::defer(function () {
-				$this->save();
-			});
-		} // 非协程环境，直接save
+        // 立即写入
+        if ($category === self::CATE_IMMEDIATE || Coroutine::getCid() < 0) {
+            $this->save();
+        }
+		// 协程defer时写入
 		else {
-			$this->save();
-		}
+            Coroutine::defer(function () {
+                $this->save();
+            });
+        }
 
 		return $str;
 	}

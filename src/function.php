@@ -160,7 +160,7 @@ if ( ! function_exists('config')) {
 
 if ( ! function_exists('trace')) {
 	/**
-	 * 记录日志信息
+	 * 记录日志信息，协程defer时写入
 	 * @param string|array $log log信息 支持字符串和数组
 	 * @param string $level 日志级别
 	 * @param string $category 日志类型
@@ -171,6 +171,19 @@ if ( ! function_exists('trace')) {
 		is_scalar($log) or $log = json_encode($log, JSON_UNESCAPED_UNICODE);
 		return Logger::getInstance()->$level($log, $category);
 	}
+}
+
+if ( ! function_exists('trace_immediate')) {
+    /**
+     * 记录日志信息,立即写入
+     * @param string|array $log log信息 支持字符串和数组
+     * @param string $level 日志级别
+     * @return void|bool
+     */
+    function trace_immediate($log = '', $level = 'info')
+    {
+        return trace($log, $level, 'immediate');
+    }
 }
 
 
