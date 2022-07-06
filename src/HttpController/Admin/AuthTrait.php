@@ -560,8 +560,11 @@ trait AuthTrait
         if (empty($this->get['adid']) && ! $this->isSuper()) {
             // 限制adid
             if (isset($this->operinfo['extension']['ads']) && $this->operinfo['extension']['ads'] != 1) {
-                $filter['adid'] = $this->operinfo['extension']['adid'] ?? [];
+                $this->get['adid'] = $this->operinfo['extension']['adid'] ?? [];
             }
+        }
+        if (isset($this->get['adid']) && is_string($this->get['adid'])) {
+            $this->get['adid'] = explode(',', $this->get['adid']);
         }
 
         return $filter + $this->get;
