@@ -13,7 +13,7 @@ trait CrontabTrait
 	{
 		$where = [];
 		foreach (['status'] as $col) {
-            empty($this->get[$col]) or $where[$col] = $this->get[$col];
+            isset($this->get[$col]) && is_numeric($this->get[$col]) && $where[$col] = $this->get[$col];
 		}
         empty($this->get['name']) or $where['concat(name," ",eclass," ",method)'] = ["%{$this->get['name']}%", 'like'];
 

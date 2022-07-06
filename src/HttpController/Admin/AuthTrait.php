@@ -451,7 +451,7 @@ trait AuthTrait
             $arr = explode('.', $clientFileName);
             $suffix = end($arr);
 
-            $ymd = DateUtils::timeChangeZoneByTimeStamp(time(), '', '', DateUtils::_ymd);
+            $ymd = date(DateUtils::_ymd);
             $join = "/{$ymd}/";
 
             $dir = rtrim(config('UPLOAD.dir'), '/') . $join;
@@ -549,6 +549,18 @@ trait AuthTrait
             } // 非超级管理员只允许有权限的
             elseif ( ! $this->isSuper()) {
                 $filter[$col] = $this->operinfo['extension'][$extColName[$col]] ?? [];
+            }
+        }
+
+        /**
+         * 广告
+         * ads: 1-不限制,0-读adid数组
+         * adid: ['aaa', 'bbb', 'ccc']
+         */
+        if (empty($this->get['adid']) && ! $this->isSuper()) {
+            // 限制adid
+            if (isset($this->operinfo['extension']['ads']) && $this->operinfo['extension']['ads'] != 1) {
+                $filter['adid'] = $this->operinfo['extension']['adid'] ?? [];
             }
         }
 
