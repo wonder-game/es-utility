@@ -96,6 +96,19 @@ class EventMainServerCreate extends SplBean
                 $register->add($event, $item);
             }
         }
+        else if (is_string($events) && class_exists($events)) {
+            $allowNames = (new \ReflectionClass(EventRegister::class))->getConstants();
+            $Ref = new \ReflectionClass($events);
+            $public = $Ref->getMethods(\ReflectionMethod::IS_PUBLIC);
+
+            foreach ($public as $item)
+            {
+                $name = $item->name;
+                if ($item->isStatic() && isset($allowNames[$name])) {
+                    $register->add($allowNames[$name], [$item->class, $name]);
+                }
+            }
+        }
     }
 
     /**
