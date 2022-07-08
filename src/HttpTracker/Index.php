@@ -12,7 +12,7 @@ class Index extends PointContext
 	{
 		$this->enableAutoSave()->setSaveHandler(new SaveHandler($handleConfig));
 	}
-	
+
 	public static function startArgsRequest(Request $request, array $merge = [])
 	{
 		return array_merge([
@@ -24,10 +24,11 @@ class Index extends PointContext
 			'header' => $request->getHeaders(),
 //            'server' => $request->getServerParams(),
 			'GET' => $request->getQueryParams(),
-			'POST' => $request->getParsedBody() ?: json_decode($request->getBody()->__toString(), true),
+			'POST' => $request->getParsedBody(),
+            'JSON' => json_decode($request->getBody()->__toString(), true),
 		], $merge);
 	}
-	
+
 	public static function endArgsResponse(Response $response, array $merge = [])
 	{
 		$data = $response->getBody()->__toString();
