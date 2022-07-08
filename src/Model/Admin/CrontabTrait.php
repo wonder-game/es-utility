@@ -63,10 +63,4 @@ trait CrontabTrait
 		$json = json_decode($data, true);
 		return $json ? $json : [];
 	}
-
-	public function getCrontab($svr = '')
-	{
-		// 0-启用,2-运行一次
-		return $this->where(['status' => [[0, 2], 'in']])->all();
-	}
 }
