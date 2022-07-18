@@ -39,7 +39,7 @@ trait AdminModelTrait
             $array[$col] = $colValue;
         }
         // gameid转整型
-        $array['gameids'] = array_map('intval', $array['gameids']);
+        $array['gameid'] = array_map('intval', $array['gameid']);
 
 		// 强类型限制, 游戏id有0
 		$array['gid'] = ! empty($array['gid']) ? intval($array['gid']) : '';
