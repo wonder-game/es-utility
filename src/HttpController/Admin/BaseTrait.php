@@ -69,7 +69,7 @@ trait BaseTrait
 				return $value;
 			}, $result[$name]);
 		}
-		$this->writeJson(Code::CODE_OK, $result, $msg);
+        return $this->writeJson(Code::CODE_OK, $result, $msg);
 	}
 
     /**

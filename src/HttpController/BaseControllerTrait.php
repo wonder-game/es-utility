@@ -104,15 +104,16 @@ trait BaseControllerTrait
 		$this->error($throwable->getCode() ?: Code::CODE_INTERNAL_SERVER_ERROR, $message);
 	}
 
-	protected function success($result = null, $msg = null)
-	{
-		$this->writeJson(Code::CODE_OK, $result, $msg);
-	}
+    protected function success($result = null, $msg = null)
+    {
+        return $this->writeJson(Code::CODE_OK, $result, $msg);
+    }
 
-	protected function error(int $code, $msg = null)
-	{
-		$this->writeJson($code, [], $msg);
-	}
+    protected function error(int $code, $msg = null)
+    {
+        $this->writeJson($code, [], $msg);
+        return false;
+    }
 
 	protected function writeJson($statusCode = 200, $result = null, $msg = null)
 	{
