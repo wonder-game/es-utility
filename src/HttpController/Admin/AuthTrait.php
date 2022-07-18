@@ -514,53 +514,60 @@ trait AuthTrait
 
     /**
      * 公共参数,配合where使用
+     * 考虑到有时会有大数据量的搜索条件，特意使用$this->input 而不是 $this->get
      * @return array
      */
     protected function filter()
     {
-        $filter = [];
+        $filter = $this->input;
 
-        if (isset($this->input['begintime'])) {
-            if ((strpos($this->input['begintime'], ':') === false)) {
-                $this->input['begintime'] .= ' 00:00:00';
+        if (isset($filter['begintime'])) {
+            if ((strpos($filter['begintime'], ':') === false)) {
+                $filter['begintime'] .= ' 00:00:00';
             }
 
-            $filter['begintime'] = strtotime($this->input['begintime']);
+            $filter['begintime'] = strtotime($filter['begintime']);
             $filter['beginday'] = date(DateUtils::YMD, $filter['begintime']);
         }
 
-        if (isset($this->input['endtime'])) {
-            if (strpos($this->input['endtime'], ':') === false) {
-                $this->input['endtime'] .= ' 23:59:59';
+        if (isset($filter['endtime'])) {
+            if (strpos($filter['endtime'], ':') === false) {
+                $filter['endtime'] .= ' 23:59:59';
             }
 
-            $filter['endtime'] = strtotime($this->input['endtime']);
+            $filter['endtime'] = strtotime($filter['endtime']);
             $filter['endday'] = date(DateUtils::YMD, $filter['endtime']);
         }
 
-        // 特意让$filter拥有以下这几个key的成员，值至少为[]
-        // 这样外围有需要可直接写 if($filter['XXX']){.....}，而不需要写isset($filter['XXX']) && $filter['XXX']
-        $extColName = ['gameid', 'pkgbnd', 'adid'];
-        foreach ($extColName as $col) {
-            $filter[$col] = explode(',', ($this->input[$col] ?? ''));
 
-            // 非超级管理员只允许有权限的
-            if ( ! $this->isSuper()) {
+        $extColName = ['gameid', 'pkgbnd', 'adid'];
+
+        // 特意让$filter拥有以下这几个key的成员，值至少为[]
+        // 这样外围有需要可直接写 $filter['XXX'] && ....，而不需要写isset($filter['XXX']) && $filter['XXX'] && ....
+        foreach ([... $extColName, 'status', 'dft'] as $col) {
+            $filter[$col] = isset($filter[$col]) && $filter[$col] !== '' ? explode(',', ($filter[$col])) : [];
+        }
+
+        // 非超级管理员只允许有权限的
+        if ( ! $this->isSuper()) {
+            foreach ($extColName as $col) {
                 $my = $this->operinfo['extension'][$col] ?? [];
                 // 故意造一个不存在的值
                 $my = $my ?: [-1];
-
                 $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]): $my;
             }
         }
 
         // ads为 1 的人 不限制广告位,
-        if($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) != 1)
+        if($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) == 1)
         {
             $filter['adid'] = [];
-            }
+        }
 
-        return $filter ;
+        // 地区
+        $filter['area'] = $filter['area'] ?? '';
+
+        return $filter;
     }
 
     // 生成OptionsItem[]结构
