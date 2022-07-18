@@ -71,13 +71,13 @@ trait AdminTrait
 
 		if($gp)
 		{
-			$gameids = $this->operinfo['extension']['gameids'] ?? [];
-			is_string($gameids) && $gameids = explode(',', $gameids);
+			$gameid = $this->operinfo['extension']['gameid'] ?? [];
+			is_string($gameid) && $gameid = explode(',', $gameid);
 
 			// 默认选择游戏，管理员级别 > 系统级别
 			if (isset($config['sysinfo']['default_select_gameid']) && $config['sysinfo']['default_select_gameid'] !== '') {
 				// 权限
-				if ($super || in_array($config['sysinfo']['default_select_gameid'], $gameids)) {
+				if ($super || in_array($config['sysinfo']['default_select_gameid'], $gameid)) {
 					$result['sleGid'] = $config['sysinfo']['default_select_gameid'];
 				}
 				// todo 设置多个，返回有权限的部分，前端如果是单选，要改为选中第一个
@@ -92,7 +92,7 @@ trait AdminTrait
 			/** @var \App\Model\Admin\Package $Package */
 			$Package = model_admin('Package');
 			if ( ! $super) {
-				$Game->where(['id' => [$gameids, 'in']]);
+				$Game->where(['id' => [$gameid, 'in']]);
 
 				$pkgbnd = $this->operinfo['extension']['pkgbnd'] ?? [];
 				is_string($pkgbnd) && $pkgbnd = explode(',', $pkgbnd);

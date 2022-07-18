@@ -520,54 +520,47 @@ trait AuthTrait
     {
         $filter = [];
 
-        if (isset($this->get['begintime'])) {
-            if ((strpos($this->get['begintime'], ':') === false)) {
-                $this->get['begintime'] .= ' 00:00:00';
+        if (isset($this->input['begintime'])) {
+            if ((strpos($this->input['begintime'], ':') === false)) {
+                $this->input['begintime'] .= ' 00:00:00';
             }
 
-            $filter['begintime'] = strtotime($this->get['begintime']);
+            $filter['begintime'] = strtotime($this->input['begintime']);
             $filter['beginday'] = date(DateUtils::YMD, $filter['begintime']);
         }
 
-        if (isset($this->get['endtime'])) {
-            if (strpos($this->get['endtime'], ':') === false) {
-                $this->get['endtime'] .= ' 23:59:59';
+        if (isset($this->input['endtime'])) {
+            if (strpos($this->input['endtime'], ':') === false) {
+                $this->input['endtime'] .= ' 23:59:59';
             }
 
-            $filter['endtime'] = strtotime($this->get['endtime']);
+            $filter['endtime'] = strtotime($this->input['endtime']);
             $filter['endday'] = date(DateUtils::YMD, $filter['endtime']);
         }
 
-        // gameid, pkgbnd
-        // 对应extension字段
-        $extColName = ['gameid' => 'gameids', 'pkgbnd' => 'pkgbnd'];
-        foreach (['gameid', 'pkgbnd'] as $col) {
-            if (isset($this->get[$col])) {
-                $value = $this->get[$col];
-                $value = explode(',', $value);
-                $filter[$col] = $value;
-            } // 非超级管理员只允许有权限的
-            elseif ( ! $this->isSuper()) {
-                $filter[$col] = $this->operinfo['extension'][$extColName[$col]] ?? [];
+        // 特意让$filter拥有以下这几个key的成员，值至少为[]
+        // 这样外围有需要可直接写 if($filter['XXX']){.....}，而不需要写isset($filter['XXX']) && $filter['XXX']
+        $extColName = ['gameid', 'pkgbnd', 'adid'];
+        foreach ($extColName as $col) {
+            $filter[$col] = explode(',', ($this->input[$col] ?? ''));
+
+            // 非超级管理员只允许有权限的
+            if ( ! $this->isSuper()) {
+                $my = $this->operinfo['extension'][$col] ?? [];
+                // 故意造一个不存在的值
+                $my = $my ?: [-1];
+
+                $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]): $my;
             }
         }
 
-        /**
-         * 广告
-         * ads: 1-不限制,0-读adid数组
-         * adid: ['aaa', 'bbb', 'ccc']
-         */
-        if (empty($this->get['adid']) && ! $this->isSuper()) {
-            // 限制adid
-            if (isset($this->operinfo['extension']['ads']) && $this->operinfo['extension']['ads'] != 1) {
-                $this->get['adid'] = $this->operinfo['extension']['adid'] ?? [];
+        // ads为 1 的人 不限制广告位,
+        if($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) != 1)
+        {
+            $filter['adid'] = [];
             }
-        }
-        if (isset($this->get['adid']) && is_string($this->get['adid'])) {
-            $this->get['adid'] = explode(',', $this->get['adid']);
-        }
 
-        return $filter + $this->get;
+        return $filter ;
     }
 
     // 生成OptionsItem[]结构
