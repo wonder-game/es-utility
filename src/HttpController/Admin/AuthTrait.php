@@ -451,7 +451,7 @@ trait AuthTrait
             $arr = explode('.', $clientFileName);
             $suffix = end($arr);
 
-            $ymd = date(DateUtils::_ymd);
+            $ymd = date(DateUtils::YMD);
             $join = "/{$ymd}/";
 
             $dir = rtrim(config('UPLOAD.dir'), '/') . $join;
@@ -527,7 +527,7 @@ trait AuthTrait
             }
 
             $filter['begintime'] = strtotime($filter['begintime']);
-            $filter['beginday'] = date(DateUtils::_ymd, $filter['begintime']);
+            $filter['beginday'] = date(DateUtils::YMD, $filter['begintime']);
         }
 
         if (isset($filter['endtime'])) {
@@ -536,7 +536,7 @@ trait AuthTrait
             }
 
             $filter['endtime'] = strtotime($filter['endtime']);
-            $filter['endday'] = date(DateUtils::_ymd, $filter['endtime']);
+            $filter['endday'] = date(DateUtils::YMD, $filter['endtime']);
         }
 
 
@@ -566,7 +566,7 @@ trait AuthTrait
 
         // 地区
         $filter['area'] = $filter['area'] ?? '';
-        
+
         return $filter;
     }
 
