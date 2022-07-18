@@ -6,7 +6,7 @@ namespace WonderGame\EsUtility\Common\Classes;
 
 class DateUtils
 {
-	const _ymd = 'ymd';
+	const YMD = 'ymd';
 	const FULL = 'Y-m-d H:i:s';
 	const YmdHis = 'YmdHis';
 	const FMT_1 = 'Y-m-d';

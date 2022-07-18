@@ -451,7 +451,7 @@ trait AuthTrait
             $arr = explode('.', $clientFileName);
             $suffix = end($arr);
 
-            $ymd = date(DateUtils::_ymd);
+            $ymd = date(DateUtils::YMD);
             $join = "/{$ymd}/";
 
             $dir = rtrim(config('UPLOAD.dir'), '/') . $join;
@@ -526,7 +526,7 @@ trait AuthTrait
             }
 
             $filter['begintime'] = strtotime($this->get['begintime']);
-            $filter['beginday'] = date(DateUtils::_ymd, $filter['begintime']);
+            $filter['beginday'] = date(DateUtils::YMD, $filter['begintime']);
         }
 
         if (isset($this->get['endtime'])) {
@@ -535,7 +535,7 @@ trait AuthTrait
             }
 
             $filter['endtime'] = strtotime($this->get['endtime']);
-            $filter['endday'] = date(DateUtils::_ymd, $filter['endtime']);
+            $filter['endday'] = date(DateUtils::YMD, $filter['endtime']);
         }
 
         // gameid, pkgbnd
