@@ -337,6 +337,7 @@ trait AuthTrait
         $page = $this->get[config('fetchSetting.pageField')] ?? 1;          // 当前页码
         $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
 
+        $this->__with();
         $where = $this->__search();
 
         // 处理排序
@@ -357,6 +358,16 @@ trait AuthTrait
     protected function __after_index($items, $total)
     {
         return [config('fetchSetting.listField') => $items, config('fetchSetting.totalField') => $total];
+    }
+
+    protected function __with($column = 'relation')
+    {
+        $origin = $this->Model->getWith();
+        $exist = is_array($origin) && in_array($column, $origin);
+        if ( ! $exist && method_exists($this->Model, $column)) {
+            $with = is_array($origin) ? array_merge($origin, [$column]) : [$column];
+            $this->Model->with($with);
+        }
     }
 
     protected function __order()
