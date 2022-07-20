@@ -129,7 +129,7 @@ class Crontab extends AbstractCronTask
     // 获取任务列表
     protected function getTaskList()
     {
-        $file = config('CRONTAB_BACKUP_FILE') ?: (config('LOG.dir') . '/crontab.object.data');
+        $file = config('CRONTAB.backup') ?: (config('LOG.dir') . '/crontab.object.data');
         try {
             $cron = $this->getCrontab();
 
