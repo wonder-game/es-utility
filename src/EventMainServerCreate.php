@@ -39,6 +39,12 @@ class EventMainServerCreate extends SplBean
 
 
     protected $hotReloadWatchDirs = [EASYSWOOLE_ROOT . '/App', EASYSWOOLE_ROOT . '/vendor/wonder-game'];
+    protected $hotReloadFunc = [
+        'on_change' => null, // callback Change事件
+        'on_exception' => null, // callback 异常
+        'reload_before' => null, // callback worker process reload 前
+        'reload_after' => null, // callback worker process reload 后
+    ];
 
     /**
      * @var null ['key' => new EsNotify/Config([])]
@@ -171,17 +177,15 @@ class EventMainServerCreate extends SplBean
     protected function watchHotReload()
     {
         $watchConfig = $this->hotReloadWatchDirs;
-        // 只允许在开发环境运行
-        if (is_env('dev') && is_array($watchConfig) && ! empty($watchConfig)) {
-            $watcher = new \EasySwoole\FileWatcher\FileWatcher();
-            // 设置监控规则和监控目录
-            foreach ($watchConfig as $dir) {
-                if (is_dir($dir)) {
-                    $watcher->addRule(new \EasySwoole\FileWatcher\WatchRule($dir));
-                }
-            }
 
-            $watcher->setOnChange(function (array $list) {
+        if ( ! is_env('dev') || ! is_array($watchConfig) || empty($watchConfig))
+        {
+            return;
+        }
+
+        $onChange = is_callable($this->hotReloadFunc['on_change'])
+            ? $this->hotReloadFunc['on_change']
+            : function (array $list, \EasySwoole\FileWatcher\WatchRule $rule) {
                 echo PHP_EOL . PHP_EOL . Color::warning(' Worker进程重启，检测到以下文件变更: ') . PHP_EOL;
 
                 foreach ($list as $item) {
@@ -196,13 +200,23 @@ class EventMainServerCreate extends SplBean
                     $Server->close($fd);
                 }
 
+                if (is_callable($this->hotReloadFunc['reload_before'])) {
+                    $this->hotReloadFunc['reload_before']($list, $rule);
+                }
+
                 $Server->reload();
+
+                if (is_callable($this->hotReloadFunc['reload_after'])) {
+                    $this->hotReloadFunc['reload_after']($list, $rule);
+                }
 
                 echo Color::success('Worker进程启动成功 ') . PHP_EOL;
                 echo Color::red('请自行区分 Master 和 Worker 程序 !!!!!!!!!!') . PHP_EOL . PHP_EOL;
-            });
+            };
 
-            $watcher->setOnException(function (\Throwable $throwable) {
+        $onException = is_callable($this->hotReloadFunc['on_exception'])
+            ? $this->hotReloadFunc['on_exception']
+            : function (\Throwable $throwable) {
 
                 echo PHP_EOL . Color::danger('Worker进程重启失败: ') . PHP_EOL;
                 echo Utility::displayItem("[message]", $throwable->getMessage()) . PHP_EOL;
@@ -222,9 +236,19 @@ class EventMainServerCreate extends SplBean
 //                        echo Utility::displayItem("$key-----------------------", $item) . PHP_EOL;
 //                    }
                 }
-            });
-            $watcher->attachServer(ServerManager::getInstance()->getSwooleServer());
+            };
+
+        $watcher = new \EasySwoole\FileWatcher\FileWatcher();
+        // 设置监控规则和监控目录
+        foreach ($watchConfig as $dir) {
+            if (is_dir($dir)) {
+                $watcher->addRule(new \EasySwoole\FileWatcher\WatchRule($dir));
+            }
         }
+
+        $watcher->setOnChange($onChange);
+        $watcher->setOnException($onException);
+        $watcher->attachServer(ServerManager::getInstance()->getSwooleServer());
     }
 
     protected function registerNotify()
