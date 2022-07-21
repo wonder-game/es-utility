@@ -94,7 +94,11 @@ class Crontab extends AbstractCronTask
                 throw new \Exception('CRONTAB.db配置错误');
             }
         }
-        return new Mysqli('default', is_array($dbConfig) ? $dbConfig : []);
+        $Mysqli = new Mysqli('default', is_array($dbConfig) ? $dbConfig : []);
+        \Swoole\Coroutine::defer(function () use ($Mysqli) {
+            $Mysqli->close();
+        });
+        return $Mysqli;
     }
 
     protected function getCrontab()

@@ -93,9 +93,9 @@ if ( ! function_exists('model')) {
         /** @var AbstractModel $model */
         $model = new $className($data, $tableName, $gameid);
 
-        $connectName = $model->getConnectionName();
         // 注入连接(连接池连接)
         if (is_bool($inject) && $inject) {
+            $connectName = $model->getConnectionName();
             /** @var MysqliClient $Client */
             $Client = DbManager::getInstance()->getConnection($connectName)->defer();
             $Client->connectionName($connectName);
@@ -104,10 +104,13 @@ if ( ! function_exists('model')) {
         // 注入连接(新连接) + 切换时区
         else if (is_numeric($inject) && method_exists($model, 'setTimeZone')) {
             // 请不要从连接池获取连接, 否则连接回收后会污染连接池
+            $connectName = $model->getConnectionName();
             $Client = new Mysqli($connectName);
-            $Client->connectionName($connectName);
             $model->setExecClient($Client);
             $model->setTimeZone($inject);
+            \Swoole\Coroutine::defer(function () use ($Client) {
+                $Client->close();
+            });
         }
         return $model;
     }
