@@ -56,6 +56,20 @@ trait AuthTrait
         return $this->checkAuthorization();
     }
 
+    // 返回主体数据
+    protected function _getEntityData($id = 0)
+    {
+        /** @var AbstractModel $Admin */
+        $Admin = model_admin('Admin');
+        // 当前用户信息
+        return $Admin->where('id', $id)->get();
+    }
+
+    protected function _verifyToken($authorization = '')
+    {
+        return LamJwt::verifyToken($authorization, config('auth.jwtkey'));
+    }
+
     protected function setAuthTraitProptected()
     {
     }
@@ -69,18 +83,16 @@ trait AuthTrait
         }
 
         // jwt验证
-        $jwt = LamJwt::verifyToken($authorization, config('auth.jwtkey'));
+        $jwt = $this->_verifyToken($authorization);
+
         $id = $jwt['data']['id'] ?? '';
         if ($jwt['status'] != 1 || empty($id)) {
             $this->error(Code::CODE_UNAUTHORIZED, Dictionary::ADMIN_AUTHTRAIT_2);
             return false;
         }
 
-        // uid验证
-        /** @var AbstractModel $Admin */
-        $Admin = model_admin('Admin');
         // 当前用户信息
-        $data = $Admin->where('id', $id)->get();
+        $data = $this->_getEntityData($id);
         if (empty($data)) {
             $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_3);
             return false;
