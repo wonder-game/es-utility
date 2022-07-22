@@ -111,6 +111,8 @@ class Crontab extends AbstractCronTask
 
         if (is_callable($where)) {
             $where($Builder);
+        } elseif (is_string($where)) {
+            $Builder->where($where);
         } elseif (is_array($where)) {
             foreach ($where as $whereField => $whereValue)
             {
