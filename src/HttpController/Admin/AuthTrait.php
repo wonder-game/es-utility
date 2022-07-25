@@ -6,7 +6,6 @@ use App\HttpController\BaseController;
 use EasySwoole\Component\Timer;
 use EasySwoole\Http\Exception\FileException;
 use EasySwoole\ORM\AbstractModel;
-use EasySwoole\ORM\Db\MysqliClient;
 use EasySwoole\Policy\Policy;
 use EasySwoole\Policy\PolicyNode;
 use EasySwoole\Utility\MimeType;
@@ -15,7 +14,6 @@ use WonderGame\EsUtility\Common\Classes\DateUtils;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\XlsWriter;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
-use WonderGame\EsUtility\Common\Exception\SyncException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
@@ -194,23 +192,6 @@ trait AuthTrait
     protected function setPolicy(Policy $policy)
     {
 
-    }
-
-    protected function setDbTimeZone(MysqliClient $client, $tzn)
-    {
-        $tznsql = ($tzn > 0 ? "+$tzn" : $tzn) . ':00';
-        $sql = "set time_zone = '$tznsql';";
-        trace($sql, 'info', 'sql');
-        $client->rawQuery($sql);
-    }
-
-    protected function getDbTimeZone(MysqliClient $client, $debug = true)
-    {
-        $timeZone = $client->rawQuery("SHOW VARIABLES LIKE '%time_zone%'");
-        if ($debug) {
-            var_dump($timeZone);
-        }
-        return $timeZone;
     }
 
     protected function isSuper($rid = null)
