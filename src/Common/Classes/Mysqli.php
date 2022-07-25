@@ -25,7 +25,9 @@ class Mysqli extends MysqliClient
      */
     public function __construct(string $name = 'default', array $config = [])
     {
-        $this->_config = config('MYSQL.' . $name);
+        if (is_array($cfg = config('MYSQL.' . $name))) {
+            $this->_config = array_merge($this->_config, $cfg);
+        }
         $this->_config = array_merge($this->_config, $config);
 
         $this->connectionName($name);

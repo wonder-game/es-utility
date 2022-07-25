@@ -109,6 +109,7 @@ trait有哪些坑
 - [x] WebSocket相关类，事件、解析、Caller、连接符管理等
 - [ ] Crontab支持database、file、http等方式获取
 - [ ] es-orm-cache 组件封装，替换原有的cacheinfo系列方法
+- [ ] WebSocket实现导出全部，永不超时，进度实时可见，随时取消
 
 ### 其他
 

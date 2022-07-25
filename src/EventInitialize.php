@@ -85,6 +85,10 @@ class EventInitialize extends SplBean
     public function run()
     {
         $this->registerConfig();
+
+        // 数据可能依赖新配置
+        $this->initialize();
+
         $this->registerExceptionTrigger();
         $this->registerMysqlPool();
         $this->registerRedisPool();
