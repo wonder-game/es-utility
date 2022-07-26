@@ -118,4 +118,25 @@ class Mysqli extends MysqliClient
 
         return [$dbTimeZone, $PhpTimeZone];
     }
+
+    public function startTransaction()
+    {
+        $Builder = new QueryBuilder();
+        $Builder->startTransaction();
+        $this->query($Builder);
+    }
+
+    public function commit()
+    {
+        $Builder = new QueryBuilder();
+        $Builder->commit();
+        $this->query($Builder);
+    }
+
+    public function rollback()
+    {
+        $Builder = new QueryBuilder();
+        $Builder->rollback();
+        $this->query($Builder);
+    }
 }
