@@ -68,6 +68,11 @@ trait AuthTrait
         return LamJwt::verifyToken($authorization, config('auth.jwtkey'));
     }
 
+    protected function _menuModel()
+    {
+        return model_admin('Menu');
+    }
+
     protected function setAuthTraitProptected()
     {
     }
@@ -141,7 +146,7 @@ trait AuthTrait
         }
 
         /** @var \App\Model\Admin\Menu $Menu */
-        $Menu = model_admin('Menu');
+        $Menu = $this->_menuModel();
         $priv = $Menu->where('id', $userMenu, 'IN')->where('permission', '', '<>')->where('status', 1)->column('permission');
         if (empty($priv)) {
             return true;
@@ -210,8 +215,7 @@ trait AuthTrait
 
     protected function ifRunBeforeAction()
     {
-        foreach (['__before__common', '__before_' . $this->getActionName()] as $beforeAction)
-        {
+        foreach (['__before__common', '__before_' . $this->getActionName()] as $beforeAction) {
             if (method_exists(static::class, $beforeAction)) {
                 $this->$beforeAction();
             }
@@ -558,13 +562,12 @@ trait AuthTrait
                 $my = $this->operinfo['extension'][$col] ?? [];
                 // 故意造一个不存在的值
                 $my = $my ?: [-1];
-                $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]): $my;
+                $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]) : $my;
             }
         }
 
         // ads为 1 的人 不限制广告位,
-        if($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) == 1)
-        {
+        if ($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) == 1) {
             $filter['adid'] = [];
         }
 
