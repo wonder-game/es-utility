@@ -2,169 +2,218 @@
 
 namespace WonderGame\EsUtility\Common\Classes;
 
-/**
- * todo 此类需要重写
- */
-class Tree
+use EasySwoole\ORM\AbstractModel;
+use EasySwoole\Spl\SplBean;
+
+class Tree extends SplBean
 {
-	/**
-	 * 原始数组
-	 * @var array
-	 */
-	protected $menu = [];
+    /**
+     * 初始数据，执行完initialize之后就无了
+     * @var array
+     */
+    protected $data = [];
 
-	/**
-	 * 表示下级菜单的key
-	 * @var string
-	 */
-	protected $childName = 'children';
+    /**
+     * 根元素id
+     * todo 支持所有节点，和一些相关方法
+     * @var int
+     */
+    protected $rootId = 0;
 
-	/**
-	 * 返回的tree限制在固定的id范围内, null 不限制
-	 * @var array|null
-	 */
-	protected $ids = null;
+    /**
+     * 可用id的列表, null-不限制
+     * @var null | array | int
+     */
+    protected $filterIds = null;
 
-	public function __construct($ids = null, $child = '', $data = [])
-	{
-		if ( ! is_null($ids)) {
-			$this->ids = is_string($ids) ? explode(',', $ids) : $ids;
-		}
-		$child && $this->childName = $child;
-		$data && $this->menu = $data;
-	}
+    /**
+     * 客户端路由格式
+     * @var bool
+     */
+    protected  $isRouter = false;
 
-	public function originData($where = [])
-	{
-		$Menu = model_admin('Menu');
-		if ($where) {
-			$Menu->where($where);
-		}
-		$this->menu = $Menu->setOrder()->all();
-		return $this;
-	}
+    protected $idKey = 'id';
+    protected $pidKey = 'pid';
+    protected $childKey = 'children';
 
-	/**
-	 * 获取树形数据
-	 * @return array
-	 */
-	public function getTree($pid = 0, $isRouter = false): array
-	{
-		$tree = $this->buildMenuTree($pid);
-		return $isRouter ? $this->toRouter($tree) : $tree;
-	}
+    /**
+     * 树形数据
+     * @var array
+     */
+    private $tree = [];
 
-	public function getAll()
-	{
-		$arr = [];
-		foreach ($this->menu as $value) {
-			$arr[] = $value['pid'];
-		}
-		$min = min($arr);
-		return $this->buildMenuTree($min);
-	}
+    private $origin = [];
+    private $parent = [];
+    private $children = [];
 
-	/**
-	 * 多级菜单树
-	 * @param int $pid
-	 * @return array
-	 */
-	protected function buildMenuTree($pid)
-	{
-		$result = [];
-		foreach ($this->menu as $key => $value) {
-			if ($value instanceof \EasySwoole\ORM\AbstractModel) {
-				$value = $value->toArray();
-			}
-			if ($value['pid'] === $pid) {
-//                unset($this->menu[$key]);
-				// 继续找儿子
-				if ($children = $this->buildMenuTree($value['id'])) {
-					$value[$this->childName] = $children;
-				}
+    protected function initialize(): void
+    {
+        foreach ($this->data as $value) {
+            if ($value instanceof AbstractModel) {
+                $value = $value->toArray();
+            }
+            $this->setNode($value[$this->idKey], $value[$this->pidKey], $value);
+        }
+        unset($this->data);
 
-				// 儿子在id列表爸爸不在，把爸爸也算上, 适用于 treeSelect 当子节点未选满时不会返回父节点的场景
-				if (is_null($this->ids) || (is_array($this->ids) && in_array($value['id'], $this->ids) || $children)) {
-					$result[] = $value;
-				}
-			}
-		}
+        $this->filters();
+        $this->toRouter();
+    }
 
-		return $result;
-	}
+    protected function setNode($id, $pid = 0, $data = [])
+    {
+        $this->origin[$id] = $data + [$this->childKey => []];
+        $this->children[$pid][$id] = $id;
+        $this->parent[$id] = $pid;
+    }
 
-	/**
-	 * 转化为客户端Router结构
-	 */
-	public function toRouter($data)
-	{
-		$result = [];
-		foreach ($data as $value) {
-			$router = [];
-			foreach (['path', 'component', 'name', 'redirect',] as $col) {
-				$router[$col] = $value[$col] ?? '';
-			}
+    /**
+     * 所有祖先元素的id
+     * @param array $ids
+     * @return array 一维
+     */
+    protected function getParents(array $ids = [])
+    {
+        $idArray = $ids;
+        foreach ($ids as $id)
+        {
+            if (isset($this->parent[$id])) {
+                $pids = $this->getParents([$this->parent[$id]]);
+                if (is_array($pids)) {
+                    $idArray = array_merge($idArray, $pids);
+                }
+            }
+        }
+        return array_unique($idArray);
+    }
 
-			// meta,强类型,对应types/vue-router.d.ts
-			$meta = [
-				'orderNo' => intval($value['sort']),
-				'title' => $value['title'],
-				'ignoreAuth' => $value['ignore_auth'] == 1,
-				'ignoreKeepAlive' => $value['keepalive'] != 1,
-				'affix' => $value['affix'] == 1,
-				'icon' => $value['icon'],
-				'hideMenu' => $value['isshow'] != 1,
-				'hideBreadcrumb' => $value['breadcrumb'] != 1
-			];
-			// 外部链接, isext=1为外链，=0为frameSrc
-			$validate = new \EasySwoole\Validate\Validate();
-			$validate->addColumn('path')->url();
-			$validate->addColumn('isext')->differentWithColumn(1);
-			$isFrame = $validate->validate($value);
-			if ($isFrame) {
-				$meta['frameSrc'] = $value['path'];
-				// 当为内嵌时，path已经不需要了，但优先级比frameSrc高，需要覆盖掉path为非url
-				$router['path'] = $router['name'] ?? '';
-			}
-			$router['meta'] = $meta;
+    /**
+     * 根据filterIds过滤某些数据
+     * @return void
+     */
+    protected function filters()
+    {
+        if ( ! is_null($this->filterIds)) {
 
-			if ( ! empty($value['children'])) {
-				$router['children'] = $this->toRouter($value['children']);
-			}
-			$result[] = $router;
-		}
-		return $result;
-	}
+            if (is_numeric($this->filterIds)) {
+                $this->filterIds = [$this->filterIds];
+            }
 
-	/**
-	 * 获取某一个子菜单的完整path(拼接父级)
-	 * @param $id
-	 * @return string
-	 */
-	public function getHomePath($id)
-	{
-		$path = $this->buildPath($id);
-		// 倒转，因为是从儿子找到爸爸的
-		$path = array_reverse($path);
-		return '/' . implode('/', $path);
-	}
+            $allow = $this->getParents($this->filterIds);
+            foreach ($this->origin as $key => $value)
+            {
+                if ( ! in_array($key, $allow)) {
+                    unset($this->origin[$key]);
+                }
+            }
+        }
+    }
 
-	protected function buildPath($id = 0)
-	{
-		$result = [];
-		foreach ($this->menu as $key => $value) {
-			if ($value instanceof \EasySwoole\ORM\AbstractModel) {
-				$value = $value->toArray();
-			}
+    /**
+     * 生成完整树形结构
+     * @return array
+     */
+    public function treeData()
+    {
+        $this->tree = $this->origin;
+        foreach ($this->origin as $id => $value) {
+            if ($value[$this->pidKey] == 0) { // todo 处理rootId
+                continue;
+            }
+            $this->tree[$value[$this->pidKey]][$this->childKey][$value[$this->idKey]] = $this->tree[$id];
+            $this->tree[$id] = &$this->tree[$value[$this->pidKey]][$this->childKey][$value[$this->idKey]];
+        }
 
-			if ($value['id'] == $id) {
-				$result[] = trim($value['path'], '/');
-				if ( ! empty($value['pid'])) {
-					// 继续找爸爸
-					$result[] = $this->buildPath($value['pid']);
-				}
-			}
-		}
-		return count($result) > 1 ? $result : current($result);
-	}
+        $this->tree = array_filter($this->tree, function ($arr) {
+            return $arr[$this->pidKey] == 0; // todo 处理rootId
+        });
+
+        return $this->tree;
+    }
+
+    /****************** 以下为vue-router相关方法 *******************/
+
+    /**
+     * 将源数据转换为vue-router格式
+     * @return void
+     * @throws \EasySwoole\Validate\Exception\Runtime
+     */
+    protected function toRouter()
+    {
+        if ( ! $this->isRouter) {
+            return;
+        }
+        foreach ($this->origin as &$value)
+        {
+            // 构造树形结构必须的几个key
+            $row = [
+                $this->idKey => $value[$this->idKey],
+                $this->pidKey => $value[$this->pidKey],
+                $this->childKey => $value[$this->childKey] ?? [],
+            ];
+            foreach (['path', 'component', 'name', 'redirect',] as $col) {
+                $row[$col] = $value[$col] ?? '';
+            }
+
+            // meta,强类型,对应types/vue-router.d.ts
+            $meta = [
+                'orderNo' => intval($value['sort']),
+                'title' => $value['title'],
+                'ignoreAuth' => $value['ignore_auth'] == 1,
+                'ignoreKeepAlive' => $value['keepalive'] != 1,
+                'affix' => $value['affix'] == 1,
+                'icon' => $value['icon'],
+                'hideMenu' => $value['isshow'] != 1,
+                'hideBreadcrumb' => $value['breadcrumb'] != 1
+            ];
+            // 外部链接, isext=1为外链，=0为frameSrc
+            $validate = new \EasySwoole\Validate\Validate();
+            $validate->addColumn('path')->url();
+            $validate->addColumn('isext')->differentWithColumn(1);
+            $isFrame = $validate->validate($value);
+            if ($isFrame) {
+                $meta['frameSrc'] = $value['path'];
+                // 当为内嵌时，path已经不需要了，但优先级比frameSrc高，需要覆盖掉path为非url
+                $row['path'] = $value['name'] ?? '';
+            }
+            $row['meta'] = $meta;
+            $value = $row;
+        }
+    }
+
+    /**
+     * 获取某一个菜单的完整path，对应vben的homePath字段
+     * @param $id 菜单id
+     * @param $column
+     * @return string
+     */
+    public function getHomePage($id = null, $column = 'path')
+    {
+        // 不传则使用filterIds
+        if (is_null($id)) {
+            $id = $this->filterIds;
+        }
+        $id = is_array($id) ? $id[0] : $id;
+        $path = $this->getFullPath($id, $column);
+        return implode('/', array_reverse($path));
+    }
+
+    /**
+     * 指定id的完整path路径，有序
+     * @param int $id
+     * @param int $i
+     * @return array
+     */
+    protected function getFullPath($id, $column = '', $i = 0)
+    {
+        $path = [];
+        if (isset($this->origin[$id][$column])) {
+            $path[$i] = $this->origin[$id][$column];
+            if (isset($this->parent[$id])) {
+                $array = $this->getFullPath($this->parent[$id], $column, ++$i);
+                $path = array_merge($path, $array);
+            }
+        }
+        return $path;
+    }
 }
