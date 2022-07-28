@@ -26,7 +26,7 @@ trait MenuTrait
 			$where['status'] = $input['status'];
 		}
 
-		$result = $this->Model->menuAll($where);
+		$result = $this->Model->getTree($where);
 		$this->success($result);
 	}
 

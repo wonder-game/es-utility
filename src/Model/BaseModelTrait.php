@@ -74,6 +74,10 @@ trait BaseModelTrait
 	 */
 	protected function setExtensionAttr($extension = [], $alldata = [])
 	{
+        // QueryBuilder::func 等结构
+        if (is_array($extension) && in_array(array_key_first($extension), ['[I]', '[F]', '[N]'])) {
+            return $extension;
+        }
 		if (is_string($extension)) {
 			$extension = json_decode($extension, true);
 			if ( ! $extension) {
