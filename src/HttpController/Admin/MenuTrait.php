@@ -3,8 +3,6 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
-
-use WonderGame\EsUtility\Common\Classes\Tree;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
@@ -54,7 +52,10 @@ trait MenuTrait
 		if ( ! is_null($userMenus) && empty($userMenus)) {
 			throw new HttpParamException(lang(Dictionary::PERMISSION_DENIED));
 		}
-		$menu = $this->Model->getRouter($userMenus);
+
+        $where = ['type' => [[0, 1], 'in'], 'status' => 1 ];
+        $options = ['isRouter' => true, 'filterIds' => $userMenus];
+        $menu = $this->Model->getTree($where, $options);
 		return $return ? $menu : $this->success($menu);
 	}
 
@@ -64,8 +65,7 @@ trait MenuTrait
      */
     public function _treeList($return = false)
     {
-        $Tree = new Tree();
-        $treeData = $Tree->originData()->getTree();
+        $treeData = $this->Model->getTree();
         return $return ? $treeData : $this->success($treeData);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
-use WonderGame\EsUtility\Common\Classes\Tree;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
@@ -47,8 +46,8 @@ trait AdminTrait
 
 		// 客户端进入页,应存id
 		if ( ! empty($this->operinfo['extension']['homePath'])) {
-			$Tree = new Tree();
-			$homePage = $Tree->originData(['type' => [[0, 1], 'in']])->getHomePath($this->operinfo['extension']['homePath']);
+            $Menu = model_admin('Menu');
+			$homePage = $Menu->getHomePage($this->operinfo['extension']['homePath']);
 		}
 		$avatar = $this->operinfo['avatar'] ?? '';
 
@@ -138,12 +137,10 @@ trait AdminTrait
 			/** @var \App\Model\Admin\Menu $Menu */
 			$Menu = model_admin('Menu');
 
-			$where = [];
-			$menus = $this->getUserMenus();
-			if (is_array($menus)) {
-				$where['id'] = [$menus, 'in'];
-			}
-			$menuList = $Menu->menuList($where);
+			$menuList = $Menu->getTree(
+                ['type' => [[0, 1], 'in'], 'status' => 1 ],
+                ['filterIds' => $this->getUserMenus()]
+            );
 			$data = ['menuList' => $menuList, 'result' => $userInfo];
 			return $return ? $data : $this->success($data);
 		} elseif ($this->isHttpPost()) {

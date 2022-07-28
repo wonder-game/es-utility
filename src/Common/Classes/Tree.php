@@ -115,18 +115,24 @@ class Tree extends SplBean
      */
     public function treeData()
     {
-        $this->tree = $this->origin;
+        $tree = $this->origin;
         foreach ($this->origin as $id => $value) {
             if ($value[$this->pidKey] == 0) { // todo 处理rootId
                 continue;
             }
-            $this->tree[$value[$this->pidKey]][$this->childKey][$value[$this->idKey]] = $this->tree[$id];
-            $this->tree[$id] = &$this->tree[$value[$this->pidKey]][$this->childKey][$value[$this->idKey]];
+
+            // children也是索引数组
+            $len = count($tree[$value[$this->pidKey]][$this->childKey] ?? []);
+            $tree[$value[$this->pidKey]][$this->childKey][$len] = $tree[$id];
+            $tree[$id] = &$tree[$value[$this->pidKey]][$this->childKey][$len];
         }
 
-        $this->tree = array_filter($this->tree, function ($arr) {
-            return $arr[$this->pidKey] == 0; // todo 处理rootId
-        });
+        foreach ($tree as $item)
+        {
+            if ($item[$this->pidKey] == 0) {  // todo 处理rootId
+                $this->tree[] = $item;
+            }
+        }
 
         return $this->tree;
     }

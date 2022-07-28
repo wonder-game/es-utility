@@ -40,30 +40,28 @@ trait MenuModelTrait
         return $value;
     }
 
-	public function getRouter($userMenus = [])
+    /**
+     * 菜单树
+     * @param $where
+     * @param array $options
+     * @return array
+     */
+	public function getTree($where = [], array $options = [])
 	{
-		$tree = new Tree($userMenus);
-		$where = [
-			'type' => [[0, 1], 'in'],
-			'status' => 1
-		];
-		$router = $tree->originData($where)->getTree(0, true);
-		return $router;
+        if ($where) {
+            $this->where($where);
+        }
+        $data = $this->setOrder()->all();
+		$Tree = new Tree($options + ['data' => $data]);
+		return $Tree->treeData();
 	}
 
-	public function menuList($where = [])
-	{
-		$Tree = new Tree();
-		$where['status'] = 1;
-		$where['type'] = [[0, 1], 'in'];
-		return $Tree->originData($where)->getTree();
-	}
-
-	public function menuAll($where = [])
-	{
-		$Tree = new Tree();
-		return $Tree->originData($where)->getAll();
-	}
+    public function getHomePage($id)
+    {
+        $data = $this->where(['type' => [[0, 1], 'in']])->setOrder()->all();
+        $Tree = new Tree(['data' => $data, 'filterIds' => $id]);
+        return $Tree->getHomePage();
+    }
 
 	/**
 	 * 角色组权限码
