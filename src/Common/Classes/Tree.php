@@ -62,7 +62,7 @@ class Tree extends SplBean
 
     protected function setNode($id, $pid = 0, $data = [])
     {
-        $this->origin[$id] = $data + [$this->childKey => []];
+        $this->origin[$id] = $data;
         $this->children[$pid][$id] = $id;
         $this->parent[$id] = $pid;
     }
@@ -155,7 +155,6 @@ class Tree extends SplBean
             $row = [
                 $this->idKey => $value[$this->idKey],
                 $this->pidKey => $value[$this->pidKey],
-                $this->childKey => $value[$this->childKey] ?? [],
             ];
             foreach (['path', 'component', 'name', 'redirect',] as $col) {
                 $row[$col] = $value[$col] ?? '';
