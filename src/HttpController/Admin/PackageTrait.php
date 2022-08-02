@@ -91,7 +91,13 @@ trait PackageTrait
     public function _options($return = false)
     {
         // 除了extension外的所有字段
-        $options = $this->Model->order('gameid', 'desc')->order('sort', 'asc')->field(['id', 'name', 'gameid', 'pkgbnd', 'os', 'sort'])->all();
+        $options = $this->Model->order('p.gameid', 'desc')
+            ->order('p.sort', 'asc')
+            ->field(['p.id', 'p.name', 'p.gameid', 'p.pkgbnd', 'p.os', 'p.sort'])
+            ->alias('p')
+            ->where('g.status', 1)
+            ->join('game as g', 'p.gameid=g.id')
+            ->all();
         return $return ? $options : $this->success($options);
     }
 }

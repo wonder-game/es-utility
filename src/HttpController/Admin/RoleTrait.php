@@ -44,7 +44,7 @@ trait RoleTrait
 
     public function _options($return = false)
     {
-        $options = $this->Model->order('sort', 'asc')->field(['id', 'name'])->all();
+        $options = $this->Model->order('sort', 'asc')->field(['id', 'name'])->where('status', 1)->all();
         $result = [];
         foreach ($options as $option) {
             $result[] = [
