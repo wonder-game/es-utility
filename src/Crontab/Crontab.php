@@ -66,7 +66,7 @@ class Crontab extends AbstractCronTask
                 continue;
             }
 
-            $className = $this->getTemplateClass($value['rclass'] ?? 'Crontab');
+            $className = $this->getTemplateClass($value['rclass']);
             $class = new $className([$value['eclass'], $value['method']], $args);
             // 投递给异步任务
             $finish = $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
@@ -153,23 +153,33 @@ class Crontab extends AbstractCronTask
         return $cron;
     }
 
-    // 获取模板类名
-    protected function getTemplateClass($className)
+    /**
+     * 获取模板类名
+     * @param string $className
+     * @return string
+     */
+    protected function getTemplateClass($className = '')
     {
-        if (empty($className)) {
-            $className = 'Crontab';
-        }
-        // 异步任务模板类
-        if ($className && strpos($className, '\\') === false) {
-            $className = '\\WonderGame\\EsUtility\\Task\\' . ucfirst($className);
-        }
+        $dftTemp = CrontabTemplate::class;
+        $className = empty($className) ? $dftTemp : $className;
+        try {
+            // 默认命名空间，跟随CrontabTemplate
+            if (strpos($className, '\\') === false) {
+                $Ref = new \ReflectionClass($dftTemp);
+                $nameSpace = $Ref->getNamespaceName();
+                $className = $nameSpace . '\\'. ucfirst($className);
+            }
 
-        if ( ! class_exists($className) || ( ! $className instanceof TaskInterface)) {
-//                trace("{$className} 不存在", 'error');
-//                continue;
-            // 2022-04-06 为兼容旧版本
-            $className = CrontabTemplate::class;
+            // 必须实现TaskInterface接口
+            $RefFull = new \ReflectionClass($className);
+            if ($RefFull->implementsInterface(TaskInterface::class)) {
+                return $className;
+            }
+        } catch (\ReflectionException $e) {
+            trace_immediate($e->__toString(), 'error');
         }
-        return $className;
+        // todo 为兼容旧版本，否则为抛异常, 上方捕获逻辑也不需要
+
+        return $dftTemp;
     }
 }
