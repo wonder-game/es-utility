@@ -365,6 +365,7 @@ trait AuthTrait
             $with = is_array($origin) ? array_merge($origin, [$column]) : [$column];
             $this->Model->with($with);
         }
+        return $this;
     }
 
     protected function __order()
@@ -408,14 +409,14 @@ trait AuthTrait
             }
         }
 
-        $where = $this->__search();
+        $where = $this->__with()->__search();
 
         // 处理排序
         $this->__order();
 
         // todo 希望优化为fetch模式
         $items = $this->Model->all($where);
-        $data = $this->__afterIndex($items, 0)[config('fetchSetting.listField')];
+        $data = $this->__after_index($items, 0)[config('fetchSetting.listField')];
 
         // 是否需要合并合计行，如需合并，data为索引数组，为空字段需要占位
 
