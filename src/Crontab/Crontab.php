@@ -138,9 +138,8 @@ class Crontab extends AbstractCronTask
         $file = config('CRONTAB.backup') ?: (config('LOG.dir') . '/crontab.object.data');
         try {
             $cron = $this->getCrontab();
-
             // 成功记录到文件
-            File::createFile($file, json_encode($cron, JSON_UNESCAPED_UNICODE));
+            $this->backupFile($file, $cron);
         } catch (\Exception | \Throwable $e) {
             // 失败降级从文件读取
             if ( ! file_exists($file) || ! ($str = file_get_contents($file))) {
@@ -151,6 +150,16 @@ class Crontab extends AbstractCronTask
             $cron = json_decode($str, true);
         }
         return $cron;
+    }
+
+    protected function backupFile($filename, $data = [])
+    {
+        $dir = dirname($filename);
+        if (File::createDirectory($dir)) {
+            $fp = fopen($filename, 'w+');
+            fwrite($fp, json_encode($data, JSON_UNESCAPED_UNICODE));
+            fclose($fp);
+        }
     }
 
     /**
