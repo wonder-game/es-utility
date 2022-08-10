@@ -72,7 +72,6 @@ abstract class Base extends TestCase
             'isshow' => 1,
             'keepalive' => 1,
             'affix' => 0,
-            'ignore_auth' => 0,
             'breadcrumb' => 1,
         ],
         [
@@ -92,7 +91,6 @@ abstract class Base extends TestCase
             'isshow' => 1,
             'keepalive' => 1,
             'affix' => 0,
-            'ignore_auth' => 0,
             'breadcrumb' => 1,
         ],
         [
@@ -112,7 +110,6 @@ abstract class Base extends TestCase
             'isshow' => 1,
             'keepalive' => 1,
             'affix' => 0,
-            'ignore_auth' => 0,
             'breadcrumb' => 1,
         ],
         [
@@ -132,7 +129,6 @@ abstract class Base extends TestCase
             'isshow' => 1,
             'keepalive' => 1,
             'affix' => 0,
-            'ignore_auth' => 0,
             'breadcrumb' => 1,
         ],
         [
@@ -152,7 +148,6 @@ abstract class Base extends TestCase
             'isshow' => 1,
             'keepalive' => 1,
             'affix' => 1,
-            'ignore_auth' => 0,
             'breadcrumb' => 1,
         ],
         [
@@ -172,7 +167,6 @@ abstract class Base extends TestCase
             'isshow' => 1,
             'keepalive' => 1,
             'affix' => 1,
-            'ignore_auth' => 0,
             'breadcrumb' => 1,
         ]
     ];

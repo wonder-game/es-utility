@@ -164,7 +164,6 @@ class Tree extends SplBean
             $meta = [
                 'orderNo' => intval($value['sort']),
                 'title' => $value['title'],
-                'ignoreAuth' => $value['ignore_auth'] == 1,
                 'ignoreKeepAlive' => $value['keepalive'] != 1,
                 'affix' => $value['affix'] == 1,
                 'icon' => $value['icon'],
