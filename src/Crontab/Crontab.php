@@ -9,6 +9,7 @@ use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EasySwoole\Utility\File;
+use EasySwoole\EasySwoole\Trigger;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
 use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 
@@ -29,8 +30,25 @@ class Crontab extends AbstractCronTask
 
     public function onException(\Throwable $throwable, int $taskId, int $workerIndex)
     {
-        \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+        Trigger::getInstance()->throwable($throwable);
         return '执行失败： ' . __CLASS__;
+    }
+
+    public function throwable($row, string $message)
+    {
+        trace($message, 'error');
+//        Trigger::getInstance()->throwable(new \Exception($message));
+
+        $title = 'Crontab异常';
+        $textArray = implode(" \n\n ", [
+            '### **' . $title . '**',
+            '- 服务器: ' . config('SERVNAME'),
+            '- 项 目：' . config('SERVER_NAME'),
+            "- id: {$row['id']}",
+            "- name: {$row['name']}",
+            "- 详 情：$message",
+        ]);
+        dingtalk_markdown($title, $textArray);
     }
 
     public function run(int $taskId, int $workerIndex)
@@ -41,12 +59,13 @@ class Crontab extends AbstractCronTask
             return;
         }
 
+        $namespace = config('CRONTAB.namespace') ?: '\\App\\Crontab';
+        $namespace = rtrim($namespace, '\\') . '\\';
+
         $task = TaskManager::getInstance();
         foreach ($cron as $value) {
             if ( ! CronExpression::isValidExpression($value['rule'])) {
-                $msg = "id={$value['id']} 运行规则设置错误 {$value['rule']}";
-                trace($msg, 'error');
-                dingtalk_text($msg);
+                $this->throwable($value, "运行规则设置错误 {$value['rule']}");
                 continue;
             }
 
@@ -60,25 +79,32 @@ class Crontab extends AbstractCronTask
                 $args = json_decode($args, true);
             }
             if ( ! is_array($args)) {
-                $msg = "定时任务参数解析失败: id={$value['id']},name={$value['name']},args=" . var_export($value['args'], true);
-                trace($msg, 'error');
-                dingtalk_text($msg);
+                $this->throwable($value, "定时任务参数解析失败: args=" . var_export($value['args'], true));
                 continue;
             }
 
-            $className = $this->getTemplateClass($value['rclass']);
-            $class = new $className([$value['eclass'], $value['method']], $args);
+            $runClass = ucfirst($value['eclass'] ?? '');
+            if ($runClass && strpos($runClass, '\\') === false) {
+                $runClass = $namespace . $runClass;
+            }
+            if (empty($runClass) || empty($value['method']) || ! class_exists($runClass) || ! method_exists($runClass, $value['method'])) {
+                $this->throwable($value, "参数异常: run class: $runClass, run method: {$value['method']}");
+                continue;
+            }
+            $value['eclass'] = $runClass;
+
+            $instance = $this->tplInstance($value, $args);
             // 投递给异步任务
-            $finish = $task->async($class, function ($reply, $taskId, $workerIndex) use ($value) {
-                trace("[CRONTAB] id={$value['id']} finish! {$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
+            $finish = $task->async($instance, function ($reply, $taskId, $workerIndex) use ($value) {
+                trace("[CRONTAB] SUCCESS id={$value['id']}, name={$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
             });
             // 只运行一次的任务
             if ($finish > 0 && $value['status'] == 2) {
-                $this->updStatus($value['id']);
+                $this->updateStatus($value['id']);
             }
 
             if ($finish <= 0) {
-                trace("投递失败: 返回值={$finish}, id={$value['id']}, name={$value['name']}", 'error');
+                $this->throwable($value, "投递失败: 返回值={$finish}, id={$value['id']}, name={$value['name']}");
             }
         }
     }
@@ -125,7 +151,7 @@ class Crontab extends AbstractCronTask
         return $this->getMysqlClient()->query($Builder)->getResult();
     }
 
-    protected function updStatus($id, $status = 1)
+    protected function updateStatus($id, $status = 1)
     {
         $Builder = new QueryBuilder();
         $Builder->where('id', $id)->update($this->tableName, ['status' => $status]);
@@ -163,32 +189,28 @@ class Crontab extends AbstractCronTask
     }
 
     /**
-     * 获取模板类名
-     * @param string $className
-     * @return string
+     * 模板实例
+     * @param array $row 单个crontab行
+     * @param array $params 模板类实例化参数
+     * @return TaskInterface
      */
-    protected function getTemplateClass($className = '')
+    protected function tplInstance($row = [], $params = []): TaskInterface
     {
-        $dftTemp = CrontabTemplate::class;
-        $className = empty($className) ? $dftTemp : $className;
-        try {
-            // 默认命名空间，跟随CrontabTemplate
-            if (strpos($className, '\\') === false) {
-                $Ref = new \ReflectionClass($dftTemp);
-                $nameSpace = $Ref->getNamespaceName();
-                $className = $nameSpace . '\\'. ucfirst($className);
-            }
-
-            // 必须实现TaskInterface接口
-            $RefFull = new \ReflectionClass($className);
-            if ($RefFull->implementsInterface(TaskInterface::class)) {
-                return $className;
-            }
-        } catch (\ReflectionException $e) {
-            trace_immediate($e->__toString(), 'error');
+        $dftTpl = CrontabTemplate::class;
+        $className = $row['rclass'] ?: $dftTpl;
+        // 默认命名空间，跟随CrontabTemplate
+        if (strpos($className, '\\') === false) {
+            $Ref = new \ReflectionClass($dftTpl);
+            $nameSpace = $Ref->getNamespaceName();
+            $className = $nameSpace . '\\'. ucfirst($className);
         }
-        // todo 为兼容旧版本，否则为抛异常, 上方捕获逻辑也不需要
 
-        return $dftTemp;
+        $RefFull = new \ReflectionClass($className);
+        if ($RefFull->implementsInterface(TaskInterface::class)) {
+            return $RefFull->newInstance($row, $params);
+        } else {
+            trace("$className 异步任务模板未实现TaskInterface接口, 已使用默认模板", 'error');
+            return new $dftTpl($row, $params);
+        }
     }
 }
