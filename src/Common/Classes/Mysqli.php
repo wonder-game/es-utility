@@ -100,7 +100,7 @@ class Mysqli extends MysqliClient
     /**
      * @param QueryBuilder $Builder
      * @param string $modelName AbstractModel子类，否则为数组
-     * @return bool
+     * @return \Generator
      * @throws \Throwable
      */
     public function fetch(QueryBuilder $Builder, string $modelName = '')
