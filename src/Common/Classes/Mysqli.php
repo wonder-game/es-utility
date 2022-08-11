@@ -6,13 +6,13 @@ namespace WonderGame\EsUtility\Common\Classes;
 use EasySwoole\Mysqli\Client;
 use EasySwoole\Mysqli\Config;
 use EasySwoole\Mysqli\QueryBuilder;
+use EasySwoole\ORM\AbstractModel;
+use EasySwoole\ORM\Db\Cursor;
 use EasySwoole\ORM\Db\MysqliClient;
 use EasySwoole\ORM\Db\Result;
 
 class Mysqli extends MysqliClient
 {
-    protected $_config = [];
-
     /**
      * 存储数据表字段列表 ['hourly' => ['gameid', 'login', 'reg', ...]]
      * @var array
@@ -25,16 +25,17 @@ class Mysqli extends MysqliClient
      */
     public function __construct(string $name = 'default', array $config = [])
     {
-        if (is_array($cfg = config('MYSQL.' . $name))) {
-            $this->_config = array_merge($this->_config, $cfg);
+        if ($name && is_array($cfg = config('MYSQL.' . $name))) {
+            $configArray = array_merge($cfg, $config);
+            $this->connectionName($name);
+        } else {
+            $configArray = $config;
+            $this->connectionName(md5(json_encode($configArray)));
         }
-        $this->_config = array_merge($this->_config, $config);
 
-        $this->connectionName($name);
+        parent::__construct(new Config($configArray));
 
-        parent::__construct(new Config($this->_config));
-
-        if ( ! isset($this->_config['save_log']) || $this->_config['save_log'] !== false) {
+        if ( ! isset($configArray['save_log']) || $configArray['save_log'] !== false) {
             $this->onQuery(function ($res, Client $client, $start) {
                 trace($client->lastQueryBuilder()->getLastQuery(), 'info', 'sql');
             });
@@ -94,6 +95,32 @@ class Mysqli extends MysqliClient
         $Builder->insertAll($tableName, $data, ['field' => $columns]);
 
         return $this->query($Builder, true);
+    }
+
+    /**
+     * @param QueryBuilder $Builder
+     * @param string $modelName AbstractModel子类，否则为数组
+     * @return bool
+     * @throws \Throwable
+     */
+    public function fetch(QueryBuilder $Builder, string $modelName = '')
+    {
+        $this->config->setFetchMode(true);
+
+        $this->connect();
+        /** @var Cursor $Cursor */
+        $Cursor = $this->query($Builder, false)->getResult();
+
+        if ($modelName && class_exists($modelName) && is_subclass_of($modelName, AbstractModel::class)) {
+            $Cursor->setModelName($modelName);
+            $Cursor->setReturnAsArray(false);
+        } else {
+            $Cursor->setReturnAsArray(true);
+        }
+
+        while ($ret = $Cursor->fetch()) {
+            yield $ret;
+        }
     }
 
     /**
