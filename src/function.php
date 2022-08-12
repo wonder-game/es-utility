@@ -102,12 +102,12 @@ if ( ! function_exists('model')) {
             $model->setExecClient($Client);
         }
         // 注入连接(新连接) + 切换时区
-        else if (is_numeric($inject) && method_exists($model, 'setTimeZone')) {
+        else if (is_numeric($inject)) {
             // 请不要从连接池获取连接, 否则连接回收后会污染连接池
             $connectName = $model->getConnectionName();
             $Client = new Mysqli($connectName);
+            $Client->setTimeZone($inject);
             $model->setExecClient($Client);
-            $model->setTimeZone($inject);
             \Swoole\Coroutine::defer(function () use ($Client) {
                 $Client->close();
             });
