@@ -159,24 +159,6 @@ trait BaseModelTrait
 
 	/************** 合并原LamModel方法 *******************/
 
-	public function setAutoTimeStamp($auto = false)
-	{
-		$this->autoTimeStamp = $auto;
-		return $this;
-	}
-
-	public function setCreateTime($instime = 'instime')
-	{
-		$this->createTime = $instime;
-		return $this;
-	}
-
-	public function setUpdateTime($updtime = 'updtime')
-	{
-		$this->updateTime = $updtime;
-		return $this;
-	}
-
 	/**
 	 * 更新缓存
 	 */
@@ -405,17 +387,5 @@ trait BaseModelTrait
 	public function rollback()
 	{
 		DbManager::getInstance()->rollback($this->getQueryConnection());
-	}
-
-	/******************** 兼容部分项目 _error ，最好能改为异常处理 ************************/
-	public function getError()
-	{
-		return $this->_error;
-	}
-
-	public function setError($err = [])
-	{
-		$this->_error = $err;
-		return $this;
 	}
 }
