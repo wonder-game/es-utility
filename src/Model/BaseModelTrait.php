@@ -250,10 +250,10 @@ trait BaseModelTrait
 			if ($isarray) {
 				$realKey = $this->schemaInfo()->getPkFiledName();
 				//将值设为 QUOTE:表主键
-				$Redis->set($key, 'QUOTE:' . $data[$realKey], $this->awaCacheExpire);
+				$Redis->setEx($key, $this->awaCacheExpire, 'QUOTE:' . $data[$realKey]);
 				$this->cacheInfo($data[$realKey], $data);
 			} else {
-				$Redis->set($key, is_scalar($data) ? $data : json_encode($data, JSON_UNESCAPED_UNICODE), $this->awaCacheExpire);
+				$Redis->setEx($key, $this->awaCacheExpire, is_scalar($data) ? $data : json_encode($data, JSON_UNESCAPED_UNICODE));
 			}
 		}
 
