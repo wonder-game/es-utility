@@ -257,7 +257,8 @@ class EventInitialize extends SplBean
             }
         }
         // ini优先级比Config.default高
-        if (($iniLang = get_cfg_var('env.language')) && in_array($iniLang, array_keys($languages))) {
+        $iniLang = config('INI.language');
+        if ($iniLang && in_array($iniLang, array_keys($languages))) {
             I18N::getInstance()->setDefaultLanguage($iniLang);
         }
     }
