@@ -6,11 +6,11 @@ namespace WonderGame\EsUtility\Crontab;
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
-use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EasySwoole\Utility\File;
 use EasySwoole\EasySwoole\Trigger;
-use WonderGame\EsUtility\Common\Classes\Mysqli;
+use WonderGame\EsUtility\Crontab\Drive\Interfaces;
+use WonderGame\EsUtility\Crontab\Drive\Mysql;
 use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 
 class Crontab extends AbstractCronTask
@@ -53,17 +53,32 @@ class Crontab extends AbstractCronTask
 
     public function run(int $taskId, int $workerIndex)
     {
-        $cron = $this->getTaskList();
+        $config = config('CRONTAB');
+        $Drive = $this->drive($config['drive']);
+        $backupFile = $config['backup'] ?: (config('LOG.dir') . '/crontab.data');
 
-        if (empty($cron) || ! is_array($cron)) {
+        try {
+            $list = $Drive->list();
+            // 成功记录到文件, todo 运行一次的任务此时还未修改
+            $this->backupFile($backupFile, $list);
+        } catch (\Exception | \Throwable $e) {
+            // 失败降级从文件读取
+            if ( ! file_exists($backupFile) || ! ($str = file_get_contents($backupFile))) {
+                // 连文件都没有，说明从未正常运行过
+                throw $e;
+            }
+            $list = json_decode($str, true);
+        }
+
+        if (empty($list) || ! is_array($list)) {
             return;
         }
 
-        $namespace = config('CRONTAB.namespace') ?: '\\App\\Crontab';
+        $namespace = $config['namespace'] ?: '\\App\\Crontab';
         $namespace = rtrim($namespace, '\\') . '\\';
 
         $task = TaskManager::getInstance();
-        foreach ($cron as $value) {
+        foreach ($list as $value) {
             if ( ! CronExpression::isValidExpression($value['rule'])) {
                 $this->throwable($value, "运行规则设置错误 {$value['rule']}");
                 continue;
@@ -98,9 +113,12 @@ class Crontab extends AbstractCronTask
             $finish = $task->async($instance, function ($reply, $taskId, $workerIndex) use ($value) {
                 trace("[CRONTAB] SUCCESS id={$value['id']}, name={$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
             });
-            // 只运行一次的任务
-            if ($finish > 0 && $value['status'] == 2) {
-                $this->updateStatus($value['id']);
+            // 运行一次
+            $once = $config['status_once'] ?? 2;
+            // 禁用状态
+            $disabled = $config['status_disabled'] ?? 1;
+            if ($finish > 0 && $value['status'] == $once) {
+                $Drive->update($value['id'], $disabled);
             }
 
             if ($finish <= 0) {
@@ -109,73 +127,29 @@ class Crontab extends AbstractCronTask
         }
     }
 
-    protected function getMysqlClient()
+    protected function drive($name = 'Mysql'): Interfaces
     {
-        // db配置，连接池名 或 相关配置的数组 （最优先）
-        $dbConfig = config('CRONTAB.db');
-
-        if (is_string($dbConfig)) {
-            $dbConfig = config('MYSQL.' . $dbConfig);
-            if (empty($dbConfig)) {
-                throw new \Exception('CRONTAB.db配置错误');
+        if (empty($name)) {
+            $name = Mysql::class;
+        }
+        // 允许自定义
+        if (strpos($name, '\\') !== false) {
+            $Ref = new \ReflectionClass($name);
+            if ($Ref->implementsInterface(Interfaces::class)) {
+                return $Ref->newInstance();
+            } else {
+                throw new \Exception($name . ' Please implements Interfaces');
+            }
+        } else {
+            $Ref = new \ReflectionClass(static::class);
+            $nameSpace = $Ref->getNamespaceName();
+            $name = $nameSpace . '\\Drive\\' . ucfirst($name);
+            if (class_exists($name)) {
+                return new $name();
+            } else {
+                throw new \Exception('Class Not found: ' . $name);
             }
         }
-        $Mysqli = new Mysqli('default', is_array($dbConfig) ? $dbConfig : []);
-        \Swoole\Coroutine::defer(function () use ($Mysqli) {
-            $Mysqli->close();
-        });
-        return $Mysqli;
-    }
-
-    protected function getCrontab()
-    {
-        // 查询条件，回调函数 或 字段条件的数组
-        $where = config('CRONTAB.where');
-
-        $Builder = new QueryBuilder();
-        $Builder->where('status', [0, 2], 'IN');
-
-        if (is_callable($where)) {
-            $where($Builder);
-        } elseif (is_string($where)) {
-            $Builder->where($where);
-        } elseif (is_array($where)) {
-            foreach ($where as $whereField => $whereValue)
-            {
-                $Builder->where($whereField, ...$whereValue);
-            }
-        }
-
-        $Builder->get($this->tableName);
-
-        return $this->getMysqlClient()->query($Builder)->getResult();
-    }
-
-    protected function updateStatus($id, $status = 1)
-    {
-        $Builder = new QueryBuilder();
-        $Builder->where('id', $id)->update($this->tableName, ['status' => $status]);
-        return $this->getMysqlClient()->query($Builder);
-    }
-
-    // 获取任务列表
-    protected function getTaskList()
-    {
-        $file = config('CRONTAB.backup') ?: (config('LOG.dir') . '/crontab.object.data');
-        try {
-            $cron = $this->getCrontab();
-            // 成功记录到文件
-            $this->backupFile($file, $cron);
-        } catch (\Exception | \Throwable $e) {
-            // 失败降级从文件读取
-            if ( ! file_exists($file) || ! ($str = file_get_contents($file))) {
-                // 连文件都没有，说明从未正常运行过
-                throw $e;
-            }
-
-            $cron = json_decode($str, true);
-        }
-        return $cron;
     }
 
     protected function backupFile($filename, $data = [])
