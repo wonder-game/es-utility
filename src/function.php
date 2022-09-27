@@ -477,14 +477,23 @@ if ( ! function_exists('dingtalk_text')) {
 
 
 if ( ! function_exists('dingtalk_markdown')) {
-	function dingtalk_markdown($title = '', $text = '', $at = true)
-	{
-		EsNotify::getInstance()->doesOne('dingtalk', new Markdown([
-			'title' => $title,
-			'text' => $text,
-			'isAtAll' => $at
-		]));
-	}
+    function dingtalk_markdown($title = '', $text = '', $at = true)
+    {
+        if (is_array($text)) {
+            $arr = ['### **' . $title . '**'];
+            foreach ($text as $key => $value)
+            {
+                $exp = strpos(strtolower($key), 'exp') === 0;
+                $arr[] = $exp ? $value : "- $key: $value";
+            }
+            $text = implode(" \n\n ", $arr);
+        }
+        EsNotify::getInstance()->doesOne('dingtalk', new Markdown([
+            'title' => $title,
+            'text' => $text,
+            'isAtAll' => $at
+        ]));
+    }
 }
 
 
