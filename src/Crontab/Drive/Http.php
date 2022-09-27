@@ -11,8 +11,7 @@ class Http implements Interfaces
     {
         $url = rtrim(config('CRONTAB.url'), '/') . '/list';
         $HttpClient = new HttpClient($url);
-        $data = array_merge(['status' => [[0, 2], 'IN']], config('CRONTAB.post') ?: []);
-        $body = $this->body($data);
+        $body = $this->body(config('CRONTAB.post') ?: []);
         $Resp = $HttpClient->post($body);
 
         $json = $Resp->getBody();
