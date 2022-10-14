@@ -14,10 +14,46 @@ trait Strings
     use Events;
 
     /**
-     * 有效期
+     * 有效期, s
      * @var float|int
      */
     protected $expire = 7 * 86400;
+
+    /**
+     * 防雪崩偏移, s
+     * @var float|int
+     */
+    protected $expireOffset = 12 * 3600;
+
+    /**
+     * 穿透标识
+     * @var string
+     */
+    private $penetrationSb = 'PENETRATION';
+
+    /**
+     * 布隆过滤，true-开启，对于大表谨慎开启！！
+     * @var bool
+     */
+    protected $bloom = false;
+
+    /**
+     * 布隆过滤，集合key
+     * @var string
+     */
+    protected $bloomKey = 'bloom_%s';
+
+    /**
+     * 布隆过滤，集合缓存字段
+     * @var string
+     */
+    protected $bloomField = 'id';
+
+    /**
+     * 布隆过滤，集合缓存条件
+     * @var array
+     */
+    protected $bloomWhere = [];
 
     /**
      * 连接池
@@ -56,18 +92,6 @@ trait Strings
     private $primarySb = 'QUOTE:';
 
     /**
-     * 穿透标识
-     * @var string
-     */
-    private $penetrationSb = '--PENETRATION--';
-
-    /**
-     * 布隆过滤，集合 字段
-     * @var bool | string
-     */
-    protected $bloomColumn = false;
-
-    /**
      * 懒惰模式，数据发生变化时，仅删除缓存key，不主动set缓存
      * @var bool
      */
@@ -89,7 +113,7 @@ trait Strings
             $str = implode($this->joinSb, array_values($id));
             $id = $this->isMd5 ? md5($str) : $str;
         }
-        $prefix = $this->prefix ?: $this->getTableName();
+        $prefix = is_null($this->prefix) ? $this->getTableName() : $this->prefix;
         return $prefix . $this->joinSb . $id;
     }
 
@@ -102,6 +126,20 @@ trait Strings
         /** @var AbstractModel $data */
         $data = $this->get($id);
         return $data ? $data->toArray() : [];
+    }
+
+    protected function _getBloomData()
+    {
+        if ($this->bloomWhere) {
+            $this->where($this->bloomWhere);
+        }
+        return $this->column($this->bloomField);
+    }
+
+    protected function _getBloomKey()
+    {
+        $tableName = $this->getTableName();
+        return sprintf($this->bloomKey, $tableName);
     }
 
     protected function _mergeExt($data) {
@@ -118,6 +156,35 @@ trait Strings
         return $pk;
     }
 
+    public function bloomSet()
+    {
+        RedisPool::invoke(function (Redis $redis) {
+            if ($rows = $this->_getBloomData()) {
+                $key = $this->_getBloomKey();
+                $redis->sAdd($key, ...$rows);
+            }
+        }, $this->redisPool);
+    }
+
+    public function bloomDel()
+    {
+        return RedisPool::invoke(function (Redis $redis) {
+            $key = $this->_getBloomKey();
+            return $redis->del($key);
+        }, $this->redisPool);
+    }
+
+    public function bloomIsMember($value)
+    {
+        return RedisPool::invoke(function (Redis $redis) use ($value) {
+            $key = $this->_getBloomKey();
+            if ( ! $redis->exists($key)) {
+                $this->bloomSet();
+            }
+            return $redis->sIsMember($key, $value);
+        }, $this->redisPool);
+    }
+
     /**
      * @param $id 主键值 | ['key' => 'value']
      * @param $data
@@ -129,12 +196,11 @@ trait Strings
             $key = $this->_getCacheKey($id);
 
             mt_srand();
-            $offset = 12 * 3600;
-            $expire = mt_rand($this->expire - $offset, $this->expire + $offset);
+            $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
 
             if (is_array($id)) {
                 $pk = $this->_getPk();
-                if (is_array($data) && ! empty($data) && $data[$pk]) {
+                if (is_array($data) && ! empty($data) && isset($data[$pk])) {
                     $this->cacheSet($data[$pk], $data);
                     $value = $this->primarySb . $data[$pk];
                 } else {
@@ -144,6 +210,12 @@ trait Strings
                 is_array($data) && ($encode = json_encode($data, JSON_UNESCAPED_UNICODE)) && $data = $encode;
                 $value = $data ?: $this->penetrationSb;
             }
+
+            if ($this->bloom) {
+                // 无法判断是更新还是新增，全删
+                $this->bloomDel();
+            }
+
             return $redis->setEx($key, $expire, $value);
         }, $this->redisPool);
     }
@@ -151,6 +223,14 @@ trait Strings
     public function cacheGet($id)
     {
         return RedisPool::invoke(function (Redis $redis) use ($id) {
+
+            if ($this->bloom) {
+                if (is_array($id) && isset($id[$this->bloomField])) {
+                    $id = $id[$this->bloomField];
+                }
+                return $this->bloomIsMember($id);
+            }
+
             $key = $this->_getCacheKey($id);
             $data = $redis->get($key);
             // 存储的是主键,则使用主键再次获取
@@ -178,8 +258,12 @@ trait Strings
     {
         return RedisPool::invoke(function (Redis $redis) use ($id) {
             $key = $this->_getCacheKey($id);
-            return $redis->del($key);
-        });
+            $status = $redis->del($key);
+
+            $this->bloom && $this->bloomDel();
+
+            return $status;
+        }, $this->redisPool);
     }
 
 
@@ -189,9 +273,7 @@ trait Strings
     {
         // 存入缓存
         if ($res) {
-            // 此处去掉协程，原因是特殊场景需要复用连接池连接时会有问题，https://wiki.swoole.com/wiki/page/963.html
             $data = $this->toArray();
-
             $pk = $this->_getPk();
 
             // 新增时没有id
@@ -199,8 +281,14 @@ trait Strings
                 $data[$pk] = $this->lastQueryResult()->getLastInsertId();
             }
 
-            if ($data[$pk]) {
+            if (isset($data[$pk])) {
                 $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheGet($data[$pk]);
+            }
+            if ($this->bloom) {
+                $this->bloomDel();
+                if ( ! $this->lazy) {
+                    $this->bloomSet();
+                }
             }
         }
     }
@@ -211,8 +299,15 @@ trait Strings
             // 请使用ORM链式操作对象删除，否则无法拿到data，另外，批量删除也无法拿到单行数据！！！只有受影响行数
             $data = $this->toArray();
             $pk = $this->_getPk();
-            if ($data[$pk]) {
+
+            if (isset($data[$pk])) {
                 $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheGet($data[$pk]);
+            }
+            if ($this->bloom) {
+                $this->bloomDel();
+                if ( ! $this->lazy) {
+                    $this->bloomSet();
+                }
             }
         }
     }
