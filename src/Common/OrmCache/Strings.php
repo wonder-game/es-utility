@@ -234,7 +234,11 @@ trait Strings
             $data = $redis->get($key);
             // 存储的是主键,则使用主键再次获取
             if (is_string($data) && strpos($data, $this->primarySb) === 0) {
+                // 再次获取时无需校验了
+                $bloom = $this->bloom;
+                $this->bloom = false;
                 $data = $this->cacheGet(explode(':', $data)[1]);
+                $this->bloom = $bloom;
             }
             // 没有数据，从数据表获取
             if (is_null($data) || $data === false) {
