@@ -41,7 +41,7 @@ trait Strings
      * 布隆过滤，集合key
      * @var string
      */
-    protected $bloomKey = 'bloom_%s';
+    protected $bloomKey = 'bloom-%s';
 
     /**
      * 布隆过滤，集合缓存字段
@@ -59,7 +59,7 @@ trait Strings
      * 连接池
      * @var string
      */
-    protected $redisPool = 'default';
+    protected $redisPoolName = 'default';
 
     /**
      * 前缀，null则获取数据表名
@@ -77,7 +77,7 @@ trait Strings
      * 将extension数据合并到主数据
      * @var bool
      */
-    protected $mergeExt = true;
+    protected $mergeExt = false;
 
     /**
      * key连接符
@@ -98,13 +98,10 @@ trait Strings
     protected $lazy = true;
 
     /**
-     * 设置以上protected属性
-     * @return void
+     * todo 延迟双删
+     * @var bool
      */
-    protected function setCacheTraitProtected()
-    {
-
-    }
+    protected $delay = false;
 
     protected function _getCacheKey($id)
     {
@@ -163,7 +160,7 @@ trait Strings
                 $key = $this->_getBloomKey();
                 $redis->sAdd($key, ...$rows);
             }
-        }, $this->redisPool);
+        }, $this->redisPoolName);
     }
 
     public function bloomDel()
@@ -171,7 +168,7 @@ trait Strings
         return RedisPool::invoke(function (Redis $redis) {
             $key = $this->_getBloomKey();
             return $redis->del($key);
-        }, $this->redisPool);
+        }, $this->redisPoolName);
     }
 
     public function bloomIsMember($value)
@@ -182,17 +179,18 @@ trait Strings
                 $this->bloomSet();
             }
             return $redis->sIsMember($key, $value);
-        }, $this->redisPool);
+        }, $this->redisPoolName);
     }
 
     /**
      * @param $id 主键值 | ['key' => 'value']
      * @param $data
+     * @param $bloom 删集合
      * @return mixed|null
      */
-    public function cacheSet($id, $data = [])
+    public function cacheSet($id, $data = [], $bloom = false)
     {
-        return RedisPool::invoke(function (Redis $redis) use ($id, $data) {
+        return RedisPool::invoke(function (Redis $redis) use ($id, $data, $bloom) {
             $key = $this->_getCacheKey($id);
 
             mt_srand();
@@ -211,13 +209,10 @@ trait Strings
                 $value = $data ?: $this->penetrationSb;
             }
 
-            if ($this->bloom) {
-                // 无法判断是更新还是新增，全删
-                $this->bloomDel();
-            }
+            $bloom && $this->bloomDel();
 
             return $redis->setEx($key, $expire, $value);
-        }, $this->redisPool);
+        }, $this->redisPoolName);
     }
 
     public function cacheGet($id)
@@ -225,10 +220,14 @@ trait Strings
         return RedisPool::invoke(function (Redis $redis) use ($id) {
 
             if ($this->bloom) {
-                if (is_array($id) && isset($id[$this->bloomField])) {
-                    $id = $id[$this->bloomField];
+                $bloomKey = $id;
+                if (is_array($bloomKey) && isset($bloomKey[$this->bloomField])) {
+                    $bloomKey = $bloomKey[$this->bloomField];
                 }
-                return $this->bloomIsMember($id);
+                $isMember = $this->bloomIsMember($bloomKey);
+                if ( ! $isMember) {
+                    return false;
+                }
             }
 
             $key = $this->_getCacheKey($id);
@@ -251,7 +250,7 @@ trait Strings
             is_string($data) && $data = json_decode_ext($data);
             $this->mergeExt && $data = $this->_mergeExt($data);
             return $data;
-        }, $this->redisPool);
+        }, $this->redisPoolName);
     }
 
     public function cacheDel($id)
@@ -263,7 +262,7 @@ trait Strings
             $this->bloom && $this->bloomDel();
 
             return $status;
-        }, $this->redisPool);
+        }, $this->redisPoolName);
     }
 
 
@@ -286,9 +285,7 @@ trait Strings
             }
             if ($this->bloom) {
                 $this->bloomDel();
-                if ( ! $this->lazy) {
-                    $this->bloomSet();
-                }
+                ! $this->lazy && $this->bloomSet();
             }
         }
     }
@@ -305,9 +302,7 @@ trait Strings
             }
             if ($this->bloom) {
                 $this->bloomDel();
-                if ( ! $this->lazy) {
-                    $this->bloomSet();
-                }
+                ! $this->lazy && $this->bloomSet();
             }
         }
     }
