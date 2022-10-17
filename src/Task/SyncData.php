@@ -117,8 +117,8 @@ class SyncData implements TaskInterface
             trace("数据同步失败, class: $className, data: " . json_encode($data, JSON_UNESCAPED_UNICODE) , 'info', 'sync');
         }
 
-        // 清除缓存
-        $model->cacheInfo((int) $orgs[$pk], null);
+        // 清除缓存， 由对应model事件执行
+//        $model->cacheDel($orgs[$pk]);
     }
 
     protected function _delete($className)
@@ -141,13 +141,13 @@ class SyncData implements TaskInterface
                 // 备份删除数据
                 $this->_delete_backup($row);
                 // 执行删除
-                $rowCount = $row->destroy([$pk => $orgs[$pk]]);
+                $rowCount = $row->destroy();
                 // 不论成功失败，上报
                 $this->_delete_report($className, $rowCount, $row->lastQuery()->getLastQuery());
             }
 
-            // 删缓存
-            $model->cacheInfo((int) $orgs[$pk], null);
+            // 删缓存, 由对应model事件执行
+//            $model->cacheDel($orgs[$pk], null);
         }
     }
     // 记录，用于误删恢复

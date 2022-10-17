@@ -801,7 +801,8 @@ if ( ! function_exists('json_decode_ext'))
      */
     function json_decode_ext($data = '')
     {
-        $data = is_scalar($data) ? json_decode($data, true) : $data;
+        is_string($data) && ($json = json_decode($data, true)) && $data = $json;
+
         is_array($data) && isset($data['extension']) && ! is_array($data['extension']) && ($data['extension'] = json_decode($data['extension'], true));
         return $data;
     }
