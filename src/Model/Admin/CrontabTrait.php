@@ -3,9 +3,12 @@
 
 namespace WonderGame\EsUtility\Model\Admin;
 
+use WonderGame\EsUtility\Common\OrmCache\Events;
 
 trait CrontabTrait
 {
+    use Events;
+
 	protected function setBaseTraitProptected()
 	{
 		$this->autoTimeStamp = true;
