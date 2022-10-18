@@ -2,8 +2,14 @@
 
 namespace WonderGame\EsUtility\Model\Admin;
 
+use EasySwoole\Redis\Redis;
+use EasySwoole\RedisPool\RedisPool;
+use WonderGame\EsUtility\Common\OrmCache\Events;
+
 trait SysinfoModelTrait
 {
+    use Events;
+
 	// 缓存key
 	abstract public function getCacheKey(): string;
 
@@ -34,13 +40,20 @@ trait SysinfoModelTrait
 		return $value;
 	}
 
+    protected function _delCache()
+    {
+        RedisPool::invoke(function (Redis $redis) {
+            $redis->del($this->getCacheKey());
+        });
+    }
+
 	protected function _after_write($res = false)
 	{
-		$this->delRedisKey($this->getCacheKey());
+        $this->_delCache();
 	}
 
 	protected function _after_delete($res)
 	{
-		$this->delRedisKey($this->getCacheKey());
+        $this->_delCache();
 	}
 }

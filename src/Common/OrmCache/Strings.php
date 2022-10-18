@@ -156,10 +156,10 @@ trait Strings
     public function bloomSet()
     {
         RedisPool::invoke(function (Redis $redis) {
-            if ($rows = $this->_getBloomData()) {
-                $key = $this->_getBloomKey();
-                $redis->sAdd($key, ...$rows);
-            }
+            $rows = $this->_getBloomData();
+            $rows = ($rows && is_array($rows)) ? $rows : [];
+            $key = $this->_getBloomKey();
+            $redis->sAdd($key, ...$rows);
         }, $this->redisPoolName);
     }
 
@@ -193,9 +193,6 @@ trait Strings
         return RedisPool::invoke(function (Redis $redis) use ($id, $data, $bloom) {
             $key = $this->_getCacheKey($id);
 
-            mt_srand();
-            $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
-
             if (is_array($id)) {
                 $pk = $this->_getPk();
                 if (is_array($data) && ! empty($data) && isset($data[$pk])) {
@@ -211,6 +208,8 @@ trait Strings
 
             $bloom && $this->bloomDel();
 
+            mt_srand();
+            $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
             return $redis->setEx($key, $expire, $value);
         }, $this->redisPoolName);
     }
