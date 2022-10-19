@@ -696,36 +696,9 @@ if ( ! function_exists('sysinfo')) {
 	 */
 	function sysinfo($key = null, $default = null)
 	{
-
-		/** @var SplArray $Spl */
-		$Spl = RedisPool::invoke(function (Redis $redis) {
-
-			$model = model_admin('sysinfo');
-
-			$redisKey = $model->getCacheKey();
-
-			$cache = $redis->get($redisKey);
-			if ($cache !== false && ! is_null($cache)) {
-				$slz = unserialize($cache);
-				if ($slz instanceof SplArray) {
-					return $slz;
-				}
-			}
-
-			$data = $model->where('status', 1)->all();
-
-			$array = [];
-			/** @var Sysinfo $item */
-			foreach ($data as $item) {
-				$array[$item->getAttr('varname')] = $item->getAttr('value');
-			}
-
-			$Spl = new SplArray($array);
-			$redis->set($redisKey, serialize($Spl));
-			return $Spl;
-		});
-
-		return $key === true ? $Spl : $Spl->get($key, $default);
+        /** @var \App\Model\Admin\Sysinfo $model */
+        $model = model_admin('sysinfo');
+        return $model->cacheSpl($key, $default);
 	}
 }
 
