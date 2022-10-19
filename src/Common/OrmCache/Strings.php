@@ -206,7 +206,7 @@ trait Strings
                 $value = $data ?: $this->penetrationSb;
             }
 
-            $bloom && $this->bloomDel();
+            $bloom && $this->bloom && $this->bloomDel();
 
             mt_srand();
             $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
@@ -220,7 +220,10 @@ trait Strings
 
             if ($this->bloom) {
                 $bloomKey = $id;
-                if (is_array($bloomKey) && isset($bloomKey[$this->bloomField])) {
+                if (is_array($bloomKey)) {
+                    if (empty($bloomKey[$this->bloomField])) {
+                        return false;
+                    }
                     $bloomKey = $bloomKey[$this->bloomField];
                 }
                 $isMember = $this->bloomIsMember($bloomKey);
@@ -271,43 +274,35 @@ trait Strings
 
     /*-------------------------- 模型事件 --------------------------*/
 
+    protected function _after_cache()
+    {
+        $data = $this->toArray();
+        $pk = $this->_getPk();
+
+        // 新增时没有id
+        if ( ! isset($data[$pk])) {
+            $insertId = $this->lastQueryResult()->getLastInsertId();
+            $insertId && $data[$pk] = $insertId;
+        }
+
+        if (isset($data[$pk])) {
+            $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheSet($data[$pk], $data);
+        }
+        if ($this->bloom) {
+            $this->bloomDel();
+            ! $this->lazy && $this->bloomSet();
+        }
+    }
+
     protected function _after_write($res = false)
     {
-        // 存入缓存
-        if ($res) {
-            $data = $this->toArray();
-            $pk = $this->_getPk();
-
-            // 新增时没有id
-            if ( ! isset($data[$pk])) {
-                $data[$pk] = $this->lastQueryResult()->getLastInsertId();
-            }
-
-            if (isset($data[$pk])) {
-                $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheGet($data[$pk]);
-            }
-            if ($this->bloom) {
-                $this->bloomDel();
-                ! $this->lazy && $this->bloomSet();
-            }
-        }
+        $res && $this->_after_cache();
     }
 
     protected function _after_delete($res)
     {
-        if ($res) {
-            // 请使用ORM链式操作对象删除，否则无法拿到data，另外，批量删除也无法拿到单行数据！！！只有受影响行数
-            $data = $this->toArray();
-            $pk = $this->_getPk();
-
-            if (isset($data[$pk])) {
-                $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheGet($data[$pk]);
-            }
-            if ($this->bloom) {
-                $this->bloomDel();
-                ! $this->lazy && $this->bloomSet();
-            }
-        }
+        // 请使用ORM链式操作对象删除，否则无法拿到data，另外，批量删除也无法拿到单行数据!!!!!!!!! 只有受影响行数
+        $res && $this->_after_cache();
     }
 
 }
