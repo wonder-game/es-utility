@@ -220,7 +220,10 @@ trait Strings
 
             if ($this->bloom) {
                 $bloomKey = $id;
-                if (is_array($bloomKey) && isset($bloomKey[$this->bloomField])) {
+                if (is_array($bloomKey)) {
+                    if (empty($bloomKey[$this->bloomField])) {
+                        return false;
+                    }
                     $bloomKey = $bloomKey[$this->bloomField];
                 }
                 $isMember = $this->bloomIsMember($bloomKey);
