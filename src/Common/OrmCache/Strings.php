@@ -293,16 +293,4 @@ trait Strings
             ! $this->lazy && $this->bloomSet();
         }
     }
-
-    protected function _after_write($res = false)
-    {
-        $res && $this->_after_cache();
-    }
-
-    protected function _after_delete($res)
-    {
-        // 请使用ORM链式操作对象删除，否则无法拿到data，另外，批量删除也无法拿到单行数据!!!!!!!!! 只有受影响行数
-        $res && $this->_after_cache();
-    }
-
 }
