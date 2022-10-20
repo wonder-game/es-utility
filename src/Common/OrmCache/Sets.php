@@ -78,14 +78,4 @@ trait Sets
     {
         $this->cacheDel();
     }
-
-    protected function _after_write($res)
-    {
-        $res && $this->_after_cache();
-    }
-
-    protected function _after_delete($res)
-    {
-        $res && $this->_after_cache();
-    }
 }

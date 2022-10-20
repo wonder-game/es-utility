@@ -19,7 +19,15 @@ trait Events
         $model->_after_delete($res);
     }
 
-    protected function _after_write($res) {}
+    protected function _after_write($res)
+    {
+        $res && $this->_after_cache();
+    }
 
-    protected function _after_delete($res) {}
+    protected function _after_delete($res)
+    {
+        $res && $this->_after_cache();
+    }
+
+    protected function _after_cache() {}
 }
