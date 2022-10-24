@@ -553,23 +553,23 @@ trait AuthTrait
 
         // 特意让$filter拥有以下这几个key的成员，值至少为[]
         // 这样外围有需要可直接写 $filter['XXX'] && ....，而不需要写isset($filter['XXX']) && $filter['XXX'] && ....
-        foreach ([... $extColName, 'status', 'dft'] as $col) {
-            $filter[$col] = isset($filter[$col]) && $filter[$col] !== '' ? explode(',', ($filter[$col])) : [];
+        foreach ([... $extColName, 'status'] as $col) {
+            $filter[$col] = (isset($filter[$col]) && $filter[$col] !== '') ? explode(',', ($filter[$col])) : [];
         }
 
         // 非超级管理员只允许有权限的
         if ( ! $this->isSuper()) {
-            foreach ($extColName as $col) {
-                $my = $this->operinfo['extension'][$col] ?? [];
-                // 故意造一个不存在的值
-                $my = $my ?: [-1];
-                $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]) : $my;
-            }
-        }
 
-        // ads为 1 的人 不限制广告位,
-        if ($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) == 1) {
-            $filter['adid'] = [];
+            foreach ($extColName as $col) {
+                // 是否需要校验相关权限
+                $isChk = ! empty($this->operinfo['extension']['chk_' . $col]);
+                if ($isChk) {
+                    $my = $this->operinfo['extension'][$col] ?? [];
+                    // 故意造一个不存在的值
+                    $my = $my ?: [-1];
+                    $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]) : $my;
+                }
+            }
         }
 
         // 地区
