@@ -159,10 +159,19 @@ class EventInitialize extends SplBean
         }
         foreach ($config as $rname => $rvalue)
         {
-            \EasySwoole\RedisPool\RedisPool::getInstance()->register(
+            $RedisPoolConfig = \EasySwoole\RedisPool\RedisPool::getInstance()->register(
                 new \EasySwoole\Redis\Config\RedisConfig($rvalue),
                 $rname
             );
+            // 排序，maxObjectNum > minObjectNum
+            ksort($rvalue);
+            foreach ($rvalue as $key => $value)
+            {
+                $method = 'set' . ucfirst($key);
+                if (method_exists($RedisPoolConfig, $method)) {
+                    call_user_func([$RedisPoolConfig, $method], $value);
+                }
+            }
         }
     }
 
