@@ -331,6 +331,10 @@ trait AuthTrait
 
     public function _index($return = false)
     {
+        if ( ! $this->Model instanceof AbstractModel) {
+            throw new HttpParamException(lang(Dictionary::PARAMS_ERROR));
+        }
+
         $page = $this->get[config('fetchSetting.pageField')] ?? 1;          // 当前页码
         $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
 
