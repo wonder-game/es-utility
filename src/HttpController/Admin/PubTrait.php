@@ -70,7 +70,7 @@ trait PubTrait
     // 动态创建Excel模板并返回文件流
     public function downExcelTpl()
     {
-        $token = $this->get['token'];
+        $token = $this->getAuthorization();
         if (empty($token)) {
             $this->error(Code::ERROR_OTHER, '未登录');
             return;
