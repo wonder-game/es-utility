@@ -3,7 +3,11 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
+use EasySwoole\Component\Timer;
+use EasySwoole\Utility\MimeType;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
+use WonderGame\EsUtility\Common\Classes\LamJwt;
+use WonderGame\EsUtility\Common\Classes\XlsWriter;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
@@ -62,4 +66,36 @@ trait PubTrait
 	{
 		$this->success('success');
 	}
+
+    // 动态创建Excel模板并返回文件流
+    public function downExcelTpl()
+    {
+        $token = $this->get['token'];
+        if (empty($token)) {
+            $this->error(Code::ERROR_OTHER, '未登录');
+            return;
+        }
+        $jwt = LamJwt::verifyToken($token, config('auth.jwtkey'));
+        $id = $jwt['data']['id'] ?? '';
+        if ($jwt['status'] != 1 || empty($id)) {
+            $this->error(Code::ERROR_OTHER, 'token无效');
+            return;
+        }
+
+        $colWidth = $this->get['col_width'] ?? 30;
+        $rowHeight = $this->get['row_height'] ?? 15;
+        $header = explode(',', $this->get[config('fetchSetting.exportThField')] ?? '');
+
+        $XlsWriter = new XlsWriter();
+        $fullFilePath = $XlsWriter->xlsxTemplate($header, $colWidth, $rowHeight);
+
+        $this->response()->sendFile($fullFilePath);
+        $this->response()->withHeader('Content-Type', MimeType::getMimeTypeByExt('xlsx'));
+        $this->response()->withHeader('Cache-Control', 'max-age=0');
+        $this->response()->end();
+
+        Timer::getInstance()->after(1000, function () use ($fullFilePath) {
+            @unlink($fullFilePath);
+        });
+    }
 }

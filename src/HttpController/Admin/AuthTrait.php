@@ -429,7 +429,8 @@ trait AuthTrait
 
         // 客户端response响应头获取不到Content-Disposition，用参数传文件名
         $fileName = $this->get[config('fetchSetting.exprotFilename')] ?? '';
-        if ( ! empty($fileName)) {
+
+        if (empty($fileName)) {
             $fileName = sprintf('export-%d-%s.xlsx', date(DateUtils::YmdHis), substr(uniqid(), -5));
         }
 
