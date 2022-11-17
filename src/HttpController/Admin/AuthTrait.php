@@ -5,6 +5,7 @@ namespace WonderGame\EsUtility\HttpController\Admin;
 use App\HttpController\BaseController;
 use EasySwoole\Component\Timer;
 use EasySwoole\Http\Exception\FileException;
+use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\Policy\Policy;
 use EasySwoole\Policy\PolicyNode;
@@ -299,10 +300,8 @@ trait AuthTrait
     {
         $post = $this->post;
         $pk = $this->Model->getPk();
-        foreach ([$pk, 'column'] as $col) {
-            if ( ! isset($post[$col]) || ! isset($post[$post['column']])) {
-                return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_15);
-            }
+        if ( ! isset($post[$pk]) || ( ! isset($post[$post['column']]) && ! isset($post['value']))) {
+            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_15);
         }
 
         $column = $post['column'];
@@ -315,7 +314,16 @@ trait AuthTrait
             $where = [$pk => $post[$pk]];
         }
 
-        $upd = $model->update([$column => $post[$column]], $where);
+        $value = $post[$column] ?? $post['value'];
+        if (strpos($column, '.') === false) {
+            // 普通字段
+            $upd = $model->update([$column => $value], $where);
+        } else {
+            // json字段
+            list($one, $two) = explode('.', $column);
+            $upd = $model->update([$one => QueryBuilder::func(sprintf("json_set($one, '$.%s','%s')", $two, $value))], $where);
+        }
+
 //        $rowCount = $model->lastQueryResult()->getAffectedRows();
         if ($upd === false) {
             throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_18));
@@ -429,8 +437,7 @@ trait AuthTrait
 
         // 客户端response响应头获取不到Content-Disposition，用参数传文件名
         $fileName = $this->get[config('fetchSetting.exprotFilename')] ?? '';
-
-        if (empty($fileName)) {
+        if ( ! empty($fileName)) {
             $fileName = sprintf('export-%d-%s.xlsx', date(DateUtils::YmdHis), substr(uniqid(), -5));
         }
 
