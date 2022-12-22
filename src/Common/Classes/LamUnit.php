@@ -13,29 +13,26 @@ use EasySwoole\I18N\I18N;
 
 class LamUnit
 {
-    public static function setI18n(Request $request, $headerKey = 'accept-language')
+    public static function setI18n(Request $request, $headerKey = 'accept-language', $paramKey = 'lang')
     {
-        if ($request->hasHeader($headerKey)) {
-            $langage = $request->getHeader($headerKey);
-            if (is_array($langage)) {
-                $langage = current($langage);
-            }
-            $languages = config('LANGUAGES') ?: [];
-            foreach ($languages as $lang => $value) {
-                // 回调
-                if (is_callable($value['match'])) {
-                    $match = $value['match']($langage);
-                    if ($match === true) {
-                        I18N::getInstance()->setLanguage($lang);
-                        break;
-                    }
-                }
-                // 正则
-                elseif(is_string($value['match']) && preg_match($value['match'], $langage))
-                {
+        // 请求参数的优先级高于头信息
+        if ( ! $langage = $request->getRequestParam($paramKey) ?: $request->getHeader($headerKey)) {
+            return;
+        }
+        is_array($langage) && $langage = current($langage);
+        $languages = config('LANGUAGES') ?: [];
+        foreach ($languages as $lang => $value) {
+            // 回调
+            if (is_callable($value['match'])) {
+                $match = $value['match']($langage);
+                if ($match === true) {
                     I18N::getInstance()->setLanguage($lang);
                     break;
                 }
+            } // 正则
+            elseif (is_string($value['match']) && preg_match($value['match'], $langage)) {
+                I18N::getInstance()->setLanguage($lang);
+                break;
             }
         }
     }

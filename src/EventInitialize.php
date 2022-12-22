@@ -252,14 +252,7 @@ class EventInitialize extends SplBean
                 continue;
             }
             I18N::getInstance()->addLanguage(new $className(), $lang);
-            if (isset($language['default']) && $language['default'] === true) {
-                I18N::getInstance()->setDefaultLanguage($lang);
-            }
-        }
-        // ini优先级比Config.default高
-        $iniLang = config('INI.language');
-        if ($iniLang && in_array($iniLang, array_keys($languages))) {
-            I18N::getInstance()->setDefaultLanguage($iniLang);
+            empty($language['default']) or I18N::getInstance()->setDefaultLanguage($lang);
         }
     }
 
