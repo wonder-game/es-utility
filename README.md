@@ -22,20 +22,24 @@
      │      │     ├── CtxRequest 协程单例类，解决一些痛点，如Model内无法获取Http Request、WebSocket Caller实例等，作用与EasySwoole\Component\Context\ContextManager类似
      │      │     ├── DateUtils 时间日期时区等处理
      │      │     ├── ExceptionTrigger 自定义异常处理器，将异常上报至redis或http
+     │      │     ├── FdManager  WebSocket连接符管理，共享内存(Swoole\Table)实现
      │      │     ├── LamJwt jwt
      │      │     ├── LamLog 自定义日志处理器
      │      │     ├── LamOpenssl RSA数据加密和解密
      │      │     ├── LamUnit 辅助工具类
+     │      │     ├── Mysqli 对MysqlClient的二次封装
      │      │     ├── ShardTable 定时建分区、续分区
      │      │     ├── Tree 数行结构处理
-     │      │     ├── WeChatManager WeChat实例管理
      │      │     └── XlsWriter 数据导入和导出
      │      ├── Exception 各种自定义异常
      │      ├── Http Http相关的配置
      │      │     └── Code Http响应状态码，项目的Code请`继承`它
-     │      └── Language I18N国际化目录
-     │            ├── Dictionary 国际化字典，项目请`继承`它
-     │            └── Languages I18n助手类，主要用来注册、设置
+     │      ├── Language I18N国际化目录
+     │      │     ├── Dictionary 国际化字典，项目请`继承`它
+     │      │     └── Languages I18n助手类，主要用来注册、设置
+     │      │
+     │      └── OrmCache 模型缓存组件，已实现 String、Hash、Set、SplArray
+     │
      ├── HttpController
      │        ├── Admin
      │        │     ├── BaseTrait 继承BaseController
@@ -52,6 +56,7 @@
      ├── Task 异步任务
      │     ├── Crontab 通用的异步任务模板
      │     └── ... 异步任务类
+     ├── WebSocket 同 HttpController
      ├── ... 其他业务
      ├── EventInitialize 对EasySwooleEvent::initialize事件的一些封装
      ├── EventMainServerCreate  对EasySwooleEvent::mainServerCreate事件的一些封装

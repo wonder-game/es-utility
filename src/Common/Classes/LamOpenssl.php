@@ -11,11 +11,11 @@ use EasySwoole\Component\Singleton;
 class LamOpenssl
 {
 	use Singleton;
-	
+
 	private $_privateKey = ''; // 私钥
 	private $_publicKey = ''; // 公钥
-	
-	
+
+
 	/**
 	 * LamRsa constructor.
 	 * @param string $prvfile 私钥文件
@@ -23,37 +23,45 @@ class LamOpenssl
 	 */
 	public function __construct($prvfile, $pubfile)
 	{
-		extension_loaded('openssl') or die('php需要openssl扩展支持');
-		(is_file($prvfile) && is_file($pubfile)) or die('找不到密钥文件');
-		$this->_privateKey = openssl_pkey_get_private(file_get_contents($prvfile));
-		$this->_publicKey = openssl_pkey_get_public(file_get_contents($pubfile));
-		($this->_privateKey && $this->_publicKey) or die('私钥或者公钥不可用');
+        if ( ! extension_loaded('openssl')) {
+            throw new \RuntimeException('php需要openssl扩展支持');
+        }
+        if ( ! is_file($prvfile) || ! is_file($pubfile)) {
+            throw new \RuntimeException('找不到密钥文件');
+        }
+
+        $this->_privateKey = openssl_pkey_get_private(file_get_contents($prvfile));
+        $this->_publicKey = openssl_pkey_get_public(file_get_contents($pubfile));
+
+        if ( ! $this->_privateKey || ! $this->_publicKey) {
+            throw new \RuntimeException('私钥或者公钥不可用');
+        }
 	}
-	
+
 	// 公钥加密
 	public function publicEncrypt($data)
 	{
 		return $this->encrypt($data, 'public');
 	}
-	
+
 	// 公钥解密
 	public function publicDecrypt($data)
 	{
 		return $this->decrypt($data, 'public');
 	}
-	
+
 	// 私钥加密
 	public function privateEncrypt($data)
 	{
 		return $this->encrypt($data, 'private');
 	}
-	
+
 	// 私钥解密
 	public function privateDecrypt($data)
 	{
 		return $this->decrypt($data, 'private');
 	}
-	
+
 	// 加密
 	public function encrypt($data = '', $type = 'public')
 	{
@@ -67,7 +75,7 @@ class LamOpenssl
 		$crypto = $this->urlsafeB64encode($crypto);
 		return $crypto;
 	}
-	
+
 	// 解密
 	public function decrypt($data = '', $type = 'private')
 	{
@@ -80,7 +88,7 @@ class LamOpenssl
 		}
 		return $crypto;
 	}
-	
+
 	//加密码时把特殊符号替换成URL可以带的内容
 	public function urlsafeB64encode($string)
 	{
@@ -88,7 +96,7 @@ class LamOpenssl
 		$string = str_replace(['+', '/', '='], ['-', '_', ''], $string);
 		return $string;
 	}
-	
+
 	//解密码时把转换后的符号替换特殊符号
 	public function urlsafeB64decode($string)
 	{

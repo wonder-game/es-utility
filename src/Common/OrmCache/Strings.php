@@ -156,10 +156,10 @@ trait Strings
     public function bloomSet()
     {
         RedisPool::invoke(function (Redis $redis) {
-            if ($rows = $this->_getBloomData()) {
-                $key = $this->_getBloomKey();
-                $redis->sAdd($key, ...$rows);
-            }
+            $rows = $this->_getBloomData();
+            $rows = ($rows && is_array($rows)) ? $rows : [];
+            $key = $this->_getBloomKey();
+            $redis->sAdd($key, ...$rows);
         }, $this->redisPoolName);
     }
 
@@ -193,9 +193,6 @@ trait Strings
         return RedisPool::invoke(function (Redis $redis) use ($id, $data, $bloom) {
             $key = $this->_getCacheKey($id);
 
-            mt_srand();
-            $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
-
             if (is_array($id)) {
                 $pk = $this->_getPk();
                 if (is_array($data) && ! empty($data) && isset($data[$pk])) {
@@ -209,8 +206,10 @@ trait Strings
                 $value = $data ?: $this->penetrationSb;
             }
 
-            $bloom && $this->bloomDel();
+            $bloom && $this->bloom && $this->bloomDel();
 
+            mt_srand();
+            $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
             return $redis->setEx($key, $expire, $value);
         }, $this->redisPoolName);
     }
@@ -221,7 +220,10 @@ trait Strings
 
             if ($this->bloom) {
                 $bloomKey = $id;
-                if (is_array($bloomKey) && isset($bloomKey[$this->bloomField])) {
+                if (is_array($bloomKey)) {
+                    if (empty($bloomKey[$this->bloomField])) {
+                        return false;
+                    }
                     $bloomKey = $bloomKey[$this->bloomField];
                 }
                 $isMember = $this->bloomIsMember($bloomKey);
@@ -272,43 +274,23 @@ trait Strings
 
     /*-------------------------- 模型事件 --------------------------*/
 
-    protected function _after_write($res = false)
+    protected function _after_cache()
     {
-        // 存入缓存
-        if ($res) {
-            $data = $this->toArray();
-            $pk = $this->_getPk();
+        $data = $this->toArray();
+        $pk = $this->_getPk();
 
-            // 新增时没有id
-            if ( ! isset($data[$pk])) {
-                $data[$pk] = $this->lastQueryResult()->getLastInsertId();
-            }
+        // 新增时没有id
+        if ( ! isset($data[$pk])) {
+            $insertId = $this->lastQueryResult()->getLastInsertId();
+            $insertId && $data[$pk] = $insertId;
+        }
 
-            if (isset($data[$pk])) {
-                $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheGet($data[$pk]);
-            }
-            if ($this->bloom) {
-                $this->bloomDel();
-                ! $this->lazy && $this->bloomSet();
-            }
+        if (isset($data[$pk])) {
+            $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheSet($data[$pk], $data);
+        }
+        if ($this->bloom) {
+            $this->bloomDel();
+            ! $this->lazy && $this->bloomSet();
         }
     }
-
-    protected function _after_delete($res)
-    {
-        if ($res) {
-            // 请使用ORM链式操作对象删除，否则无法拿到data，另外，批量删除也无法拿到单行数据！！！只有受影响行数
-            $data = $this->toArray();
-            $pk = $this->_getPk();
-
-            if (isset($data[$pk])) {
-                $this->lazy ? $this->cacheDel($data[$pk]) : $this->cacheGet($data[$pk]);
-            }
-            if ($this->bloom) {
-                $this->bloomDel();
-                ! $this->lazy && $this->bloomSet();
-            }
-        }
-    }
-
 }

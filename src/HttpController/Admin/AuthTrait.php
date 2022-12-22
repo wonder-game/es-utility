@@ -5,6 +5,7 @@ namespace WonderGame\EsUtility\HttpController\Admin;
 use App\HttpController\BaseController;
 use EasySwoole\Component\Timer;
 use EasySwoole\Http\Exception\FileException;
+use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\Policy\Policy;
 use EasySwoole\Policy\PolicyNode;
@@ -299,10 +300,8 @@ trait AuthTrait
     {
         $post = $this->post;
         $pk = $this->Model->getPk();
-        foreach ([$pk, 'column'] as $col) {
-            if ( ! isset($post[$col]) || ! isset($post[$post['column']])) {
-                return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_15);
-            }
+        if ( ! isset($post[$pk]) || ( ! isset($post[$post['column']]) && ! isset($post['value']))) {
+            return $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_15);
         }
 
         $column = $post['column'];
@@ -315,7 +314,16 @@ trait AuthTrait
             $where = [$pk => $post[$pk]];
         }
 
-        $upd = $model->update([$column => $post[$column]], $where);
+        $value = $post[$column] ?? $post['value'];
+        if (strpos($column, '.') === false) {
+            // 普通字段
+            $upd = $model->update([$column => $value], $where);
+        } else {
+            // json字段
+            list($one, $two) = explode('.', $column);
+            $upd = $model->update([$one => QueryBuilder::func(sprintf("json_set($one, '$.%s','%s')", $two, $value))], $where);
+        }
+
 //        $rowCount = $model->lastQueryResult()->getAffectedRows();
         if ($upd === false) {
             throw new HttpParamException(lang(Dictionary::ADMIN_AUTHTRAIT_18));
@@ -331,6 +339,10 @@ trait AuthTrait
 
     public function _index($return = false)
     {
+        if ( ! $this->Model instanceof AbstractModel) {
+            throw new HttpParamException(lang(Dictionary::PARAMS_ERROR));
+        }
+
         $page = $this->get[config('fetchSetting.pageField')] ?? 1;          // 当前页码
         $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
 
@@ -553,23 +565,23 @@ trait AuthTrait
 
         // 特意让$filter拥有以下这几个key的成员，值至少为[]
         // 这样外围有需要可直接写 $filter['XXX'] && ....，而不需要写isset($filter['XXX']) && $filter['XXX'] && ....
-        foreach ([... $extColName, 'status', 'dft'] as $col) {
-            $filter[$col] = isset($filter[$col]) && $filter[$col] !== '' ? explode(',', ($filter[$col])) : [];
+        foreach ([... $extColName, 'status'] as $col) {
+            $filter[$col] = (isset($filter[$col]) && $filter[$col] !== '') ? explode(',', ($filter[$col])) : [];
         }
 
         // 非超级管理员只允许有权限的
         if ( ! $this->isSuper()) {
-            foreach ($extColName as $col) {
-                $my = $this->operinfo['extension'][$col] ?? [];
-                // 故意造一个不存在的值
-                $my = $my ?: [-1];
-                $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]) : $my;
-            }
-        }
 
-        // ads为 1 的人 不限制广告位,
-        if ($filter['adid'] === [-1] && ($this->operinfo['extension']['ads'] ?? 0) == 1) {
-            $filter['adid'] = [];
+            foreach ($extColName as $col) {
+                // 是否需要校验相关权限
+                $isChk = ! empty($this->operinfo['extension']['chk_' . $col]);
+                if ($isChk) {
+                    $my = $this->operinfo['extension'][$col] ?? [];
+                    // 故意造一个不存在的值
+                    $my = $my ?: [-1];
+                    $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]) : $my;
+                }
+            }
         }
 
         // 地区
