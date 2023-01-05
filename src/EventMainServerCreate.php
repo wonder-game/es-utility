@@ -323,6 +323,7 @@ class EventMainServerCreate extends SplBean
                 // mysql连接池
                 foreach ($mysql as $dName => $dVal)
                 {
+                    $info['mysql_pool'][$dName] = [];
                     // status返回类型bug，遍历取当前进程
                     $dValues = DbManager::getInstance()->getConnection($dName)->__getClientPool()->status();
                     foreach ($dValues as $value) {
@@ -334,6 +335,7 @@ class EventMainServerCreate extends SplBean
                 // redis连接池
                 foreach ($redis as $rName => $rVal)
                 {
+                    $info['redis_pool'][$rName] = [];
                     $rValues = RedisPool::getInstance()->getPool($rName)->status();
                     foreach ($rValues as $value) {
                         if ($value['pid'] === $pid) {
