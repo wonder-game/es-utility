@@ -173,6 +173,12 @@ trait BaseControllerTrait
         return $this->isMethod('POST');
     }
 
+    // 兼容多种客户端
+    protected function isHttpAjax()
+    {
+        return $this->request()->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+    }
+
     protected function getStaticClassName()
     {
         $array = explode('\\', static::class);

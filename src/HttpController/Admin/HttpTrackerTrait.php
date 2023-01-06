@@ -21,9 +21,8 @@ trait HttpTrackerTrait
     protected function __search()
 	{
 		if (empty($this->get['where'])) {
-			// 默认最近14天
 			$tomorrow = strtotime('tomorrow');
-			$begintime = $tomorrow - (14 * 86400);
+			$begintime = $tomorrow - (2 * 86400);
 			$endtime = $tomorrow - 1;
 			$this->Model->where('instime', [$begintime, $endtime], 'BETWEEN');
 		} else {

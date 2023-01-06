@@ -4,6 +4,7 @@ namespace WonderGame\EsUtility\Consumer;
 
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
+use WonderGame\EsUtility\EventMainServerCreate;
 
 trait BaseTrait
 {
@@ -44,6 +45,10 @@ trait BaseTrait
     public function run($arg)
     {
         $this->args = $this->getArg();
+
+        if (config('PROCESS_INFO.isopen')) {
+            EventMainServerCreate::listenProcessInfo();
+        }
 
         $this->addTick($this->args['tick'] ?? 1000, function () {
 
