@@ -202,7 +202,12 @@ class XlsWriter
 			unset($data[$key]);
 		}
 
-		$fileObject = $this->excel->constMemory($file, null, false);
+        // 新版本的constMemory增加了第三个参数用来兼容WPS，在这之前，如果传递3个参数会报错
+        $Ref = new \ReflectionClass(get_class($this->excel));
+        $RefMethod = $Ref->getMethod('constMemory');
+        $cmy = count($RefMethod->getParameters()) < 3 ? [$file] : [$file, null, false];
+        $fileObject = $this->excel->constMemory(...$cmy);
+
 		$fileHandle = $fileObject->getHandle();
 		$format = new Format($fileHandle);
 		// 默认加粗，其他样式参考Format
