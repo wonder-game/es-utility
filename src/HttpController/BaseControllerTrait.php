@@ -176,7 +176,7 @@ trait BaseControllerTrait
     // 兼容多种客户端
     protected function isHttpAjax()
     {
-        return $this->request()->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
+        return $this->request()->getHeaderLine('x-requested-with') === 'XMLHttpRequest';
     }
 
     protected function getStaticClassName()
