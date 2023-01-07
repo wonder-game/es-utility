@@ -109,9 +109,9 @@ trait BaseControllerTrait
         return $this->writeJson(Code::CODE_OK, $result, $msg);
     }
 
-    protected function error(int $code, $msg = null)
+    protected function error(int $code, $msg = null, $result = [])
     {
-        $this->writeJson($code, [], $msg);
+        $this->writeJson($code, $result, $msg);
         return false;
     }
 
