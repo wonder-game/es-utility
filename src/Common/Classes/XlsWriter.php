@@ -22,15 +22,15 @@ class XlsWriter
 	const TYPE_STRING = Excel::TYPE_STRING;
 	const TYPE_DOUBLE = Excel::TYPE_DOUBLE;
 	const TYPE_TIMESTAMP = Excel::TYPE_TIMESTAMP;
-	
+
 	protected $excel = null;
-	
+
 	protected $offset = 0;
-	
+
 	protected $setType = [];
-	
+
 	protected $config = [];
-	
+
 	public function __construct($path = '')
 	{
 		if (empty($path)) {
@@ -41,16 +41,16 @@ class XlsWriter
 			mkdir($path, 0777, true);
 //            throw new \Exception('没有这个目录：' . $path);
 		}
-		
+
 		$this->setConfig(['path' => $path]);
 		$this->excel = new Excel($this->getConfig());
 	}
-	
+
 	public function setConfig($config = [])
 	{
 		$this->config = array_merge_multi($this->config, $config);
 	}
-	
+
 	public function getConfig($name = null)
 	{
 		if ( ! is_null($name)) {
@@ -58,7 +58,7 @@ class XlsWriter
 		}
 		return $this->config;
 	}
-	
+
 	/**
 	 * 设置读取参数
 	 * @param int $offset 偏移量，传1会丢弃第一行，传2会丢弃第一行和第二行 ...
@@ -71,7 +71,7 @@ class XlsWriter
 		$this->setType = $setType;
 		return $this;
 	}
-	
+
 	/**
 	 * 导入，游标模式
 	 * @param $file
@@ -80,7 +80,7 @@ class XlsWriter
 	public function readFileByCursor($file, callable $callback)
 	{
 		$sheetList = $this->excel->openFile($file)->sheetList();
-		
+
 		foreach ($sheetList as $sheetName) {
 			$sheet = $this->excel->openSheet($sheetName);
 			if ($this->offset > 0) {
@@ -92,7 +92,7 @@ class XlsWriter
 			$sheet->nextCellCallback($callback);
 		}
 	}
-	
+
 	/**
 	 * 导入，全量模式
 	 * @param $file
@@ -100,7 +100,7 @@ class XlsWriter
 	public function readFile($file)
 	{
 		$sheetList = $this->excel->openFile($file)->sheetList();
-		
+
 		$result = [];
 		foreach ($sheetList as $sheetName) {
 			$sheet = $this->excel->openSheet($sheetName);
@@ -114,10 +114,10 @@ class XlsWriter
 			$result = array_merge($result, $sheetData);
 			unset($sheetData, $sheet);
 		}
-		
+
 		return $result;
 	}
-	
+
 	/**
 	 * 导出，全量模式
 	 * @param $file
@@ -132,7 +132,7 @@ class XlsWriter
 		}
 		$object->data($data)->output();
 	}
-	
+
 	/**
 	 * @param string $file
 	 * @param array $header ['uid' => '用户id', 'username' => '用户名', 'itime' => '时间']
@@ -149,15 +149,15 @@ class XlsWriter
 		if (substr($file, -5) !== $suffix) {
 			$file .= $suffix;
 		}
-		
+
 		$this->excel->constMemory($file)->header(array_values($header));
-		
+
 		$fileHandle = $this->excel->getHandle();
 		$format = new Format($fileHandle);
 		// 默认加粗，其他样式参考Format
 		$boldStyle = $format->bold()->toResource();
 		$this->excel->setRow('A1', 15, $boldStyle);
-		
+
 		if ($model instanceof AbstractModel) {
 			$model->field(array_keys($header))->chunk(function ($item) use ($header) {
 				/** @var AbstractModel $item */
@@ -174,7 +174,7 @@ class XlsWriter
 		}
 		$this->excel->output();
 	}
-	
+
 	/**
 	 * 导出，固定内存模式
 	 * @param string $file
@@ -187,7 +187,7 @@ class XlsWriter
 		if (substr($file, -5) !== $suffix) {
 			$file .= $suffix;
 		}
-		
+
 		$thKeys = array_keys($header);
 		$thValue = array_values($header);
 		$result = [];
@@ -201,18 +201,23 @@ class XlsWriter
 			$row && $result[] = $row;
 			unset($data[$key]);
 		}
-		
-		$fileObject = $this->excel->constMemory($file);
+
+        // 新版本的constMemory增加了第三个参数用来兼容WPS，在这之前，如果传递3个参数会报错
+        $Ref = new \ReflectionClass(get_class($this->excel));
+        $RefMethod = $Ref->getMethod('constMemory');
+        $cmy = count($RefMethod->getParameters()) < 3 ? [$file] : [$file, null, false];
+        $fileObject = $this->excel->constMemory(...$cmy);
+
 		$fileHandle = $fileObject->getHandle();
 		$format = new Format($fileHandle);
 		// 默认加粗，其他样式参考Format
 		$boldStyle = $format->bold()->toResource();
 		// 给表头设置样式
-		$fileObject->setRow('A1', 10, $boldStyle)
+		$fileObject->setRow('A1', 15, $boldStyle)
 			->header($thValue)
 			->data($result)
 			->output();
 	}
-	
+
 	// ... 增加csv支持
 }
