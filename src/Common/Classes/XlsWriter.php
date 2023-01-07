@@ -202,7 +202,7 @@ class XlsWriter
 			unset($data[$key]);
 		}
 
-		$fileObject = $this->excel->constMemory($file);
+		$fileObject = $this->excel->constMemory($file, null, false);
 		$fileHandle = $fileObject->getHandle();
 		$format = new Format($fileHandle);
 		// 默认加粗，其他样式参考Format
