@@ -18,189 +18,193 @@ use Vtiful\Kernel\Format;
  */
 class XlsWriter
 {
-	const TYPE_INT = Excel::TYPE_INT;
-	const TYPE_STRING = Excel::TYPE_STRING;
-	const TYPE_DOUBLE = Excel::TYPE_DOUBLE;
-	const TYPE_TIMESTAMP = Excel::TYPE_TIMESTAMP;
+    const TYPE_INT = Excel::TYPE_INT;
+    const TYPE_STRING = Excel::TYPE_STRING;
+    const TYPE_DOUBLE = Excel::TYPE_DOUBLE;
+    const TYPE_TIMESTAMP = Excel::TYPE_TIMESTAMP;
 
-	protected $excel = null;
+    protected $excel = null;
 
-	protected $offset = 0;
+    protected $offset = 0;
 
-	protected $setType = [];
+    protected $setType = [];
 
-	protected $config = [];
+    /**
+     * @var array [
+     *          'path' => 文件存放路径
+     *          'thHeight' => 表头行高
+     *      ]
+     */
+    protected $config = [
+        'thHeight' => 15
+    ];
 
-	public function __construct($path = '')
-	{
-		if (empty($path)) {
-			$path = config('export_dir');
-		}
-		$path = rtrim($path, '/') . '/';
-		if ( ! is_dir($path)) {
-			mkdir($path, 0777, true);
+    public function __construct($path = '')
+    {
+        if (empty($path)) {
+            $path = config('export_dir');
+        }
+        $path = rtrim($path, '/') . '/';
+        if ( ! is_dir($path)) {
+            mkdir($path, 0777, true);
 //            throw new \Exception('没有这个目录：' . $path);
-		}
+        }
 
-		$this->setConfig(['path' => $path]);
-		$this->excel = new Excel($this->getConfig());
-	}
+        $this->setConfig(['path' => $path]);
+        $this->excel = new Excel($this->getConfig());
+    }
 
-	public function setConfig($config = [])
-	{
-		$this->config = array_merge_multi($this->config, $config);
-	}
+    public function setConfig($config = [])
+    {
+        $this->config = array_merge_multi($this->config, $config);
+    }
 
-	public function getConfig($name = null)
-	{
-		if ( ! is_null($name)) {
-			return $this->config[$name] ?? null;
-		}
-		return $this->config;
-	}
+    public function getConfig($name = null)
+    {
+        if ( ! is_null($name)) {
+            return $this->config[$name] ?? null;
+        }
+        return $this->config;
+    }
 
-	/**
-	 * 设置读取参数
-	 * @param int $offset 偏移量，传1会丢弃第一行，传2会丢弃第一行和第二行 ...
-	 * @param array $setType 列单元格数据类型，从0开始 [2 => \XlsWriter::TYPE_TIMESTAMP]表示第三列的单元格是时间类型
-	 * @return $this
-	 */
-	public function setReader(int $offset = 0, array $setType = [])
-	{
-		$this->offset = $offset;
-		$this->setType = $setType;
-		return $this;
-	}
+    /**
+     * 设置读取参数
+     * @param int $offset 偏移量，传1会丢弃第一行，传2会丢弃第一行和第二行 ...
+     * @param array $setType 列单元格数据类型，从0开始 [2 => \XlsWriter::TYPE_TIMESTAMP]表示第三列的单元格是时间类型
+     * @return $this
+     */
+    public function setReader(int $offset = 0, array $setType = [])
+    {
+        $this->offset = $offset;
+        $this->setType = $setType;
+        return $this;
+    }
 
-	/**
-	 * 导入，游标模式
-	 * @param $file
-	 * @param callable $callback function(int $row, int $cell, $data)
-	 */
-	public function readFileByCursor($file, callable $callback)
-	{
-		$sheetList = $this->excel->openFile($file)->sheetList();
+    /**
+     * 导入，游标模式
+     * @param $file
+     * @param callable $callback function(int $row, int $cell, $data)
+     */
+    public function readFileByCursor($file, callable $callback)
+    {
+        $sheetList = $this->excel->openFile($file)->sheetList();
 
-		foreach ($sheetList as $sheetName) {
-			$sheet = $this->excel->openSheet($sheetName);
-			if ($this->offset > 0) {
-				$sheet->setSkipRows($this->offset);
-			}
-			if ($this->setType) {
-				$sheet->setType($this->setType);
-			}
-			$sheet->nextCellCallback($callback);
-		}
-	}
+        foreach ($sheetList as $sheetName) {
+            $sheet = $this->excel->openSheet($sheetName);
+            if ($this->offset > 0) {
+                $sheet->setSkipRows($this->offset);
+            }
+            if ($this->setType) {
+                $sheet->setType($this->setType);
+            }
+            $sheet->nextCellCallback($callback);
+        }
+    }
 
-	/**
-	 * 导入，全量模式
-	 * @param $file
-	 */
-	public function readFile($file)
-	{
-		$sheetList = $this->excel->openFile($file)->sheetList();
+    /**
+     * 导入，全量模式
+     * @param $file
+     */
+    public function readFile($file)
+    {
+        $sheetList = $this->excel->openFile($file)->sheetList();
 
-		$result = [];
-		foreach ($sheetList as $sheetName) {
-			$sheet = $this->excel->openSheet($sheetName);
-			if ($this->offset > 0) {
-				$sheet->setSkipRows($this->offset);
-			}
-			if ($this->setType) {
-				$sheet->setType($this->setType);
-			}
-			$sheetData = $sheet->getSheetData();
-			$result = array_merge($result, $sheetData);
-			unset($sheetData, $sheet);
-		}
+        $result = [];
+        foreach ($sheetList as $sheetName) {
+            $sheet = $this->excel->openSheet($sheetName);
+            if ($this->offset > 0) {
+                $sheet->setSkipRows($this->offset);
+            }
+            if ($this->setType) {
+                $sheet->setType($this->setType);
+            }
+            $sheetData = $sheet->getSheetData();
+            $result = array_merge($result, $sheetData);
+            unset($sheetData, $sheet);
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * 导出，全量模式
-	 * @param $file
-	 * @param array $data
-	 * @param array $header
-	 */
-	public function ouputFile($file, $data = [], $header = [])
-	{
-		$object = $this->excel->fileName($file);
-		if ($header) {
-			$object->header($header);
-		}
-		$object->data($data)->output();
-	}
+    /**
+     * 导出，全量模式
+     * @param $file
+     * @param array $data
+     * @param array $header
+     */
+    public function ouputFile($file, $data = [], $header = [])
+    {
+        $object = $this->excel->fileName($file);
+        if ($header) {
+            $object->header($header);
+        }
+        $object->data($data)->output();
+    }
 
-	/**
-	 * @param string $file
-	 * @param array $header ['uid' => '用户id', 'username' => '用户名', 'itime' => '时间']
-	 * @param AbstractModel|null $model
-	 * @param $chunk
-	 * @param callable|null $call
-	 * @return void
-	 * @throws \EasySwoole\ORM\Exception\Exception
-	 * @throws \Throwable
-	 */
-	public function ouputFileByOrm(string $file, array $header, AbstractModel $model = null, $chunk = 1000, callable $call = null)
-	{
-		$suffix = '.xlsx';
-		if (substr($file, -5) !== $suffix) {
-			$file .= $suffix;
-		}
+    /**
+     * @param string $file
+     * @param array $header ['uid' => '用户id', 'username' => '用户名', 'itime' => '时间']
+     * @param AbstractModel|null $model
+     * @param $chunk
+     * @param callable|null $call
+     * @return void
+     * @throws \EasySwoole\ORM\Exception\Exception
+     * @throws \Throwable
+     */
+    public function ouputFileByOrm(string $file, array $header, AbstractModel $model = null, $chunk = 1000, callable $call = null)
+    {
+        $suffix = '.xlsx';
+        if (substr($file, -5) !== $suffix) {
+            $file .= $suffix;
+        }
 
-		$this->excel->constMemory($file)->header(array_values($header));
+        $this->excel->constMemory($file)->header(array_values($header));
 
-		$fileHandle = $this->excel->getHandle();
-		$format = new Format($fileHandle);
-		// 默认加粗，其他样式参考Format
-		$boldStyle = $format->bold()->toResource();
-		$this->excel->setRow('A1', 15, $boldStyle);
+        $this->setThStyle($this->excel);
 
-		if ($model instanceof AbstractModel) {
-			$model->field(array_keys($header))->chunk(function ($item) use ($header) {
-				/** @var AbstractModel $item */
-				$toArray = $item->toArray();
-				$row = [];
-				foreach ($header as $key => $value) {
-					// 按header顺序填充
-					$row[] = $toArray[$key] ?? '';
-				}
-				$this->excel->data([$row]);
-			}, $chunk);
-		} elseif (is_callable($call)) {
-			$call($this->excel);
-		}
-		$this->excel->output();
-	}
+        if ($model instanceof AbstractModel) {
+            $model->field(array_keys($header))->chunk(function ($item) use ($header) {
+                /** @var AbstractModel $item */
+                $toArray = $item->toArray();
+                $row = [];
+                foreach ($header as $key => $value) {
+                    // 按header顺序填充
+                    $row[] = $toArray[$key] ?? '';
+                }
+                $this->excel->data([$row]);
+            }, $chunk);
+        } elseif (is_callable($call)) {
+            $call($this->excel);
+        }
+        $this->excel->output();
+    }
 
-	/**
-	 * 导出，固定内存模式
-	 * @param string $file
-	 * @param array $header
-	 * @param array $data
-	 */
-	public function ouputFileByCursor(string $file, array $header, array $data)
-	{
-		$suffix = '.xlsx';
-		if (substr($file, -5) !== $suffix) {
-			$file .= $suffix;
-		}
+    /**
+     * 导出，固定内存模式
+     * @param string $file
+     * @param array $header
+     * @param array $data
+     */
+    public function ouputFileByCursor(string $file, array $header, array $data)
+    {
+        $suffix = '.xlsx';
+        if (substr($file, -5) !== $suffix) {
+            $file .= $suffix;
+        }
 
-		$thKeys = array_keys($header);
-		$thValue = array_values($header);
-		$result = [];
-		// 过滤掉不在表头的字段
-		foreach ($data as $key => &$value) {
-			$row = [];
-			// 因为data只能是索引数组，所以这里按顺序十分重要
-			foreach ($thKeys as $col) {
-				$row[] = $value[$col] ?? '';
-			}
-			$row && $result[] = $row;
-			unset($data[$key]);
-		}
+        $thKeys = array_keys($header);
+        $thValue = array_values($header);
+        $result = [];
+        // 过滤掉不在表头的字段
+        foreach ($data as $key => &$value) {
+            $row = [];
+            // 因为data只能是索引数组，所以这里按顺序十分重要
+            foreach ($thKeys as $col) {
+                $row[] = $value[$col] ?? '';
+            }
+            $row && $result[] = $row;
+            unset($data[$key]);
+        }
 
         // 新版本的constMemory增加了第三个参数用来兼容WPS，在这之前，如果传递3个参数会报错
         $Ref = new \ReflectionClass(get_class($this->excel));
@@ -208,16 +212,11 @@ class XlsWriter
         $cmy = count($RefMethod->getParameters()) < 3 ? [$file] : [$file, null, false];
         $fileObject = $this->excel->constMemory(...$cmy);
 
-		$fileHandle = $fileObject->getHandle();
-		$format = new Format($fileHandle);
-		// 默认加粗，其他样式参考Format
-		$boldStyle = $format->bold()->toResource();
-		// 给表头设置样式
-		$fileObject->setRow('A1', 10, $boldStyle)
-			->header($thValue)
-			->data($result)
-			->output();
-	}
+        $this->setThStyle($fileObject)
+            ->header($thValue)
+            ->data($result)
+            ->output();
+    }
 
     /**
      * 创建excel模板
@@ -226,7 +225,7 @@ class XlsWriter
      * @param float $rowHeight 行高
      * @return string
      */
-    public function xlsxTemplate(array $header = [], $colWidth = 20, $rowHeight = 15)
+    public function xlsxTemplate(array $header = [], $colWidth = 20)
     {
         $fileName = sprintf('export-%d-%s.xlsx', date(DateUtils::YmdHis), substr(uniqid(), -5));
         $header = array_values($header);
@@ -236,14 +235,35 @@ class XlsWriter
         $ascii = ord('A');
         $chr = chr($ascii + $len);
 
-        $handle = $this->excel->fileName($fileName)->getHandle();
+        $this->excel->fileName($fileName);
 
-        $this->excel->setRow('A1', $rowHeight, (new Format($handle))->bold()->toResource())
+        $this->setThStyle($this->excel)
             ->setColumn("A1:{$chr}1", $colWidth)
             ->header($header)
             ->output();
         return $this->getConfig('path') . $fileName;
     }
 
-	// ... 增加csv支持
+    /**
+     * 设置表头样式
+     * @param Excel $excel
+     * @return Excel
+     */
+    protected function setThStyle(Excel $excel)
+    {
+        $fileHandle = $excel->getHandle();
+        $format = new Format($fileHandle);
+
+        $formatHandle = $format
+            // 加粗
+            ->bold()
+            // 水平居中 + 垂直居中
+            ->align(Format::FORMAT_ALIGN_CENTER, Format::FORMAT_ALIGN_VERTICAL_CENTER)
+            ->toResource();
+
+        $excel->setRow('A1', $this->config['thHeight'], $formatHandle);
+        return $excel;
+    }
+
+    // ... 增加csv支持
 }
