@@ -780,3 +780,16 @@ if ( ! function_exists('json_decode_ext'))
         return $data;
     }
 }
+
+if ( ! function_exists('get_google_service_account')) {
+
+    /**
+     * Google服务账号文件路径
+     * @param $pkgbnd
+     * @return string
+     */
+    function get_google_service_account($pkgbnd)
+    {
+        return EASYSWOOLE_ROOT . "/../utility/google-service-account_$pkgbnd.json";
+    }
+}
