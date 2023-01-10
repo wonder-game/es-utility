@@ -29,60 +29,51 @@ trait HttpTrackerTrait
 			$this->Model->where($this->get['where']);
 		}
 		return null;
-
-		// 已废弃
-		return function (QueryBuilder $builder) {
-			$filter = $this->filter();
-			$builder->where('instime', [$filter['begintime'], $filter['endtime']], 'between');
-			if (isset($filter['repeated']) && $filter['repeated'] !== '') {
-				$builder->where('repeated', $filter['repeated']);
-			}
-
-			// envkey: {"one":"point_name","two":"point_id"}
-			// envvalue: {"one":"123","two":"4556"}
-			foreach (['envkey', 'envvalue'] as $col) {
-				if ( ! empty($filter[$col])) {
-					$filter[$col] = json_decode($filter[$col], true);
-				}
-			}
-
-			if ( ! empty($filter['envkey'])) {
-				foreach ($filter['envkey'] as $key => $value) {
-					if ($like = $filter['envvalue'][$key]) {
-						$calc = true;
-						// 支持逻辑运算转换为like
-						$symbol = ['&&' => ' AND ', '||' => ' OR '];
-						foreach ($symbol as $sym => $join) {
-							if (strpos($like, $sym) !== false) {
-								$tmp = [];
-								$arr = explode($sym, $like);
-								foreach ($arr as $item) {
-									$item && $tmp[] = "$value LIKE '%{$item}%'";
-								}
-								if ($tmp) {
-									$tmp = implode($join, $tmp);
-									$builder->where("($tmp)");
-									$calc = false;
-								}
-							}
-						}
-						if ($calc) {
-							$builder->where($value, "%{$like}%", 'LIKE');
-						}
-					}
-				}
-			}
-
-			$runtime = $filter['runtime'] ?? 0;
-			if ($runtime > 0) {
-				$builder->where('runtime', $runtime, '>=');
-			}
-			/*
-			 * 生成的SQL分析示例
-			 * explain partitions SELECT SQL_CALC_FOUND_ROWS * FROM `http_tracker` WHERE  `instime` between 1646197200 AND 1647493199  AND `point_name` LIKE '%123%'  AND (point_id LIKE '%4556%' AND point_id LIKE '%789%') ORDER BY instime DESC  LIMIT 0, 100\G
-			 * */
-		};
 	}
+
+    /**
+     * 生成父子结构。为啥不是无限树形结构? 树形结构需要多查询一次，慢，并且只有上了RPC才用得上
+     * @param $items
+     * @param $total
+     * @return mixed
+     */
+    protected function __after_index($items, $total)
+    {
+        $parentId = [];
+        /** @var AbstractModel $item */
+        foreach ($items as $item) {
+            $parentId[] = $item->point_id;
+        }
+
+        if ($parentId) {
+            $childMap = $childKey = [];
+            $childs = $this->Model->where('parent_id', $parentId, 'IN')->all();
+            /** @var AbstractModel $item */
+            foreach ($childs as $item) {
+                $childKey[] = $item['point_id'];
+                $childMap[$item['parent_id']][] = $item->toArray();
+            }
+
+            $result = [];
+            /** @var AbstractModel $item */
+            foreach ($items as $item) {
+
+                // 有爸爸
+                if (in_array($item['point_id'], $childKey)) {
+                    continue;
+                }
+
+                // 有儿子
+                if ($childMap[$item['point_id']]) {
+                    $item['children'] = $childMap[$item['point_id']];
+                }
+
+                $result[] = $item;
+            }
+        }
+
+        return parent::__after_index($result, $total);
+    }
 
 	// 单条复发
     public function _repeat($return = false)
