@@ -51,6 +51,15 @@ trait HttpTrackerTrait
 		return array_to_std($arr);
 	}
 
+    /**
+     * 一对多关联
+     * @return mixed
+     */
+    public function children()
+    {
+        return $this->hasMany(static::class, null, 'point_id', 'parent_id');
+    }
+
 	/**
 	 * @return Response|null
 	 * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
@@ -58,7 +67,6 @@ trait HttpTrackerTrait
 	public function repeatOne(): ?Response
 	{
 		$data = $this->toRawArray();
-//        var_dump($data['point_id'] . '++++++++++++++ repeatOne ');
 		$url = $data['url'];
 		$request = json_decode($data['request'], true);
 

@@ -31,47 +31,39 @@ trait HttpTrackerTrait
 		return null;
 	}
 
+    protected function __with($column = 'relation')
+    {
+        $this->Model->with(['children']);
+        return $this;
+    }
+
     /**
-     * 生成父子结构。为啥不是无限树形结构? 树形结构需要多查询一次，慢，并且只有上了RPC才用得上
      * @param $items
      * @param $total
      * @return mixed
      */
     protected function __after_index($items, $total)
     {
-        $parentId = [];
+        $relationes = $childKey = $result = [];
         /** @var AbstractModel $item */
         foreach ($items as $item) {
-            $parentId[] = $item->point_id;
-        }
+            $array = $item->toArray(false, false);
 
-        if ($parentId) {
-            $childMap = $childKey = [];
-            $childs = $this->Model->where('parent_id', $parentId, 'IN')->all();
-            /** @var AbstractModel $item */
-            foreach ($childs as $item) {
-                $childKey[] = $item['point_id'];
-                $childMap[$item['parent_id']][] = $item->toArray();
+            // 成为子元素后，从第一级删掉
+            if (is_array($array['children'])) {
+                $childKey = array_merge($childKey, array_column($array['children'], 'point_id'));
             }
 
-            $result = [];
-            /** @var AbstractModel $item */
-            foreach ($items as $item) {
-
-                // 有爸爸
-                if (in_array($item['point_id'], $childKey)) {
-                    continue;
-                }
-
-                // 有儿子
-                if ($childMap[$item['point_id']]) {
-                    $item['children'] = $childMap[$item['point_id']];
-                }
-
-                $result[] = $item;
-            }
+            $relationes[] = $array;
         }
 
+        unset($items);
+        // 第一次foreach时，$childKey还不全
+        foreach ($relationes as $relatione) {
+            if ( ! in_array($relatione['point_id'], $childKey)) {
+                $result[] = $relatione;
+            }
+        }
         return parent::__after_index($result, $total);
     }
 
