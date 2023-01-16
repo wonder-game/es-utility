@@ -21,9 +21,8 @@ trait HttpTrackerTrait
     protected function __search()
 	{
 		if (empty($this->get['where'])) {
-			$tomorrow = strtotime('tomorrow');
-			$begintime = $tomorrow - (2 * 86400);
-			$endtime = $tomorrow - 1;
+            $begintime = strtotime('today');
+			$endtime = $begintime + 86399;
 			$this->Model->where('instime', [$begintime, $endtime], 'BETWEEN');
 		} else {
 			$this->Model->where($this->get['where']);
@@ -64,7 +63,9 @@ trait HttpTrackerTrait
                 $result[] = $relatione;
             }
         }
-        return parent::__after_index($result, $total);
+        return parent::__after_index($result, $total) + [
+                'sql' => str_replace('SQL_CALC_FOUND_ROWS', '', $this->Model->lastQuery()->getLastQuery())
+            ];
     }
 
 	// 单条复发
