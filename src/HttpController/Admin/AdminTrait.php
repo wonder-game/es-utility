@@ -2,6 +2,7 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
+use EasySwoole\ORM\AbstractModel;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
@@ -46,7 +47,8 @@ trait AdminTrait
 
         // 客户端进入页,应存id
         if ( ! empty($this->operinfo['extension']['homePath'])) {
-            $Menu = $this->_menuModel();
+            /** @var AbstractModel $Menu */
+            $Menu = model_admin('Menu');
             $homePage = $Menu->getHomePage($this->operinfo['extension']['homePath']);
         }
         $avatar = $this->operinfo['avatar'] ?? '';

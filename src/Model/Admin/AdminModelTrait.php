@@ -28,24 +28,14 @@ trait AdminModelTrait
 		return false;
 	}
 
-	protected function getExtensionAttr($extension = '', $alldata = [])
-	{
-		$array = is_array($extension) ? $extension : json_decode($extension, true);
+    protected function getExtensionAttr($extension = '', $alldata = [])
+    {
+        $array = is_array($extension) ? $extension : json_decode($extension, true);
 
-        // package、gameid、adid固定返回数组
-        foreach (['gameid', 'pkgbnd', 'adid'] as $col) {
-            $colValue = $array[$col] ?? [];
-            is_scalar($colValue) && $colValue = explode(',', $colValue);
-            $array[$col] = $colValue;
-        }
-        // gameid转整型
-        $array['gameid'] = array_map('intval', $array['gameid']);
+        $array['gid'] = isset($array['gid']) && $array['gid'] !== '' ? intval($array['gid']) : '';
 
-		// 强类型限制, 游戏id有0
-		$array['gid'] = ! empty($array['gid']) ? intval($array['gid']) : '';
-
-		return $array;
-	}
+        return $array;
+    }
 
 	/**
 	 * 关联Role分组模型
@@ -56,4 +46,12 @@ trait AdminModelTrait
 	{
 		return $this->hasOne(find_model('Admin\Role'), null, 'rid', 'id');
 	}
+
+    public function getAdminByRid($rid, $where = [])
+    {
+        if ($where) {
+            $this->where($where);
+        }
+        return $this->field(['id', 'username', 'realname', 'avatar'])->where('rid', $rid)->where('status', 1)->order('id')->all();
+    }
 }
