@@ -76,14 +76,14 @@ trait MenuModelTrait
 		$where = ['permission' => ['', '<>']];
 
 		if ( ! is_super($rid)) {
-			/** @var Role $Role */
+			/** @var AbstractModel $Role */
 			$Role = model_admin('Role');
 			$menuIds = $Role->where('id', $rid)->val('menu');
 			if (empty($menuIds)) {
 				return [];
 			}
 
-			$where['id'] = [explode(',', $menuIds), 'in'];
+			$where['id'] = [$menuIds, 'in'];
 		}
 		$permission = $this->where($where)->column('permission');
 		return is_array($permission) ? $permission : [];

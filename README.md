@@ -115,6 +115,7 @@ trait有哪些坑
 - [x] Crontab支持database、file、http等方式获取
 - [x] es-orm-cache 组件封装，替换原有的cacheinfo系列方法
 - [ ] WebSocket实现导出全部，永不超时，进度实时可见，随时取消
+- [ ] 定义模型Class映射
 
 ### 其他
 

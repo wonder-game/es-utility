@@ -27,12 +27,12 @@ trait AuthTrait
 
     protected $uploadKey = 'file';
 
-    /////////////////////////////////////////////////////////////////////////
-    /// 权限认证相关属性                                                    ///
-    ///     1. 子类无需担心重写覆盖，校验时会反射获取父类属性值，并做合并操作     ///
-    ///     2. 对于特殊场景也可直接重写 setPolicy 方法操作Policy              ///
-    ///     3. 大小写不敏感                                                 ///
-    /////////////////////////////////////////////////////////////////////////
+    /**********************************************************************
+    * 权限认证相关属性                                                      *
+    *     1. 子类无需担心重写覆盖，校验时会反射获取父类属性值，并做合并操作       *
+    *     2. 对于特殊场景也可直接重写 setPolicy 方法操作Policy                *
+    *     3. 大小写不敏感                                                   *
+    ***********************************************************************/
 
     // 别名认证
     protected array $_authAlias = ['change' => 'edit', 'export' => 'index'];
@@ -67,11 +67,6 @@ trait AuthTrait
     protected function _verifyToken($authorization = '')
     {
         return LamJwt::verifyToken($authorization, config('auth.jwtkey'));
-    }
-
-    protected function _menuModel()
-    {
-        return model_admin('Menu');
     }
 
     protected function setAuthTraitProptected()
@@ -146,8 +141,8 @@ trait AuthTrait
             return false;
         }
 
-        /** @var \App\Model\Admin\Menu $Menu */
-        $Menu = $this->_menuModel();
+        /** @var AbstractModel $Menu */
+        $Menu = model_admin('Menu');
         $priv = $Menu->where('id', $userMenu, 'IN')->where('permission', '', '<>')->where('status', 1)->column('permission');
         if (empty($priv)) {
             return true;
@@ -210,8 +205,7 @@ trait AuthTrait
         if ($this->isSuper()) {
             return null;
         }
-        $userMenu = explode(',', $this->operinfo['role']['menu'] ?? '');
-        return is_array($userMenu) ? $userMenu : [];
+        return $this->operinfo['role']['menu'] ?? [];
     }
 
     protected function ifRunBeforeAction()
@@ -574,9 +568,9 @@ trait AuthTrait
 
             foreach ($extColName as $col) {
                 // 是否需要校验相关权限
-                $isChk = ! empty($this->operinfo['extension']['chk_' . $col]);
+                $isChk = ! empty($this->operinfo['role']['chk_' . $col]);
                 if ($isChk) {
-                    $my = $this->operinfo['extension'][$col] ?? [];
+                    $my = $this->operinfo['role'][$col] ?? [];
                     // 故意造一个不存在的值
                     $my = $my ?: [-1];
                     $filter[$col] = $filter[$col] ? array_intersect($my, $filter[$col]) : $my;
