@@ -61,13 +61,6 @@ trait RoleModelTrait
 
     protected function getMenuAttr($value, $data)
     {
-        // 超级管理员，全选
-        if (is_super($data['id'])) {
-            /** @var AbstractModel $Menu */
-            $Menu = model_admin('Menu');
-            return $Menu->column('id');
-        }
-
         if (is_string($value)) {
             $value = $value === '' ? [] : explode(',', $value);
         }

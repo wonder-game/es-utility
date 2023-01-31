@@ -134,16 +134,19 @@ trait AuthTrait
         $currentClassName = strtolower($this->getStaticClassName());
         $fullPath = "/$currentClassName/$currentAction";
 
-        // 设置用户权限
-        $userMenu = $this->getUserMenus();
-        if (empty($userMenu)) {
-            $this->error(Code::CODE_FORBIDDEN);
-            return false;
-        }
-
         /** @var AbstractModel $Menu */
         $Menu = model_admin('Menu');
-        $priv = $Menu->where('id', $userMenu, 'IN')->where('permission', '', '<>')->where('status', 1)->column('permission');
+        // 设置用户权限
+        $userMenu = $this->getUserMenus();
+        if ( ! is_null($userMenu)) {
+            if (empty($userMenu)) {
+                $this->error(Code::CODE_FORBIDDEN);
+                return false;
+            }
+            $Menu->where('id', $userMenu, 'IN');
+        }
+
+        $priv = $Menu->where('permission', '', '<>')->where('status', 1)->column('permission');
         if (empty($priv)) {
             return true;
         }
@@ -202,7 +205,7 @@ trait AuthTrait
 
     protected function getUserMenus()
     {
-        if ($this->isSuper()) {
+        if (empty($this->operinfo['role']['chk_menu'])) {
             return null;
         }
         return $this->operinfo['role']['menu'] ?? [];
