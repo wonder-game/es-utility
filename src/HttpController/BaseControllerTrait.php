@@ -218,15 +218,7 @@ trait BaseControllerTrait
         $publics = $this->getAllowMethodReflections();
 
         if (isset($publics[$actionName])) {
-            try {
-
-                $this->$actionName();
-
-            } catch (HttpParamException $e) {
-                $this->error(Code::ERROR_OTHER, $e->getMessage());
-            } catch (\Exception $e) {
-                $this->error(Code::CODE_INTERNAL_SERVER_ERROR, $e->getMessage());
-            }
+            $this->$actionName();
         } else {
             parent::actionNotFound($action);
         }
