@@ -17,6 +17,7 @@ use WonderGame\EsNotify\WeChat\Message\Notice;
 use WonderGame\EsNotify\WeChat\Message\Warning;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
+use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
 
 
 if ( ! function_exists('is_super')) {
@@ -792,4 +793,28 @@ if ( ! function_exists('get_google_service_account')) {
     {
         return EASYSWOOLE_ROOT . "/../utility/google-service-account_$pkgbnd.json";
     }
+}
+
+if ( ! function_exists('http_tracker')) {
+    /**
+     * 子链路记录，返回一个结束回调，必须保证结束回调被调用
+     * @param string $pointName 标识名
+     * @param array $data 除自定义参数外，这些key尽量传递完整：ip,method,path,url,GET,POST,JSON,server_name,header
+     * @return Closure
+     */
+    function http_tracker(string $pointName, array $data = [])
+    {
+        $point = HttpTracker::getInstance()->startPoint();
+        $childPoint = false;
+        if ($point) {
+            $childPoint = $point->appendChild($pointName)->setStartArg($data + ['server_name' => config('SERVNAME')]);
+        }
+
+        return function ($data = [], int $httpCode = 200) use ($point, $childPoint) {
+            if ($point && $childPoint) {
+                $childPoint->setEndArg(['httpStatusCode' => $httpCode, 'data' => $data])->end();
+            }
+        };
+    }
+
 }
