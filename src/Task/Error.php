@@ -11,31 +11,40 @@ use EasySwoole\Utility\File;
 class Error implements TaskInterface
 {
 	protected $warp = " \n\n ";
-	
-	protected $data = [];
-	
-	public function __construct($data = [])
+
+    protected $data = [];
+
+    protected $merge = [];
+
+	public function __construct($data = [], $merge = [])
 	{
 		$this->data = $data;
+        $this->merge = $merge;
 	}
-	
+
 	public function run(int $taskId, int $workerIndex)
 	{
 		if ($this->checkTime()) {
 			$title = '程序异常';
 			$servname = config('SERVNAME');
 			$servername = config('SERVER_NAME');
-			
-			$message = implode($this->warp, [
-				'### **' . $title . '**',
-				'- 服务器: ' . $servname,
-				'- 项 目：' . $servername,
-				"- 文 件：{$this->data['file']} 第 {$this->data['line']} 行",
-				"- 详 情：" . $this->data['message'] ?? '',
-				'- 触发方式： ' . $this->data['trigger'] ?? '',
-			]);
+
+            $data = [
+                '### **' . $title . '**',
+                '- 服务器: ' . $servname,
+                '- 项 目：' . $servername,
+                "- 文 件：{$this->data['file']} 第 {$this->data['line']} 行",
+                "- 详 情：" . $this->data['message'] ?? '',
+                '- 触发方式： ' . $this->data['trigger'] ?? '',
+            ];
+
+            foreach ($this->merge as $key => $value) {
+                $data[] = "- " . (is_int($key) ? $value : "$key => $value");
+            }
+
+			$message = implode($this->warp, $data);
 			dingtalk_markdown($title, $message);
-			
+
 			wechat_warning(
 				$this->data['file'],
 				$this->data['line'],
@@ -44,12 +53,12 @@ class Error implements TaskInterface
 			);
 		}
 	}
-	
+
 	public function onException(\Throwable $throwable, int $taskId, int $workerIndex)
 	{
 		trace($throwable->__toString(), 'error');
 	}
-	
+
 	/**
 	 * 同一个文件出错，N分钟内不重复发送
 	 * @param string $file
