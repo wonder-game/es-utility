@@ -2,9 +2,9 @@
 
 namespace WonderGame\EsUtility\HttpController;
 
-use EasySwoole\EasySwoole\Core;
 use EasySwoole\Http\AbstractInterface\Controller;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
+use WonderGame\EsUtility\Common\Exception\WarnException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\Languages\Dictionary;
 
@@ -96,7 +96,19 @@ trait BaseControllerTrait
     {
         if ($throwable instanceof HttpParamException) {
             $message = $throwable->getMessage();
-        } else {
+        }
+        elseif ($throwable instanceof WarnException) {
+            $message = $throwable->getMessage();
+            $task = \EasySwoole\EasySwoole\Task\TaskManager::getInstance();
+            $task->async(new \WonderGame\EsUtility\Task\Error(
+                    [
+                        'message' => $message,
+                        'file' => $throwable->getFile(),
+                        'line' => $throwable->getLine(),
+                    ], $throwable->getData())
+            );
+        }
+        else {
             $message = ! is_env('produce') ? $throwable->getMessage() : lang(Dictionary::BASECONTROLLERTRAIT_1);
             // 交给异常处理器
             \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);

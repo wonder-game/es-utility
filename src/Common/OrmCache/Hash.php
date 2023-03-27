@@ -46,7 +46,7 @@ trait Hash
         if ($this->hashWhere) {
             $this->where($this->hashWhere);
         }
-        $data = $this->indexBy($this->hashFieldKey);
+        $data = $this->indexBy($this->hashFieldKey) ?: [];
         return array_map(function ($data) { return $this->_rowEncode($data); }, $data);
     }
 
@@ -55,7 +55,7 @@ trait Hash
         if ( ! $redis->exists($key)) {
             // set全部
             $all = $this->_getCacheData();
-            $redis->hMSet($key, $all);
+            $all && $redis->hMSet($key, $all);
         }
     }
 
@@ -82,7 +82,7 @@ trait Hash
 
             $this->_chkHashKey($redis, $key);
 
-            $data = $redis->hGetAll($key);
+            $data = $redis->hGetAll($key) ?: [];
 
             return array_map(function ($data) { return $this->_rowDecode($data); }, $data);
         }, $this->redisPoolName);
