@@ -62,6 +62,27 @@ class Mysqli extends MysqliClient
         return $this->tableStruct[$tableName];
     }
 
+    /**
+     * 获取数据表主键
+     * @param $tableName
+     * @return array
+     * @throws \EasySwoole\Mysqli\Exception\Exception
+     */
+    public function getPrimaryKey($tableName): array
+    {
+        $data = $this->rawQuery("show full columns from {$tableName}");
+
+        $pk = [];
+        // 有可能是复合主键
+        foreach ($data as $value) {
+            if ($value['Key'] === 'PRI') {
+                $pk[] = $value['Field'];
+            }
+        }
+
+        return $pk;
+    }
+
     public function replace($tableName, $data = [], $duplicate = [])
     {
         $columns = array_flip($this->fullColumns($tableName));
