@@ -79,7 +79,7 @@ trait BaseControllerTrait
     protected function _isRsa($input = [], $header = [], $category = 'pay')
     {
         // 则要求JWT要符合规则
-        $data = verify_token($input, $header, 'operid');
+        $data = verify_token($header, 'operid', $input);
 
         // 如果不是rsa加密数据并且非本地开发环境
         if (empty($input['envkeydata']) && ! empty($data['INVERTOKEN']) && ! is_env('dev')) {
