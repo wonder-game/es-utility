@@ -129,10 +129,16 @@ class EventInitialize extends SplBean
         $config = Config::getInstance()->toArray();
         foreach ($arr as $item) {
             if (is_dir($item)) {
-                $fileList = File::scanDirectory($item);
-                foreach ($fileList['files'] as $filePath){
-                    if (file_exists($filePath)) {
-                        $_cfg = include($filePath);
+                // 遍历目录下的文件
+                $scanResult = scandir($item);
+                foreach ($scanResult as $files) {
+                    if ($files == '.' || $files == '..') {
+                        continue;
+                    }
+                    $realPath = "$item/$files";
+                    if (is_file($realPath)) {
+                        // 加载配置
+                        $_cfg = include($realPath);
                         if (is_array($_cfg)) {
                             $config = array_merge_multi($config, $_cfg);
                         }
