@@ -11,6 +11,7 @@ use EasySwoole\I18N\I18N;
 use EasySwoole\ORM\DbManager;
 use EasySwoole\Spl\SplBean;
 use EasySwoole\Trigger\TriggerInterface;
+use EasySwoole\Utility\File;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\ExceptionTrigger;
 use WonderGame\EsUtility\Common\Classes\LamUnit;
@@ -117,13 +118,37 @@ class EventInitialize extends SplBean
      */
     protected function registerConfig()
     {
-        $dirs = $this->configDir;
-        if ( ! is_array($dirs)) {
+        $arr = $this->configDir;
+        if ( ! $arr) {
             return;
         }
-        foreach ($dirs as $dir) {
-            Config::getInstance()->loadDir($dir);
+        if (is_string($arr)) {
+            $arr = [$arr];
         }
+        $fileConfig = [];
+        $config = Config::getInstance()->toArray();
+        foreach ($arr as $item) {
+            if (is_dir($item)) {
+                $fileList = File::scanDirectory($item);
+                foreach ($fileList['files'] as $filePath){
+                    if (file_exists($filePath)) {
+                        $_cfg = include($filePath);
+                        if (is_array($_cfg)) {
+                            $config = array_merge_multi($config, $_cfg);
+                        }
+                    }
+                }
+            } elseif (is_file($item)) {
+                $_cfg = include($item);
+                if (is_array($_cfg)) {
+                    $fileConfig = array_merge_multi($fileConfig, $_cfg);
+                }
+            }
+        }
+        if ($fileConfig) {
+            $config = array_merge_multi($config, $fileConfig);
+        }
+        Config::getInstance()->merge($config);
     }
 
     /**
