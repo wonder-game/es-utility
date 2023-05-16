@@ -31,6 +31,11 @@ trait BaseControllerTrait
      */
     protected $input = [];
 
+    /**
+     * @var mixed rawContent
+     */
+    protected $raw = '';
+
     private $langsConstants = [];
 
     protected $actionNotFoundPrefix = '_';
@@ -58,6 +63,9 @@ trait BaseControllerTrait
         }
         $this->post = is_array($post) ? $post : [];
         $this->input = array_merge($this->get, $this->post);
+
+        //  $this->request()->getSwooleRequest()->rawContent()也可以
+        $this->raw = $this->request()->getBody()->__toString();
     }
 
     protected function setLanguageConstants()
@@ -102,6 +110,19 @@ trait BaseControllerTrait
         return $data;
     }
 
+    protected function getAuthorization()
+    {
+        $tokenKey = config('TOKEN_KEY');
+        if ( ! $this->request()->hasHeader($tokenKey)) {
+            return false;
+        }
+
+        $authorization = $this->request()->getHeader($tokenKey);
+        if (is_array($authorization)) {
+            $authorization = current($authorization);
+        }
+        return $authorization;
+    }
 
     protected function onException(\Throwable $throwable): void
     {

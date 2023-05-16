@@ -9,8 +9,8 @@ class WarnException extends \Exception
     protected $data = [];
 
     /**
-     * @param $message 用户可见
-     * @param $code
+     * @param string $message 用户可见
+     * @param int $code
      * @param array $data
      * @param Throwable|null $previous
      */
