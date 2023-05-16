@@ -122,29 +122,31 @@ class EventInitialize extends SplBean
             return;
         }
         settype($arr, 'array');
-        $fileConfig = [];
+
+        // env config 优先级最高
         $config = Config::getInstance()->toArray();
+
+        // 越靠前优先级越高
         foreach ($arr as $item) {
-            if (is_dir($item)) {
-                // 遍历目录下的文件
-                $scanResult = scandir($item);
-                foreach ($scanResult as $files) {
-                    if (in_array($files, ['.', '..'])) {
-                        continue;
-                    }
-                    // 加载配置
-                    is_file($realPath = "$item/$files") && is_array($_cfg = include($realPath)) && ($config = array_merge_multi($config, $_cfg));
+            // 只允许目录
+            if ( ! is_dir($item)) {
+                continue;
+            }
+
+            // 遍历,同级配置文件不区分优先级，请自行保证同级配置安全
+            $scanResult = scandir($item);
+            foreach ($scanResult as $files) {
+                if (in_array($files, ['.', '..'])) {
+                    continue;
                 }
-            } elseif (is_file($item)) {
-                is_array($_cfg = include($item)) && ($fileConfig = array_merge_multi($fileConfig, $_cfg));
+                $realPath = rtrim($item, '/') . '/' . $files;
+                if (is_file($realPath) && ($_cfg = include_once($realPath)) && is_array($_cfg)) {
+                    $config = array_merge_multi($_cfg, $config);
+                }
             }
         }
 
-        // 文件配置优先级高于目录配置
-        if ($fileConfig) {
-            $config = array_merge_multi($config, $fileConfig);
-        }
-        Config::getInstance()->merge($config);
+        Config::getInstance()->load($config);
     }
 
     /**
