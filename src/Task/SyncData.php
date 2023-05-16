@@ -88,7 +88,7 @@ class SyncData implements TaskInterface
         // 其它加入extension
         foreach ($orgs as $k => $v)
         {
-            if (! in_array($k, $columns + ['ip', 'envkeydata', 'instime', 'updtime']))
+            if (! in_array($k, $columns + ['ip', config('RSA.key'), 'instime', 'updtime']))
             {
                 $data['extension'][$k] = $v;
             }
