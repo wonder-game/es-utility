@@ -130,14 +130,9 @@ class EventMainServerCreate extends SplBean
      */
     protected function registerCrontab()
     {
-        if (is_array($this->crontabRunEnv) && class_exists($this->crontabClass)) {
-            foreach ($this->crontabRunEnv as $env) {
-                if (is_env($env)) {
-                    $Crontab = \EasySwoole\EasySwoole\Crontab\Crontab::getInstance();
-                    $Crontab->addTask($this->crontabClass);
-                    break;
-                }
-            }
+        if (is_array($this->crontabRunEnv) && class_exists($this->crontabClass) && is_env($this->crontabRunEnv)) {
+            $Crontab = \EasySwoole\EasySwoole\Crontab\Crontab::getInstance();
+            $Crontab->addTask($this->crontabClass);
         }
     }
 

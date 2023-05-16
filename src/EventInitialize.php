@@ -118,13 +118,10 @@ class EventInitialize extends SplBean
      */
     protected function registerConfig()
     {
-        $arr = $this->configDir;
-        if ( ! $arr) {
+        if ( ! $arr = $this->configDir) {
             return;
         }
-        if (is_string($arr)) {
-            $arr = [$arr];
-        }
+        settype($arr, 'array');
         $fileConfig = [];
         $config = Config::getInstance()->toArray();
         foreach ($arr as $item) {
@@ -132,25 +129,18 @@ class EventInitialize extends SplBean
                 // 遍历目录下的文件
                 $scanResult = scandir($item);
                 foreach ($scanResult as $files) {
-                    if ($files == '.' || $files == '..') {
+                    if (in_array($files, ['.', '..'])) {
                         continue;
                     }
-                    $realPath = "$item/$files";
-                    if (is_file($realPath)) {
-                        // 加载配置
-                        $_cfg = include($realPath);
-                        if (is_array($_cfg)) {
-                            $config = array_merge_multi($config, $_cfg);
-                        }
-                    }
+                    // 加载配置
+                    is_file($realPath = "$item/$files") && is_array($_cfg = include($realPath)) && ($config = array_merge_multi($config, $_cfg));
                 }
             } elseif (is_file($item)) {
-                $_cfg = include($item);
-                if (is_array($_cfg)) {
-                    $fileConfig = array_merge_multi($fileConfig, $_cfg);
-                }
+                is_array($_cfg = include($item)) && ($fileConfig = array_merge_multi($fileConfig, $_cfg));
             }
         }
+
+        // 文件配置优先级高于目录配置
         if ($fileConfig) {
             $config = array_merge_multi($config, $fileConfig);
         }
@@ -167,8 +157,7 @@ class EventInitialize extends SplBean
         if ( ! is_array($config)) {
             return;
         }
-        foreach ($config as $mname => $mvalue)
-        {
+        foreach ($config as $mname => $mvalue) {
             DbManager::getInstance()->addConnection(
                 new \EasySwoole\ORM\Db\Connection(new \EasySwoole\ORM\Db\Config($mvalue)),
                 $mname
@@ -188,16 +177,14 @@ class EventInitialize extends SplBean
         if ( ! is_array($config)) {
             return;
         }
-        foreach ($config as $rname => $rvalue)
-        {
+        foreach ($config as $rname => $rvalue) {
             $RedisPoolConfig = \EasySwoole\RedisPool\RedisPool::getInstance()->register(
                 new \EasySwoole\Redis\Config\RedisConfig($rvalue),
                 $rname
             );
             // 排序，maxObjectNum > minObjectNum
             ksort($rvalue);
-            foreach ($rvalue as $key => $value)
-            {
+            foreach ($rvalue as $key => $value) {
                 $method = 'set' . ucfirst($key);
                 if (method_exists($RedisPoolConfig, $method)) {
                     call_user_func([$RedisPoolConfig, $method], $value);
@@ -230,21 +217,20 @@ class EventInitialize extends SplBean
                 }
 
                 // 除非显示声明_save_log不记录日志
-                if (! isset($this->mysqlOnQueryFunc['_save_log']) || $this->mysqlOnQueryFunc['_save_log'] !== false) {
+                if ( ! isset($this->mysqlOnQueryFunc['_save_log']) || $this->mysqlOnQueryFunc['_save_log'] !== false) {
                     trace($sql, 'info', 'sql');
                 }
 
                 // 不记录的SQL，表名
                 $logtable = config('NOT_WRITE_SQL.table');
                 if (is_array($logtable)) {
-                    foreach($logtable as $v) {
+                    foreach ($logtable as $v) {
                         if (
                             strpos($sql, "`$v`")
                             ||
                             // 支持  XXX*这种模糊匹配
                             (strpos($v, '*') && strpos($sql, '`' . str_replace('*', '', $v)))
-                        )
-                        {
+                        ) {
                             return;
                         }
                     }
@@ -285,8 +271,7 @@ class EventInitialize extends SplBean
         if ( ! is_array($languages)) {
             return;
         }
-        foreach ($languages as $lang => $language)
-        {
+        foreach ($languages as $lang => $language) {
             $className = $language['class'];
             if ( ! class_exists($className)) {
                 continue;
