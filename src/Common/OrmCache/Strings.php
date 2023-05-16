@@ -139,7 +139,8 @@ trait Strings
         return sprintf($this->bloomKey, $tableName);
     }
 
-    protected function _mergeExt($data) {
+    protected function _mergeExt($data)
+    {
         isset($data['extension']) && is_array($data['extension']) && $data += $data['extension'];
         unset($data['extension']);
         return $data;

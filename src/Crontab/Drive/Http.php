@@ -54,8 +54,30 @@ class Http implements Interfaces
 
     protected function body($data = [])
     {
-        $rsa = config('RSA');
-        $openssl = LamOpenssl::getInstance($rsa['private'], $rsa['public']);
-        return [$rsa['key'] => $openssl->encrypt(json_encode($data))];
+        $config = config('CRONTAB');
+        switch (strtolower($data['encry'] = $config['encry']['type'] ?? '')) {
+            case 'rsa':
+                $rsaConfig = $config['encry']['rsa'] ?? config('RSA');
+                if (empty($rsaConfig)) {
+                    throw new \Exception('Missing configuration: CRONTAB.encry.rsa');
+                }
+                $openssl = LamOpenssl::getInstance($rsaConfig['private'], $rsaConfig['public']);
+                return [
+                    'encry' => $data['encry'],
+                    $rsaConfig['key'] => $openssl->encrypt(json_encode($data))
+                ];
+            case 'md5':
+                if (empty($config['encry']['md5']['key'])) {
+                    throw new \Exception('Missing configuration: CRONTAB.encry.md5');
+                }
+                $time = time();
+                $data['time'] = $time;
+
+                $sign = $data['encry'] . $time . $config['encry']['md5']['key'];
+                $data['sign'] = md5($sign);
+                return $data;
+            default:
+                throw new \Exception('Error configuration: CRONTAB.encry.type');
+        }
     }
 }

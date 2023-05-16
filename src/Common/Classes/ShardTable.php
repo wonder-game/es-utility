@@ -186,8 +186,7 @@ class ShardTable extends SplBean
     protected function fmtByMysql(Mysqli $Mysqli, $arr = [])
     {
         $sql = [];
-        foreach ($arr as $k => $v)
-        {
+        foreach ($arr as $k => $v) {
             $sql[] = "UNIX_TIMESTAMP($v) AS p$k";
         }
         return $this->queryRaw($Mysqli, 'SELECT ' . implode(',', $sql))->getResultOne();

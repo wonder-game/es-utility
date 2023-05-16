@@ -1,4 +1,5 @@
 <?php
+
 namespace WonderGame\EsUtility;
 
 use EasySwoole\Command\Color;
@@ -108,14 +109,12 @@ class EventMainServerCreate extends SplBean
             foreach ($events as $event => $item) {
                 $register->add($event, $item);
             }
-        }
-        else if (is_string($events) && class_exists($events)) {
+        } else if (is_string($events) && class_exists($events)) {
             $allowNames = (new \ReflectionClass(EventRegister::class))->getConstants();
             $Ref = new \ReflectionClass($events);
             $public = $Ref->getMethods(\ReflectionMethod::IS_PUBLIC);
 
-            foreach ($public as $item)
-            {
+            foreach ($public as $item) {
                 $name = $item->name;
                 if ($item->isStatic() && isset($allowNames[$name])) {
                     $register->add($allowNames[$name], [$item->class, $name]);
@@ -179,8 +178,7 @@ class EventMainServerCreate extends SplBean
     {
         $watchConfig = $this->hotReloadWatchDirs;
 
-        if ( ! is_env('dev') || ! is_array($watchConfig) || empty($watchConfig))
-        {
+        if ( ! is_env('dev') || ! is_array($watchConfig) || empty($watchConfig)) {
             return;
         }
 
@@ -316,8 +314,7 @@ class EventMainServerCreate extends SplBean
                 }
 
                 // mysql连接池
-                foreach ($mysql as $dName => $dVal)
-                {
+                foreach ($mysql as $dName => $dVal) {
                     $info['mysql_pool'][$dName] = [];
                     // status返回类型bug，遍历取当前进程
                     $dValues = DbManager::getInstance()->getConnection($dName)->__getClientPool()->status();
@@ -328,8 +325,7 @@ class EventMainServerCreate extends SplBean
                     }
                 }
                 // redis连接池
-                foreach ($redis as $rName => $rVal)
-                {
+                foreach ($redis as $rName => $rVal) {
                     $info['redis_pool'][$rName] = [];
                     $rValues = RedisPool::getInstance()->getPool($rName)->status();
                     foreach ($rValues as $value) {

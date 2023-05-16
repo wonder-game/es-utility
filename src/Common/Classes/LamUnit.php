@@ -37,7 +37,7 @@ class LamUnit
         }
     }
 
-    // 将yapi中的通用参数标识符转换为具体的通用参数数组
+    // 处理部分通用参数数组
     static public function utilityParam(Request $request)
     {
         // 获取IP
@@ -60,8 +60,9 @@ class LamUnit
      * @param Request $request
      * @param array $array 要合并的数据
      * @param bool $merge 是否覆盖掉原参数的值
+     * @param string|array $unset 要删除的量
      */
-    static public function withParams(Request $request, $array = [], $merge = true)
+    static public function withParams(Request $request, $array = [], $merge = true, $unset = '')
     {
         $method = $request->getMethod();
         $params = $method == 'GET' ? $request->getQueryParams() : $request->getParsedBody();
@@ -70,6 +71,13 @@ class LamUnit
                 $params = $array + $params;
             } else {
                 $params += $array;
+            }
+        }
+
+        if ($unset) {
+            is_array($unset) or $unset = explode(',', $unset);
+            foreach ($unset as $v) {
+                unset($params[$v]);
             }
         }
 

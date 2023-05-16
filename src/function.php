@@ -103,8 +103,7 @@ if ( ! function_exists('model')) {
             $Client = DbManager::getInstance()->getConnection($connectName)->defer();
             $Client->connectionName($connectName);
             $model->setExecClient($Client);
-        }
-        // 注入连接(新连接) + 切换时区
+        } // 注入连接(新连接) + 切换时区
         else if (is_numeric($inject)) {
             // 请不要从连接池获取连接, 否则连接回收后会污染连接池
             $connectName = $model->getConnectionName();
@@ -736,7 +735,7 @@ if ( ! function_exists('get_login_token')) {
         if ( ! is_numeric($expire)) {
             $expire = config('auth.expire');
         }
-        return LamJwt::getToken(is_array($id)? $id : ['id' => $id], config('auth.jwtkey'), $expire);
+        return LamJwt::getToken(is_array($id) ? $id : ['id' => $id], config('auth.jwtkey'), $expire);
     }
 }
 
@@ -749,10 +748,10 @@ if ( ! function_exists('is_env')) {
      */
     function is_env($env = 'dev')
     {
-		$runMode = \EasySwoole\EasySwoole\Core::getInstance()->runMode();
-		$runMode = explode('.', $runMode);
-		$_env = $runMode[1]??$runMode[0];
-		return is_array($env) ? in_array($_env, $env)  :  $_env === $env;
+        $runMode = \EasySwoole\EasySwoole\Core::getInstance()->runMode();
+        $runMode = explode('.', $runMode);
+        $_env = $runMode[1] ?? $runMode[0];
+        return is_array($env) ? in_array($_env, $env) : $_env === $env;
     }
 }
 
