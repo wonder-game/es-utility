@@ -189,11 +189,9 @@ class FdManager
     {
         $table = $this->getTable(static::UID_FD_KEY);
         $Server = ServerManager::getInstance()->getSwooleServer();
-        foreach ($table as $rows)
-        {
+        foreach ($table as $rows) {
             $fds = $this->unfmtFds($rows[$this->fdColumnName]);
-            foreach ($fds as $fd)
-            {
+            foreach ($fds as $fd) {
                 if ($Server->isEstablished($fd)) {
                     $call($fd, $Server);
                 }
@@ -237,8 +235,7 @@ class FdManager
     {
         $uids = [];
         $table = $this->getTable(static::FD_UID_KEY);
-        foreach($table as $row)
-        {
+        foreach ($table as $row) {
             $uids[] = $row['uid'];
         }
         return array_unique($uids);
@@ -248,8 +245,7 @@ class FdManager
     public function getTableAll()
     {
         $tables = [];
-        foreach ([static::FD_UID_KEY, static::UID_FD_KEY] as $tbname)
-        {
+        foreach ([static::FD_UID_KEY, static::UID_FD_KEY] as $tbname) {
             $tables[$tbname] = $this->getTable($tbname);
         }
         return $tables;

@@ -31,6 +31,11 @@ trait BaseControllerTrait
      */
     protected $input = [];
 
+    /**
+     * @var mixed rawContent
+     */
+    protected $raw = '';
+
     private $langsConstants = [];
 
     protected $actionNotFoundPrefix = '_';
@@ -58,6 +63,9 @@ trait BaseControllerTrait
         }
         $this->post = is_array($post) ? $post : [];
         $this->input = array_merge($this->get, $this->post);
+
+        //  $this->request()->getSwooleRequest()->rawContent()也可以
+        $this->raw = $this->request()->getBody()->__toString();
     }
 
     protected function setLanguageConstants()
@@ -76,13 +84,23 @@ trait BaseControllerTrait
         return $this->langsConstants;
     }
 
-    protected function _isRsa($input = [], $header = [], $category = 'pay')
+    /** 检测是否为rsa解密数据（如本地开发环境则直接为true）
+     * @param array|null $input
+     * @return bool
+     */
+    protected function _isRsaDecode($input = null)
     {
-        // 则要求JWT要符合规则
-        $data = verify_token($input, $header, 'operid');
+        $input = is_null($input) ? $this->input : $input;
+        return ! empty($input[config('RSA.key')]) || is_env('dev');
+    }
+
+    protected function _isJwtAndRsa($input = [], $header = [], $category = 'pay')
+    {
+        // 要求JWT要符合规则
+        $data = verify_token($header, 'operid', $input);
 
         // 如果不是rsa加密数据并且非本地开发环境
-        if (empty($input['envkeydata']) && ! empty($data['INVERTOKEN']) && ! is_env('dev')) {
+        if ( ! $this->_isRsaDecode($input)) {
             trace('密文有误:' . var_export($input, true) . var_export($data, true), 'error', $category);
             return false;
         }
@@ -92,12 +110,25 @@ trait BaseControllerTrait
         return $data;
     }
 
+    protected function getAuthorization()
+    {
+        $tokenKey = config('TOKEN_KEY');
+        if ( ! $this->request()->hasHeader($tokenKey)) {
+            return false;
+        }
+
+        $authorization = $this->request()->getHeader($tokenKey);
+        if (is_array($authorization)) {
+            $authorization = current($authorization);
+        }
+        return $authorization;
+    }
+
     protected function onException(\Throwable $throwable): void
     {
         if ($throwable instanceof HttpParamException) {
             $message = $throwable->getMessage();
-        }
-        elseif ($throwable instanceof WarnException) {
+        } elseif ($throwable instanceof WarnException) {
             $message = $throwable->getMessage();
             $task = \EasySwoole\EasySwoole\Task\TaskManager::getInstance();
             $task->async(new \WonderGame\EsUtility\Task\Error(
@@ -107,8 +138,7 @@ trait BaseControllerTrait
                         'line' => $throwable->getLine(),
                     ], $throwable->getData())
             );
-        }
-        else {
+        } else {
             $message = ! is_env('produce') ? $throwable->getMessage() : lang(Dictionary::BASECONTROLLERTRAIT_1);
             // 交给异常处理器
             \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);

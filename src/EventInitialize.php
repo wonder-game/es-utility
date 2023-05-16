@@ -11,6 +11,7 @@ use EasySwoole\I18N\I18N;
 use EasySwoole\ORM\DbManager;
 use EasySwoole\Spl\SplBean;
 use EasySwoole\Trigger\TriggerInterface;
+use EasySwoole\Utility\File;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\ExceptionTrigger;
 use WonderGame\EsUtility\Common\Classes\LamUnit;
@@ -117,13 +118,35 @@ class EventInitialize extends SplBean
      */
     protected function registerConfig()
     {
-        $dirs = $this->configDir;
-        if ( ! is_array($dirs)) {
+        if ( ! $arr = $this->configDir) {
             return;
         }
-        foreach ($dirs as $dir) {
-            Config::getInstance()->loadDir($dir);
+        settype($arr, 'array');
+
+        // env config 优先级最高
+        $config = Config::getInstance()->toArray();
+
+        // 越靠前优先级越高
+        foreach ($arr as $item) {
+            // 只允许目录
+            if ( ! is_dir($item)) {
+                continue;
+            }
+
+            // 遍历,同级配置文件不区分优先级，请自行保证同级配置安全
+            $scanResult = scandir($item);
+            foreach ($scanResult as $files) {
+                if (in_array($files, ['.', '..'])) {
+                    continue;
+                }
+                $realPath = rtrim($item, '/') . '/' . $files;
+                if (is_file($realPath) && ($_cfg = include_once($realPath)) && is_array($_cfg)) {
+                    $config = array_merge_multi($_cfg, $config);
+                }
+            }
         }
+
+        Config::getInstance()->load($config);
     }
 
     /**
@@ -136,8 +159,7 @@ class EventInitialize extends SplBean
         if ( ! is_array($config)) {
             return;
         }
-        foreach ($config as $mname => $mvalue)
-        {
+        foreach ($config as $mname => $mvalue) {
             DbManager::getInstance()->addConnection(
                 new \EasySwoole\ORM\Db\Connection(new \EasySwoole\ORM\Db\Config($mvalue)),
                 $mname
@@ -157,16 +179,14 @@ class EventInitialize extends SplBean
         if ( ! is_array($config)) {
             return;
         }
-        foreach ($config as $rname => $rvalue)
-        {
+        foreach ($config as $rname => $rvalue) {
             $RedisPoolConfig = \EasySwoole\RedisPool\RedisPool::getInstance()->register(
                 new \EasySwoole\Redis\Config\RedisConfig($rvalue),
                 $rname
             );
             // 排序，maxObjectNum > minObjectNum
             ksort($rvalue);
-            foreach ($rvalue as $key => $value)
-            {
+            foreach ($rvalue as $key => $value) {
                 $method = 'set' . ucfirst($key);
                 if (method_exists($RedisPoolConfig, $method)) {
                     call_user_func([$RedisPoolConfig, $method], $value);
@@ -199,21 +219,20 @@ class EventInitialize extends SplBean
                 }
 
                 // 除非显示声明_save_log不记录日志
-                if (! isset($this->mysqlOnQueryFunc['_save_log']) || $this->mysqlOnQueryFunc['_save_log'] !== false) {
+                if ( ! isset($this->mysqlOnQueryFunc['_save_log']) || $this->mysqlOnQueryFunc['_save_log'] !== false) {
                     trace($sql, 'info', 'sql');
                 }
 
                 // 不记录的SQL，表名
                 $logtable = config('NOT_WRITE_SQL.table');
                 if (is_array($logtable)) {
-                    foreach($logtable as $v) {
+                    foreach ($logtable as $v) {
                         if (
                             strpos($sql, "`$v`")
                             ||
                             // 支持  XXX*这种模糊匹配
                             (strpos($v, '*') && strpos($sql, '`' . str_replace('*', '', $v)))
-                        )
-                        {
+                        ) {
                             return;
                         }
                     }
@@ -254,8 +273,7 @@ class EventInitialize extends SplBean
         if ( ! is_array($languages)) {
             return;
         }
-        foreach ($languages as $lang => $language)
-        {
+        foreach ($languages as $lang => $language) {
             $className = $language['class'];
             if ( ! class_exists($className)) {
                 continue;

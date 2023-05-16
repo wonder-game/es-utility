@@ -10,18 +10,16 @@ trait HttpTrackerTrait
 
             $data = json_decode_ext($data);
 
-            if (empty($data['pointId']))
-            {
-                return ;
+            if (empty($data['pointId'])) {
+                return;
             }
 
-            $ip = isset($data['startArg']['ip']) ? $data['startArg']['ip'] : ($data['startArg']['post']['ip'] ?? '');
+            $ip = $data['startArg']['ip'] ?? ($data['startArg']['post']['ip'] ?? '');
 
             $request = [];
             $startArg = $data['startArg'] ?? [];
-            foreach ($startArg as $rqKey => $rkValue)
-            {
-                if (!in_array($rqKey, ['ip', 'url', 'server_name', 'repeated'])) {
+            foreach ($startArg as $rqKey => $rkValue) {
+                if ( ! in_array($rqKey, ['ip', 'url', 'server_name', 'repeated'])) {
                     if (is_string($rkValue) && ($rkJson = json_decode($rkValue, true))) {
                         $rkValue = $rkJson;
                     }
@@ -59,9 +57,7 @@ trait HttpTrackerTrait
             ];
 
             $this->_getModel()->data($insert)->save();
-        }
-        catch (\Throwable | \Exception $e)
-        {
+        } catch (\Throwable|\Exception $e) {
             trace($e->__toString(), 'error');
         }
     }

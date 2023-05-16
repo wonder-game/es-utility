@@ -47,7 +47,9 @@ trait Hash
             $this->where($this->hashWhere);
         }
         $data = $this->indexBy($this->hashFieldKey) ?: [];
-        return array_map(function ($data) { return $this->_rowEncode($data); }, $data);
+        return array_map(function ($data) {
+            return $this->_rowEncode($data);
+        }, $data);
     }
 
     protected function _chkHashKey(Redis $redis, $key)
@@ -84,7 +86,9 @@ trait Hash
 
             $data = $redis->hGetAll($key) ?: [];
 
-            return array_map(function ($data) { return $this->_rowDecode($data); }, $data);
+            return array_map(function ($data) {
+                return $this->_rowDecode($data);
+            }, $data);
         }, $this->redisPoolName);
     }
 

@@ -37,28 +37,11 @@ class LamUnit
         }
     }
 
-    // 将yapi中的通用参数标识符转换为具体的通用参数数组
-    static public function utilityParam(Request $request, $key = '一堆通用参数！！')
+    // 处理部分通用参数数组
+    static public function utilityParam(Request $request)
     {
         // 获取IP
         $utility = ['ip' => ip($request)];
-
-        if ($comval = $request->getRequestParam($key)) {
-            $comval = json_decode($comval, true);
-            $utility += [
-                'gameid' => 0,
-                'sdkver' => 'Utility-sdkver',
-                'devid' => 'Utility-devid',
-                'pkgbnd' => 'com.pkgbnd.Utility',
-                'imei' => 'Utility-imei',
-                'os' => 0,
-                'osver' => '12',
-                'exmodel' => 'Utility-Huawei P40',
-                'creqtime' => time()
-            ];
-
-            is_array($comval) && $utility = array_merge($utility, $comval);
-        }
 
         // 销售渠道
         if ( ! $request->getRequestParam('dtorid')) {
@@ -70,7 +53,7 @@ class LamUnit
             $utility['versioncode'] = 1;
         }
 
-        self::withParams($request, $utility, false, $key);
+        self::withParams($request, $utility, false);
     }
 
     /**

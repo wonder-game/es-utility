@@ -59,7 +59,7 @@ trait SplArray
     public function cacheSpl($key = null, $default = null)
     {
         $Spl = RedisPool::invoke(function (Redis $redis) {
-             $key = $this->_getCacheKey();
+            $key = $this->_getCacheKey();
 
             $data = $redis->get($key);
             if ($data !== false && ! is_null($data)) {
