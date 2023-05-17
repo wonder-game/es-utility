@@ -103,7 +103,8 @@ if ( ! function_exists('model')) {
             $Client = DbManager::getInstance()->getConnection($connectName)->defer();
             $Client->connectionName($connectName);
             $model->setExecClient($Client);
-        } // 注入连接(新连接) + 切换时区
+        }
+        // 注入连接(新连接) + 切换时区
         else if (is_numeric($inject)) {
             // 请不要从连接池获取连接, 否则连接回收后会污染连接池
             $connectName = $model->getConnectionName();
@@ -739,6 +740,21 @@ if ( ! function_exists('get_login_token')) {
     }
 }
 
+if ( ! function_exists('get_mode')) {
+	/**
+	 * 获取当前运行环境
+	 * @param string $type all:返回整个模式值; mode:返回模块值; env:返回环境值
+	 * @return string 环境|模块.环境
+	 */
+	function get_mode($type = 'env')
+	{
+		// dev|test|produce|user.test|sdk.dev|...
+		$runMode = \EasySwoole\EasySwoole\Core::getInstance()->runMode();
+		if($type === 'all'){return $runMode;}
+		$runMode = explode('.', $runMode);
+		return $type === 'mode' ? $runMode[0] : ($runMode[1] ?? $runMode[0]);
+	}
+}
 
 if ( ! function_exists('is_env')) {
     /**
@@ -748,11 +764,20 @@ if ( ! function_exists('is_env')) {
      */
     function is_env($env = 'dev')
     {
-        $runMode = \EasySwoole\EasySwoole\Core::getInstance()->runMode();
-        $runMode = explode('.', $runMode);
-        $_env = $runMode[1] ?? $runMode[0];
+        $_env = get_mode();
         return is_array($env) ? in_array($_env, $env) : $_env === $env;
     }
+}
+
+if ( ! function_exists('is_module')) {
+	/**
+	 * @param string $name log|sdk|pay|user|admin|account|....
+	 * @return bool
+	 */
+	function is_module($name = 'log')
+	{
+		return get_mode('mode') === $name;
+	}
 }
 
 if ( ! function_exists('memory_convert')) {
@@ -770,7 +795,8 @@ if ( ! function_exists('memory_convert')) {
     }
 }
 
-if ( ! function_exists('json_decode_ext')) {
+if ( ! function_exists('json_decode_ext'))
+{
     /**
      * json_decode的加强版，自动将extension字段处理为数组类型
      * @param string $data
