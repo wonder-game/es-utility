@@ -146,7 +146,7 @@ class Mysqli extends MysqliClient
 
     /**
      * 设置连接时区
-     * @param $tzn 格式为: -5 或 -5:00 或 8 或 +8:00 ...
+     * @param string $tzn 格式为: -5 或 -5:00 或 8 或 +8:00 ...
      * @throws \EasySwoole\Mysqli\Exception\Exception
      */
     public function setTimeZone($tzn)

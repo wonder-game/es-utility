@@ -22,7 +22,8 @@ use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
 
 
-if ( ! function_exists('is_super')) {
+if ( ! function_exists('is_super'))
+{
     /**
      * 是否超级管理员
      * @param $rid
@@ -36,7 +37,8 @@ if ( ! function_exists('is_super')) {
 }
 
 
-if ( ! function_exists('find_model')) {
+if ( ! function_exists('find_model'))
+{
     /**
      * @param $name
      * @param $thorw
@@ -63,7 +65,8 @@ if ( ! function_exists('find_model')) {
     }
 }
 
-if ( ! function_exists('model')) {
+if ( ! function_exists('model'))
+{
     /**
      * 实例化Model
      * @param string $name Model名称
@@ -119,7 +122,8 @@ if ( ! function_exists('model')) {
     }
 }
 
-if ( ! function_exists('model_admin')) {
+if ( ! function_exists('model_admin'))
+{
     /**
      * @param string $name
      * @param array $data
@@ -132,7 +136,8 @@ if ( ! function_exists('model_admin')) {
     }
 }
 
-if ( ! function_exists('model_log')) {
+if ( ! function_exists('model_log'))
+{
     /**
      * @param string $name
      * @param array $data
@@ -145,7 +150,8 @@ if ( ! function_exists('model_log')) {
     }
 }
 
-if ( ! function_exists('config')) {
+if ( ! function_exists('config'))
+{
     /**
      * 获取和设置配置参数
      * @param string|array $name 参数名
@@ -164,7 +170,8 @@ if ( ! function_exists('config')) {
 }
 
 
-if ( ! function_exists('trace')) {
+if ( ! function_exists('trace'))
+{
     /**
      * 记录日志信息，协程defer时写入
      * @param string|array $log log信息 支持字符串和数组
@@ -179,7 +186,8 @@ if ( ! function_exists('trace')) {
     }
 }
 
-if ( ! function_exists('trace_immediate')) {
+if ( ! function_exists('trace_immediate'))
+{
     /**
      * 记录日志信息,立即写入
      * @param string|array $log log信息 支持字符串和数组
@@ -193,7 +201,8 @@ if ( ! function_exists('trace_immediate')) {
 }
 
 
-if ( ! function_exists('defer_redis')) {
+if ( ! function_exists('defer_redis'))
+{
     /**
      * 返回redis句柄资源
      * @param string $poolname 标识
@@ -207,7 +216,8 @@ if ( ! function_exists('defer_redis')) {
 }
 
 
-if ( ! function_exists('parse_name')) {
+if ( ! function_exists('parse_name'))
+{
     /**
      * 字符串命名风格转换
      * @param string $name 字符串
@@ -229,7 +239,8 @@ if ( ! function_exists('parse_name')) {
 }
 
 
-if ( ! function_exists('array_merge_multi')) {
+if ( ! function_exists('array_merge_multi'))
+{
     /**
      * 多维数组合并（支持多数组）
      * @return array
@@ -240,12 +251,7 @@ if ( ! function_exists('array_merge_multi')) {
         foreach ($args as $arg) {
             if (is_array($arg)) {
                 foreach ($arg as $k => $v) {
-                    if (is_array($v)) {
-                        $array[$k] = isset($array[$k]) ? $array[$k] : [];
-                        $array[$k] = array_merge_multi($array[$k], $v);
-                    } else {
-                        $array[$k] = $v;
-                    }
+					$array[$k] = is_array($v) ? array_merge_multi($array[$k] ?? [], $v) : $v;
                 }
             }
         }
@@ -254,7 +260,8 @@ if ( ! function_exists('array_merge_multi')) {
 }
 
 
-if ( ! function_exists('array_sort_multi')) {
+if ( ! function_exists('array_sort_multi'))
+{
     /**
      * 二维数组按某字段排序
      */
@@ -274,7 +281,8 @@ if ( ! function_exists('array_sort_multi')) {
     }
 }
 
-if ( ! function_exists('listdate')) {
+if ( ! function_exists('listdate'))
+{
     /**
      * 返回两个日期之间的具体日期或月份
      *
@@ -348,7 +356,8 @@ if ( ! function_exists('listdate')) {
 }
 
 
-if ( ! function_exists('difdate')) {
+if ( ! function_exists('difdate'))
+{
     /**
      * 计算两个日期相差多少天或多少月
      */
@@ -370,7 +379,8 @@ if ( ! function_exists('difdate')) {
 }
 
 
-if ( ! function_exists('verify_token')) {
+if ( ! function_exists('verify_token'))
+{
     /**
      * 验证jwt并读取用户信息
      */
@@ -396,7 +406,8 @@ if ( ! function_exists('verify_token')) {
 }
 
 
-if ( ! function_exists('ip')) {
+if ( ! function_exists('ip'))
+{
     /**
      * 获取http客户端ip
      * @param null $Request
@@ -433,7 +444,8 @@ if ( ! function_exists('ip')) {
 }
 
 
-if ( ! function_exists('lang')) {
+if ( ! function_exists('lang'))
+{
     function lang($const = '')
     {
         return I18N::getInstance()->translate($const);
@@ -441,7 +453,8 @@ if ( ! function_exists('lang')) {
 }
 
 
-if ( ! function_exists('wechat_notice')) {
+if ( ! function_exists('wechat_notice'))
+{
     function wechat_notice($title = '', $content = '', $color = '#32CD32')
     {
         EsNotify::getInstance()->doesOne('wechat', new Notice([
@@ -454,7 +467,8 @@ if ( ! function_exists('wechat_notice')) {
 }
 
 
-if ( ! function_exists('wechat_warning')) {
+if ( ! function_exists('wechat_warning'))
+{
     function wechat_warning($file, $line, $servername, $message, $color = '#FF0000')
     {
         EsNotify::getInstance()->doesOne('wechat', new Warning([
@@ -469,7 +483,8 @@ if ( ! function_exists('wechat_warning')) {
 }
 
 
-if ( ! function_exists('dingtalk_text')) {
+if ( ! function_exists('dingtalk_text'))
+{
     function dingtalk_text($content = '', $at = true)
     {
         EsNotify::getInstance()->doesOne('dingtalk', new Text([
@@ -480,7 +495,8 @@ if ( ! function_exists('dingtalk_text')) {
 }
 
 
-if ( ! function_exists('dingtalk_markdown')) {
+if ( ! function_exists('dingtalk_markdown'))
+{
     function dingtalk_markdown($title = '', $text = '', $at = true)
     {
         if (is_array($text)) {
@@ -500,7 +516,8 @@ if ( ! function_exists('dingtalk_markdown')) {
 }
 
 
-if ( ! function_exists('array_to_std')) {
+if ( ! function_exists('array_to_std'))
+{
     function array_to_std(array $array = [])
     {
         $func = __FUNCTION__;
@@ -513,7 +530,8 @@ if ( ! function_exists('array_to_std')) {
 }
 
 
-if ( ! function_exists('convertip')) {
+if ( ! function_exists('convertip'))
+{
     /**
      * 官方网站　 http://www.cz88.net　请适时更新ip库
      * 按照ip地址返回所在地区
@@ -536,7 +554,7 @@ if ( ! function_exists('convertip')) {
         $ip = explode('.', $ip);
         $ipNum = $ip[0] * 16777216 + $ip[1] * 65536 + $ip[2] * 256 + $ip[3];
 
-        if ( ! ($DataBegin = fread($fd, 4)) || ! ($DataEnd = fread($fd, 4))) return;
+        if ( ! ($DataBegin = fread($fd, 4)) || ! ($DataEnd = fread($fd, 4))) return '';
         @$ipbegin = implode('', unpack('L', $DataBegin));
         if ($ipbegin < 0) $ipbegin += pow(2, 32);
         @$ipend = implode('', unpack('L', $DataEnd));
@@ -657,7 +675,8 @@ if ( ! function_exists('convertip')) {
 }
 
 
-if ( ! function_exists('area')) {
+if ( ! function_exists('area'))
+{
     /**
      * @param string $ip
      * @param int|null $num 为数字时返回地区数组中的一个成员；否则返回整个数组
@@ -689,7 +708,8 @@ if ( ! function_exists('area')) {
 }
 
 
-if ( ! function_exists('sysinfo')) {
+if ( ! function_exists('sysinfo'))
+{
     /**
      * 获取系统设置的动态配置
      * @document http://www.easyswoole.com/Components/Spl/splArray.html
@@ -706,7 +726,8 @@ if ( ! function_exists('sysinfo')) {
 }
 
 
-if ( ! function_exists('array_merge_decode')) {
+if ( ! function_exists('array_merge_decode'))
+{
     /**
      * array_merge_decode
      * @param $array
@@ -725,7 +746,8 @@ if ( ! function_exists('array_merge_decode')) {
 }
 
 
-if ( ! function_exists('get_login_token')) {
+if ( ! function_exists('get_login_token'))
+{
     /**
      * 如果项目的token规则与此不同，请在项目中重写此函数
      * @param array|int $id
@@ -740,7 +762,8 @@ if ( ! function_exists('get_login_token')) {
     }
 }
 
-if ( ! function_exists('get_mode')) {
+if ( ! function_exists('get_mode'))
+{
 	/**
 	 * 获取当前运行环境
 	 * @param string $type all:返回整个模式值; mode:返回模块值; env:返回环境值
@@ -756,7 +779,8 @@ if ( ! function_exists('get_mode')) {
 	}
 }
 
-if ( ! function_exists('is_env')) {
+if ( ! function_exists('is_env'))
+{
     /**
      * 判断当前运行环境
      * @param string $env dev|test|produce|user.test|sdk.dev|...
@@ -769,7 +793,8 @@ if ( ! function_exists('is_env')) {
     }
 }
 
-if ( ! function_exists('is_module')) {
+if ( ! function_exists('is_module'))
+{
 	/**
 	 * @param string $name log|sdk|pay|user|admin|account|....
 	 * @return bool
@@ -780,7 +805,8 @@ if ( ! function_exists('is_module')) {
 	}
 }
 
-if ( ! function_exists('memory_convert')) {
+if ( ! function_exists('memory_convert'))
+{
     /**
      * 转换内存单位
      * @param $bytes
@@ -811,7 +837,8 @@ if ( ! function_exists('json_decode_ext'))
     }
 }
 
-if ( ! function_exists('get_google_service_account')) {
+if ( ! function_exists('get_google_service_account'))
+{
 
     /**
      * Google服务账号文件路径
@@ -824,7 +851,8 @@ if ( ! function_exists('get_google_service_account')) {
     }
 }
 
-if ( ! function_exists('http_tracker')) {
+if ( ! function_exists('http_tracker'))
+{
     /**
      * 子链路记录，返回一个结束回调，必须保证结束回调被调用
      * @param string $pointName 标识名
