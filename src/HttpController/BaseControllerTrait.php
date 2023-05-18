@@ -94,13 +94,19 @@ trait BaseControllerTrait
         return ! empty($input[config('RSA.key')]) || is_env('dev');
     }
 
-    protected function _isJwtAndRsa($input = [], $header = [], $category = 'pay')
+    /**
+     * 检测是否至少符合Jwt或RSA
+     * @param array|null $input
+     * @param array $header
+     * @return bool
+     */
+    protected function _isJwtOrRsa($input = [], $header = [], $category = 'pay')
     {
         // 要求JWT要符合规则
         $data = verify_token($header, 'operid', $input);
 
         // 如果不是rsa加密数据并且非本地开发环境
-        if ( ! $this->_isRsaDecode($input)) {
+        if ( ! $data && ! $this->_isRsaDecode($input)) {
             trace('密文有误:' . var_export($input, true) . var_export($data, true), 'error', $category);
             return false;
         }
