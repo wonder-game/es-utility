@@ -98,21 +98,24 @@ trait BaseControllerTrait
      * 检测是否至少符合Jwt或RSA
      * @param array|null $input
      * @param array $header
-     * @return bool
+     * @return array|void
      */
     protected function _isJwtOrRsa($input = [], $header = [], $category = 'pay')
     {
-        // 要求JWT要符合规则
-        $data = verify_token($header, 'operid', $input);
-
-        // 如果不是rsa加密数据并且非本地开发环境
-        if ( ! $data && ! $this->_isRsaDecode($input)) {
-            trace('密文有误:' . var_export($input, true) . var_export($data, true), 'error', $category);
-            return false;
+        try{
+            // 先尝试JWT
+            $data = verify_token($header, 'uid', $input);
+        } catch (HttpParamException $e) {
+            // 记日志
+            trace('jwt验证不通过：【' . $e->getMessage() . '】将进行rsa检测。', 'error', $category);
+            // 如果不是rsa加密数据并且非本地开发环境
+            if( ! $this->_isRsaDecode($input))
+            {
+                throw new HttpParamException('密文有误:', Code::CODE_UNAUTHORIZED);
+            }
         }
-
+        
         unset($data['token']);
-
         return $data;
     }
 

@@ -397,7 +397,7 @@ if ( ! function_exists('verify_token'))
         }
         // 二次校验
         if ($orgs && ( ! isset($orgs[$key]) || $jwt['data'][$key] != $orgs[$key])) {
-            throw new HttpParamException('jwt不符', Code::CODE_PRECONDITION_FAILED);
+            throw new HttpParamException("jwt的 $key 不符:" . ($jwt['data'][$key]??''), Code::CODE_PRECONDITION_FAILED);
         }
 
         $jwt['data']['token'] = $token;
