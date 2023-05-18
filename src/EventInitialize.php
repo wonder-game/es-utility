@@ -71,16 +71,9 @@ class EventInitialize extends SplBean
      */
     protected function initialize(): void
     {
-        if (is_null($this->mysqlConfig)) {
-            $this->mysqlConfig = config('MYSQL');
-        }
-        if (is_null($this->redisConfig)) {
-            $this->redisConfig = config('REDIS');
-        }
-
-        if (is_null($this->languageConfig)) {
-            $this->languageConfig = config('LANGUAGES') ?: [];
-        }
+        $this->mysqlConfig = config('MYSQL');
+        $this->redisConfig = config('REDIS');
+        $this->languageConfig = config('LANGUAGES') ?: [];
     }
 
     public function run()
