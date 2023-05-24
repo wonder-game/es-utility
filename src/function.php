@@ -3,6 +3,7 @@
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\I18N\I18N;
+use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
 use EasySwoole\ORM\DbManager;
@@ -14,6 +15,7 @@ use WonderGame\EsNotify\DingTalk\Message\Text;
 use WonderGame\EsNotify\EsNotify;
 use WonderGame\EsNotify\WeChat\Message\Notice;
 use WonderGame\EsNotify\WeChat\Message\Warning;
+use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
@@ -362,24 +364,43 @@ if ( ! function_exists('difdate')) {
 	}
 }
 
+if ( ! function_exists('get_token')) {
+	/**
+	 * 生成jwt值并返回
+	 * @param array|int $id
+	 * @param string|null $expire 有效期（秒）
+	 * @return string
+	 */
+	function get_token($id, $expire = null)
+	{
+		return LamJwt::getToken(is_array($id) ? $id : ['id' => $id], '', $expire);
+	}
+}
 
 if ( ! function_exists('verify_token')) {
 	/**
 	 * 验证jwt并读取用户信息
+	 * @param array $header jwt所在的数组，传[]则自动从头信息中获取
+	 * @param string|null $key 为string类型时会校验这个key值是否非空；为null时直接返回token
+	 * @param array $orgs 如果有传则会进行二次校验
 	 */
 	function verify_token($header = [], $key = 'uid', $orgs = [])
 	{
-		$token = $header[config('TOKEN_KEY')][0] ?? '';
-		if ( ! $token) {
+		$header or $header = CtxRequest::getInstance()->request->getHeaders();
+
+		if ( ! $token = $header[config('ENCRYPT.jwtkey')][0] ?? '') {
 			throw new HttpParamException('缺少token', Code::CODE_UNAUTHORIZED);
+		}
+		if (is_null($key)) {
+			return $token;
 		}
 		// 验证JWT
 		$jwt = LamJwt::verifyToken($token);
-		if ($jwt['status'] != 1 || ! isset($jwt['data'][$key])) {
+		if ($jwt['status'] != 1 || empty($jwt['data'][$key])) {
 			throw new HttpParamException('jwt有误', Code::CODE_BAD_REQUEST);
 		}
 		// 二次校验
-		if ($orgs && ( ! isset($orgs[$key]) || $jwt['data'][$key] != $orgs[$key])) {
+		if ($orgs && (empty($orgs[$key]) || $jwt['data'][$key] != $orgs[$key])) {
 			throw new HttpParamException("jwt的 $key 不符:" . ($jwt['data'][$key] ?? ''), Code::CODE_PRECONDITION_FAILED);
 		}
 
@@ -714,22 +735,6 @@ if ( ! function_exists('array_merge_decode')) {
 			}
 		}
 		return array_merge_multi($merge, $array);
-	}
-}
-
-
-if ( ! function_exists('get_login_token')) {
-	/**
-	 * 如果项目的token规则与此不同，请在项目中重写此函数
-	 * @param array|int $id
-	 * @return string
-	 */
-	function get_login_token($id, $expire = null)
-	{
-		if ( ! is_numeric($expire)) {
-			$expire = config('auth.expire');
-		}
-		return LamJwt::getToken(is_array($id) ? $id : ['id' => $id], config('auth.jwtkey'), $expire);
 	}
 }
 

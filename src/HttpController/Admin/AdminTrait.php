@@ -142,7 +142,7 @@ trait AdminTrait
         if ( ! $isExtsis) {
             throw new HttpParamException(lang(Dictionary::ADMIN_ADMINTRAIT_9));
         }
-        $token = get_login_token($id, 3600);
+        $token = get_token($id, 3600);
         return $return ? $token : $this->success($token);
     }
 }
