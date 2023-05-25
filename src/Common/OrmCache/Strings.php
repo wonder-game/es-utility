@@ -185,9 +185,9 @@ trait Strings
     }
 
     /**
-     * @param $id 主键值 | ['key' => 'value']
-     * @param $data
-     * @param $bloom 删集合
+     * @param string|array $id 主键值 | ['key' => 'value']
+     * @param array $data
+     * @param bool $bloom 删集合
      * @return mixed|null
      */
     public function cacheSet($id, $data = [], $bloom = false)
