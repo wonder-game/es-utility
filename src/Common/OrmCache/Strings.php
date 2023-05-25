@@ -8,6 +8,7 @@ use EasySwoole\Redis\Redis;
 
 /**
  * 字符串缓存，适用于单行缓存
+ * @extends AbstractModel
  */
 trait Strings
 {
@@ -107,7 +108,7 @@ trait Strings
     {
         if (is_array($id)) {
             ksort($id);
-            $str = urldecode(http_build_query(($id)));
+            $str = urldecode(http_build_query($id));
             $id = $this->isMd5 ? md5($str) : $str;
         }
         $prefix = is_null($this->prefix) ? $this->getTableName() : $this->prefix;
@@ -115,7 +116,7 @@ trait Strings
     }
 
     /**
-     * @param $id 主键值 | ['key' => 'value']
+     * @param string|array $id 主键值 | ['key' => 'value']
      * @return array
      */
     protected function _getByUnique($id)
