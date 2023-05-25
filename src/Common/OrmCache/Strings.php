@@ -107,7 +107,7 @@ trait Strings
     {
         if (is_array($id)) {
             ksort($id);
-            $str = implode($this->joinSb, array_values($id));
+            $str = urldecode(http_build_query(($id)));
             $id = $this->isMd5 ? md5($str) : $str;
         }
         $prefix = is_null($this->prefix) ? $this->getTableName() : $this->prefix;
