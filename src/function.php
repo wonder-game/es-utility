@@ -3,13 +3,11 @@
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
 use EasySwoole\I18N\I18N;
-use EasySwoole\Redis\Redis;
-use EasySwoole\RedisPool\RedisPool;
-use EasySwoole\Spl\SplArray;
-use EasySwoole\ORM\DbManager;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\ORM\Db\MysqliClient;
-
+use EasySwoole\ORM\DbManager;
+use EasySwoole\RedisPool\RedisPool;
+use EasySwoole\Spl\SplArray;
 use WonderGame\EsNotify\DingTalk\Message\Markdown;
 use WonderGame\EsNotify\DingTalk\Message\Text;
 use WonderGame\EsNotify\EsNotify;
