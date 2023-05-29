@@ -176,9 +176,10 @@ class EventMainServerCreate extends SplBean
 
     protected function watchHotReload()
     {
-        $watchConfig = $this->hotReloadWatchDirs;
+        $watchConfig = (array) $this->hotReloadWatchDirs;
 
-        if ( ! is_env('dev') || ! is_array($watchConfig) || empty($watchConfig)) {
+        // 本地开发环境可固定开启
+		if ( ! is_env('dev') && get_cfg_var('env.app_dev') != 2) {
             return;
         }
 

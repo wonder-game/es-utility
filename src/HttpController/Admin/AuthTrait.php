@@ -64,34 +64,17 @@ trait AuthTrait
         return $Admin->where('id', $id)->get();
     }
 
-    protected function _verifyToken($authorization = '')
-    {
-        return LamJwt::verifyToken($authorization, config('auth.jwtkey'));
-    }
-
     protected function setAuthTraitProptected()
     {
     }
 
     protected function checkAuthorization()
     {
-        $authorization = $this->getAuthorization();
-        if ( ! $authorization) {
-            $this->error(Code::CODE_UNAUTHORIZED, Dictionary::ADMIN_AUTHTRAIT_1);
-            return false;
-        }
-
         // jwt验证
-        $jwt = $this->_verifyToken($authorization);
-
-        $id = $jwt['data']['id'] ?? '';
-        if ($jwt['status'] != 1 || empty($id)) {
-            $this->error(Code::CODE_UNAUTHORIZED, Dictionary::ADMIN_AUTHTRAIT_2);
-            return false;
-        }
+		$jwt = verify_token([], 'id');
 
         // 当前用户信息
-        $data = $this->_getEntityData($id);
+        $data = $this->_getEntityData($jwt['id']);
         if (empty($data)) {
             $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_3);
             return false;

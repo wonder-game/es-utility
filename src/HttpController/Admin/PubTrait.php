@@ -57,7 +57,7 @@ trait PubTrait
 			'ip' => ip($request),
 		]);
 
-		$token = get_login_token($data['id']);
+		$token = get_token($data['id']);
         $result = ['token' => $token];
         return $return ? $result + ['data'=>$data] : $this->success($result, Dictionary::ADMIN_PUBTRAIT_3);
 	}
