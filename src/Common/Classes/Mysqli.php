@@ -126,7 +126,11 @@ class Mysqli extends MysqliClient
      */
     public function fetch(QueryBuilder $Builder, string $modelName = '')
     {
-        $this->config->setFetchMode(true);
+        // 如果之前非fetch模式，使用新配置重新创建链接
+        if ( ! $this->config->isFetchMode()) {
+            $this->config->setFetchMode(true);
+            $this->close();
+        }
 
         $this->connect();
         /** @var Cursor $Cursor */
