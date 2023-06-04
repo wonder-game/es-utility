@@ -12,7 +12,6 @@ use EasySwoole\Policy\PolicyNode;
 use EasySwoole\Utility\MimeType;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\DateUtils;
-use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\XlsWriter;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
@@ -71,12 +70,18 @@ trait AuthTrait
     protected function checkAuthorization()
     {
         // jwt验证
-		$jwt = verify_token([], 'id');
+        try {
+            $jwt = verify_token([], 'id');
+        } catch (HttpParamException $e) {
+            // jwt认证失败必须返回401，否则无法跳转登录页
+            $this->error(Code::CODE_UNAUTHORIZED, $e->getMessage());
+            return false;
+        }
 
         // 当前用户信息
         $data = $this->_getEntityData($jwt['id']);
         if (empty($data)) {
-            $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_3);
+            $this->error(Code::CODE_UNAUTHORIZED, Dictionary::ADMIN_AUTHTRAIT_3);
             return false;
         }
 
