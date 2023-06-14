@@ -33,7 +33,7 @@ class Mysqli extends MysqliClient
             $this->connectionName(md5(json_encode($configArray)));
         }
 
-        parent::__construct(new Config($configArray));
+        parent::__construct(new Config($configArray + ['timeout' => -1]));
 
         if ( ! isset($configArray['save_log']) || $configArray['save_log'] !== false) {
             $this->onQuery(function ($res, Client $client, $start) {

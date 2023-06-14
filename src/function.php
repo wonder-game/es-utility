@@ -436,7 +436,13 @@ if ( ! function_exists('ip')) {
         // 其中“;”为getHeaderLine拼接, “, ”为代理拼接
         foreach ([';', ','] as $delimiter) {
             if (strpos($ip, $delimiter) !== false) {
-                $ip = trim(explode($delimiter, $ip)[0]);
+                $list = explode($delimiter, $ip);
+                foreach ($list as $item) {
+                    $item = trim($item);
+                    if ( ! empty($item) && ! in_array($item, ['unknown'])) {
+                        return $item;
+                    }
+                }
             }
         }
 
