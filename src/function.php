@@ -433,20 +433,19 @@ if ( ! function_exists('ip')) {
             }
         }
 
-        // 其中“;”为getHeaderLine拼接, “, ”为代理拼接
-        foreach ([';', ','] as $delimiter) {
-            if (strpos($ip, $delimiter) !== false) {
-                $list = explode($delimiter, $ip);
-                foreach ($list as $item) {
-                    $item = trim($item);
-                    if ( ! empty($item) && ! in_array($item, ['unknown'])) {
-                        return $item;
+        $arr = explode(';', $ip);
+        foreach ($arr as $item) {
+            if ($item = trim($item)) {
+                $itemArr = explode(',', $item);
+                foreach ($itemArr as $value) {
+                    if (($value = trim($value)) && ! in_array($value, ['unknown'])) {
+                        return $value;
                     }
                 }
             }
         }
 
-        return $ip;
+        return false;
     }
 }
 
@@ -544,6 +543,9 @@ if ( ! function_exists('convertip')) {
     {
         $ipdatafile = $ipdatafile ?: config('IPDAT_PATH');
         $ip = $ip ?: ip();
+        if (empty($ip)) {
+            return '- Empty';
+        }
         if (is_numeric($ip)) {
             $ip = long2ip($ip);
         }
