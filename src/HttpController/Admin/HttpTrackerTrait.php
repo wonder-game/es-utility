@@ -43,11 +43,13 @@ trait HttpTrackerTrait
             }
         }
 
+        // 注意，1. JSON值是严格类型的 2. -> 与 ->> 的区别
+
         // request->key
         foreach (['path'] as $col) {
             if (isset($filter[$col]) && $filter[$col] !== '') {
                 $sym = strpos($filter[$col], '%') !== false ? 'LIKE' : '=';
-                $builder->where("(request->'$.$col $sym '$filter[$col]')");
+                $builder->where("(request->'$.$col' $sym '$filter[$col]')");
             }
         }
 
@@ -58,7 +60,7 @@ trait HttpTrackerTrait
 
             $arr = [];
             foreach (['GET', 'POST', 'JSON'] as $k) {
-                $arr[] = "request->'$.$k.$filter[rq_key] $sym '$filter[rq_value]'";
+                $arr[] = "request->'$.$k.$filter[rq_key]' $sym '$filter[rq_value]'";
             }
 
             $str = implode(' OR ', $arr);
