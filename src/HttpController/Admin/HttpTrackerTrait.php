@@ -3,7 +3,7 @@
 namespace WonderGame\EsUtility\HttpController\Admin;
 
 use EasySwoole\Mysqli\QueryBuilder;
-use EasySwoole\ORM\AbstractModel;
+use WonderGame\EsUtility\Common\Classes\Mysqli;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 
@@ -18,69 +18,176 @@ trait HttpTrackerTrait
         return true;
     }
 
-    protected function __search()
-	{
-		if (empty($this->get['where'])) {
-            $begintime = strtotime('today');
-			$endtime = $begintime + 86399;
-			$this->Model->where('instime', [$begintime, $endtime], 'BETWEEN');
-		} else {
-			$this->Model->where($this->get['where']);
-		}
-		return null;
-	}
-
-    protected function __with($column = 'relation')
-    {
-        $this->Model->with(['children']);
-        return $this;
-    }
-
     /**
-     * @param $items
-     * @param $total
-     * @return mixed
+     * 仅构造了where的builder，后续如何操作各自实现
+     * @return QueryBuilder
      */
-    protected function __after_index($items, $total)
+    protected function _builder()
     {
-        $relationes = $childKey = $result = [];
-        /** @var AbstractModel $item */
-        foreach ($items as $item) {
-            $array = $item->toArray(false, false);
+        $filter = $this->filter();
 
-            // 成为子元素后，从第一级删掉
-            if (is_array($array['children'])) {
-                $childKey = array_merge($childKey, array_column($array['children'], 'point_id'));
-            }
-
-            $relationes[] = $array;
+        if (empty($filter['begintime']) || empty($filter['endtime'])) {
+            // 近1个小时
+            $time = time();
+            $filter['begintime'] = $time - 3600;
+            $filter['endtime'] = $time;
         }
 
-        unset($items);
-        // 第一次foreach时，$childKey还不全
-        foreach ($relationes as $relatione) {
-            if ( ! in_array($relatione['point_id'], $childKey)) {
-                $result[] = $relatione;
+        $builder = new QueryBuilder();
+        $builder->where('instime', [$filter['begintime'], $filter['endtime']], 'BETWEEN');
+
+        foreach (['repeated', 'server_name', 'url', 'ip', 'depth'] as $col) {
+            if (isset($filter[$col]) && $filter[$col] !== '') {
+                $sym = strpos($filter[$col], '%') !== false ? 'LIKE' : '=';
+                $builder->where($col, $filter[$col], $sym);
             }
         }
-        return parent::__after_index($result, $total) + [
-                'sql' => str_replace('SQL_CALC_FOUND_ROWS', '', $this->Model->lastQuery()->getLastQuery())
-            ];
+
+        // request->key
+        foreach (['path'] as $col) {
+            if (isset($filter[$col]) && $filter[$col] !== '') {
+                $sym = strpos($filter[$col], '%') !== false ? 'LIKE' : '=';
+                $builder->where("(request->'$.$col $sym '$filter[$col]')");
+            }
+        }
+
+        // 请求参数查询, GET,POST,JSON
+        if ( ! empty($filter['rq_key']) && ! empty($filter['rq_value'])) {
+
+            $sym = strpos($filter['rq_value'], '%') !== false ? 'LIKE' : '=';
+
+            $arr = [];
+            foreach (['GET', 'POST', 'JSON'] as $k) {
+                $arr[] = "request->'$.$k.$filter[rq_key] $sym '$filter[rq_value]'";
+            }
+
+            $str = implode(' OR ', $arr);
+            $builder->where("($str)");
+        }
+
+        // 自定义部分
+        if ($my = trim($filter['sql'])) {
+            $builder->where("($my)");
+        }
+
+        return $builder;
     }
 
-	// 单条复发
-    public function _repeat($return = false)
-	{
-		$pointId = $this->post['pointId'];
-		if (empty($pointId)) {
-			throw new HttpParamException('PointId id empty.');
-		}
-		$row = $this->Model->where('point_id', $pointId)->get();
-		if ( ! $row) {
-			throw new HttpParamException('PointId id Error: ' . $pointId);
-		}
+    // 预览SQL
+    public function getSql($return = false, $withCount = false)
+    {
+        $builder = $this->_builder();
 
-		$response = $row->repeatOne();
+        $builder->orderBy('instime');
+
+        $page = $this->get[config('fetchSetting.pageField')] ?? 1;
+        $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;
+        $builder->limit($limit * ($page - 1), $limit);
+
+        if ($withCount) {
+            $builder->withTotalCount();
+        }
+
+        $builder->get($this->Model->tableName());
+
+        if ($return) {
+            return $builder;
+        }
+
+        $sql = $builder->getLastQuery();
+        $this->success($sql);
+    }
+
+    // 模拟模型获取器
+    protected function getAttr($data = [])
+    {
+        foreach ($data as $col => &$val) {
+            $getter = 'get' . str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $col))) . 'Attr';
+            if (method_exists($this->Model, $getter)) {
+                $val = call_user_func([$this->Model, $getter], $val, $data);
+            }
+        }
+        return $data;
+    }
+
+    public function index()
+    {
+        $builder = $this->getSql(true, true);
+        $sql = $builder->getLastQuery();
+
+        $Mysqli = new Mysqli('log');
+
+        try {
+            $data = $Mysqli->query($builder)->getResult();
+            if (empty($data)) {
+                $data = parent::__after_index([], 0) + ['sql' => $sql];
+                $this->success($data);
+                return;
+            }
+
+            $total = intval($Mysqli->rawQuery('SELECT FOUND_ROWS() as count')[0]['count'] ?? 0);
+
+            $instimes = $ids = [];
+
+            foreach ($data as &$item) {
+                $ids[] = $item['point_id'];
+                $instimes[] = intval($item['instime']);
+                $item = $this->getAttr($item);
+            }
+
+            $min = min($instimes);
+            $max = max($instimes);
+
+            $builder = new QueryBuilder();
+            $builder->where('instime', [$min, $max + 100], 'BETWEEN')
+                ->where('parent_id', $ids, 'IN')
+                ->get($this->Model->tableName());
+            $childs = $Mysqli->query($builder)->getResult();
+
+            $Mysqli->close();
+            if ($childs) {
+                // 如果point_id是子元素，从第一级删掉
+                $childIds = [];
+                // 判断是谁的儿子
+                $childMap = [];
+                foreach ($childs as &$item) {
+                    $childIds[] = $item['point_id'];
+                    $childMap[$item['parent_id']][] = $this->getAttr($item);
+                }
+
+                foreach ($data as $key => &$val) {
+                    if (in_array($val['point_id'], $childIds)) {
+                        unset($data[$key]);
+                        continue;
+                    }
+                    if ( ! empty($childMap[$val['point_id']])) {
+                        $val['children'] = $childMap[$val['point_id']];
+                    }
+                }
+            }
+
+            $result = parent::__after_index($this->toArray($data), $total) + ['sql' => $sql];
+            $this->success($result);
+
+        } catch (\Exception | \Throwable $e) {
+            $Mysqli && $Mysqli->close();
+            $this->error(\App\Common\Http\Code::ERROR_OTHER, $e->getMessage());
+        }
+    }
+
+    // 单条复发
+    public function _repeat($return = false)
+    {
+        $pointId = $this->post['pointId'];
+        if (empty($pointId)) {
+            throw new HttpParamException('PointId id empty.');
+        }
+        $row = $this->Model->where('point_id', $pointId)->get();
+        if ( ! $row) {
+            throw new HttpParamException('PointId id Error: ' . $pointId);
+        }
+
+        $response = $row->repeatOne();
         if ( ! $response) {
             throw new HttpParamException('Http Error! ');
         }
@@ -90,67 +197,29 @@ trait HttpTrackerTrait
             'data' => json_decode($response->getBody(), true)
         ];
         return $return ? $data : $this->success($data);
-	}
+    }
 
-	// 试运行，查询count
+    // 试运行，查询count
     public function _count($return = false)
-	{
-		$where = $this->post['where'];
-		if (empty($where)) {
-			throw new HttpParamException('ERROR is Empty');
-		}
-		try {
-			$count = $this->Model->where($where)->count('point_id');
-            $data = ['count' => $count];
-			return $return ? $data : $this->success($data);
-		} catch (\Exception | \Throwable $e) {
+    {
+        $builder = $this->_builder()->getOne($this->Model->tableName(), "count(`point_id`) as count");
+        $sql = $builder->getLastQuery();
+
+        $Mysqli = new Mysqli('log');
+        try {
+
+            $count = $Mysqli->query($builder)->getResultOne()['count'] ?? 0;
+            $Mysqli->close();
+
+            $data = ['count' => intval($count), 'sql' => $sql];
+            return $return ? $data : $this->success($data);
+        } catch (\Exception | \Throwable $e) {
+            $Mysqli && $Mysqli->close();
             if ($return) {
                 throw $e;
             } else {
-                $this->error(Code::ERROR_OTHER, $e->getMessage());
+                $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
             }
-		}
-	}
-
-	// 确定运行
-    public function _run($return = false)
-	{
-		$where = $this->post['where'];
-		if (empty($where)) {
-			throw new HttpParamException('run ERROR is Empty');
-		}
-		try {
-			$count = $this->Model->where($where)->count('point_id');
-			if ($count <= 0) {
-				throw new HttpParamException('COUNT行数为0');
-			}
-			$task = \EasySwoole\EasySwoole\Task\TaskManager::getInstance();
-//            $status = $task->async(new \App\Task\HttpTracker([
-//                'count' => $count,
-//                'where' => $where
-//            ]));
-			$status = $task->async(function () use ($where) {
-				trace('HttpTracker 开始 ');
-
-				/** @var AbstractModel $model */
-				$model = model_log('HttpTracker');
-				$model->where($where)->chunk(function ($item) {
-					$item->repeatOne();
-				}, 300);
-				trace('HttpTracker 结束 ');
-			});
-			if ($status > 0) {
-                $data = ['count' => $count, 'task' => $status];
-				return $return ? $data : $this->success($data);
-			} else {
-				throw new HttpParamException("投递异步任务失败: $status");
-			}
-		} catch (HttpParamException | \Exception | \Throwable $e) {
-			if ($return) {
-                throw $e;
-            } else {
-                $this->error(Code::ERROR_OTHER, $e->getMessage());
-            }
-		}
-	}
+        }
+    }
 }
