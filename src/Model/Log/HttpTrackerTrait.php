@@ -20,22 +20,22 @@ trait HttpTrackerTrait
 		return $timeStamp ? intval($timeStamp * 1000) : $timeStamp;
 	}
 
-	protected function getStartTimeAttr($val)
+	public function getStartTimeAttr($val)
 	{
 		return $this->_trackerTime($val);
 	}
 
-	protected function getEndTimeAttr($val)
+    public function getEndTimeAttr($val)
 	{
 		return $this->_trackerTime($val);
 	}
 
-	protected function getUrlAttr($val)
+    public function getUrlAttr($val)
 	{
 		return urldecode($val);
 	}
 
-	protected function getRequestAttr($val)
+    public function getRequestAttr($val)
 	{
 		$arr = [];
 		if ($json = json_decode($val, true)) {
@@ -44,7 +44,7 @@ trait HttpTrackerTrait
 		return array_to_std($arr);
 	}
 
-	protected function getResponseAttr($val)
+    public function getResponseAttr($val)
 	{
 		$json = json_decode($val, true);
 		$arr = is_array($json) ? $json : [];
