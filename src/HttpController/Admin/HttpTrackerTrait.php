@@ -117,7 +117,7 @@ trait HttpTrackerTrait
         $builder = $this->getSql(true, true);
         $sql = $builder->getLastQuery();
 
-        $Mysqli = new Mysqli('log');
+        $Mysqli = new Mysqli($this->Model->getConnectionName());
 
         try {
             $data = $Mysqli->query($builder)->getResult();
@@ -207,7 +207,7 @@ trait HttpTrackerTrait
         $builder = $this->_builder()->getOne($this->Model->tableName(), "count(`point_id`) as count");
         $sql = $builder->getLastQuery();
 
-        $Mysqli = new Mysqli('log');
+        $Mysqli = new Mysqli($this->Model->getConnectionName());
         try {
 
             $count = $Mysqli->query($builder)->getResultOne()['count'] ?? 0;
