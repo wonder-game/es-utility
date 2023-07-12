@@ -82,19 +82,21 @@ class SyncData implements TaskInterface
         $columns = array_keys($schemaInfo->getColumns());
         $data = array_intersect_key($orgs, array_flip($columns));
 
-        is_array($data['extension']) or $data['extension'] = json_decode($data['extension'], true);
-        $data['extension'] or $data['extension'] = [];
+        if (isset($data['extension'])) {
+            is_array($data['extension']) or $data['extension'] = json_decode($data['extension'], true);
+            $data['extension'] or $data['extension'] = [];
 
-        // 其它加入extension
-        foreach ($orgs as $k => $v)
-        {
-            if (! in_array($k, $columns + ['ip', config('RSA.key'), 'instime', 'updtime']))
+            // 其它加入extension
+            foreach ($orgs as $k => $v)
             {
-                $data['extension'][$k] = $v;
+                if (! in_array($k, $columns + ['ip', config('RSA.key'), 'instime', 'updtime']))
+                {
+                    $data['extension'][$k] = $v;
+                }
             }
-        }
 
-        is_array($data['extension']) && $data['extension'] = json_encode($data['extension'], JSON_UNESCAPED_UNICODE);
+            is_array($data['extension']) && $data['extension'] = json_encode($data['extension'], JSON_UNESCAPED_UNICODE);
+        }
 
         try {
 
@@ -104,7 +106,7 @@ class SyncData implements TaskInterface
                 $model->update($data, [$pk => $data[$pk]]);
                 $orgs[$pk] = $data[$pk];
             } else {
-                $insertId = $model->_clone()->data($data)->duplicate($data)->save();
+                $insertId = $model->_clone()->data($data)->duplicate(array_keys($data))->save();
                 $orgs[$pk] = is_bool($insertId) ? $data[$pk] : $insertId;
             }
         }
@@ -114,7 +116,7 @@ class SyncData implements TaskInterface
 
             dingtalk_text($title, "$title: class: $className, 错误信息: {$e->getMessage()}");
             wechat_notice($title, "class: $className, 错误信息: {$e->getMessage()}");
-            trace("数据同步失败, class: $className, data: " . json_encode($data, JSON_UNESCAPED_UNICODE) , 'info', 'sync');
+            trace("数据同步失败, class: $className, data: " . json_encode($data, JSON_UNESCAPED_UNICODE) . $e->__toString() , 'info', 'sync');
         }
 
         // 清除缓存， 由对应model事件执行
