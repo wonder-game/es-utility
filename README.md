@@ -1,4 +1,3 @@
-
 ### 简介
 
     基于Easyswoole封装的一些Trait和Class，放到Composer仓库以实现多项目共用一套代码
@@ -63,6 +62,7 @@
      └── function.php 常用函数，项目可预定义对应函数以实现不同逻辑
 
 Controller
+
 ```php
 <?php
 use WonderGame\EsUtility\HttpController\Admin\AdminTrait;
@@ -75,7 +75,9 @@ class MyAdminController
 }
 
 ```
+
 Model
+
 ```php
 <?php
 use WonderGame\EsUtility\Model\AdminModelTrait;
@@ -91,7 +93,7 @@ class MyAdminModel
 
 ### 答疑解惑
 
- function.php 为何不写在此项目的composer.json
+function.php 为何不写在此项目的composer.json
 
     function.php应该由项目的composer.json去定义引入的顺序
     位置一定得是在项目的函数引入之后，否则无法预定义函数，而放在此项目的composer.json会被优先加载
@@ -105,6 +107,10 @@ trait有哪些坑
     1. 不允许重写属性，所以基本都定义了一个setTraitProtected方法去修改trait属性
     2. 不允许重载方法，当某些项目可能比方法多一个小逻辑时，需要及时调整代码的封装，否则需要整个复制多一份，日积月累，反而可能更难维护
     3. 由于 2 的限制，现将普通控制器方法的public方法名默认添加一个固定前缀，通过基础控制器 /src/HttpController/BaseControllerTrait.php 的 actionNotFound 方法来实现更加灵活的调用方式
+
+### 开发备忘
+
+    1. OrmCache/Strings的bloom功能使用时需注意：如果不同的系统（例如log, sdk）刚好用的是同一个redis实例，而且又刚好有同名的表(例如game,package)，请务必保证两表内容是同步的！！像pay.order_GAMEID分表和log.order_GAMEID分表，这个得注意了，因为它俩就是主键和内容都不同的，不能启用这个功能！！！
 
 ### TODO
 
