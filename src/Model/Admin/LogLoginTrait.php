@@ -8,7 +8,7 @@ use EasySwoole\Mysqli\QueryBuilder;
 
 trait LogLoginTrait
 {
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 		$this->autoTimeStamp = true;
 	}

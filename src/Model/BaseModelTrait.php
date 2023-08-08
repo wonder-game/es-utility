@@ -28,12 +28,12 @@ trait BaseModelTrait
 //        $this->autoTimeStamp = false;
 		$this->createTime = 'instime';
 		$this->updateTime = false;
-		$this->setBaseTraitProptected();
+		$this->setBaseTraitProtected();
 
 		parent::__construct($data);
 	}
 
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 	}
 

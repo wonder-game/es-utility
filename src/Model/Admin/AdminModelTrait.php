@@ -14,7 +14,7 @@ trait AdminModelTrait
 	 */
 	abstract public function signInLog($data = []);
 
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 		$this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'asc'];

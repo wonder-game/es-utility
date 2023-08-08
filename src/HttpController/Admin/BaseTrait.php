@@ -33,13 +33,13 @@ trait BaseTrait
 	protected function _initialize()
 	{
 		// 设置组件属性
-		$this->setBaseTraitProptected();
+		$this->setBaseTraitProtected();
 		// 实例化模型
 		$this->instanceModel();
 		return true;
 	}
 
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 	}
 

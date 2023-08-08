@@ -8,7 +8,7 @@ trait SysinfoModelTrait
 {
     use SplArray;
 
-    protected function setBaseTraitProptected()
+    protected function setBaseTraitProtected()
     {
         $this->splWhere = ['status' => 1];
         $this->splFieldKey = 'varname';

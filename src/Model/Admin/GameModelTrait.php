@@ -5,7 +5,7 @@ namespace WonderGame\EsUtility\Model\Admin;
 
 trait GameModelTrait
 {
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 		$this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'desc'];

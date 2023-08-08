@@ -4,7 +4,7 @@ namespace WonderGame\EsUtility\Model\Admin;
 
 trait PackageModelTrait
 {
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 		$this->sort = ['sort' => 'asc', 'id' => 'desc'];
 	}

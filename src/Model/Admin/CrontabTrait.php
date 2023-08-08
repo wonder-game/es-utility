@@ -9,7 +9,7 @@ trait CrontabTrait
 {
     use Hash;
 
-    protected function setBaseTraitProptected()
+    protected function setBaseTraitProtected()
     {
         $this->autoTimeStamp = true;
         $this->hashWhere = ['status' => [[0, 2], 'IN']];
