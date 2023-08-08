@@ -43,7 +43,7 @@ trait AuthTrait
 
     protected function onRequest(?string $action): ?bool
     {
-        $this->setAuthTraitProptected();
+        $this->setAuthTraitProtected();
 
         $return = parent::onRequest($action);
         if ( ! $return) {
@@ -63,7 +63,7 @@ trait AuthTrait
         return $Admin->where('id', $id)->get();
     }
 
-    protected function setAuthTraitProptected()
+    protected function setAuthTraitProtected()
     {
     }
 

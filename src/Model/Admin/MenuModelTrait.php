@@ -10,7 +10,7 @@ use WonderGame\EsUtility\Common\Classes\Tree;
  */
 trait MenuModelTrait
 {
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 		$this->sort = ['sort' => 'asc', 'id' => 'desc'];
 	}

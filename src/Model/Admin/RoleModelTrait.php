@@ -6,7 +6,7 @@ use EasySwoole\ORM\AbstractModel;
 
 trait RoleModelTrait
 {
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
         $this->autoTimeStamp = true;
 		$this->sort = ['sort' => 'asc', 'id' => 'asc'];

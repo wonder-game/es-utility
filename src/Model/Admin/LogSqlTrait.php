@@ -9,7 +9,7 @@ use WonderGame\EsUtility\Common\Classes\CtxRequest;
 
 trait LogSqlTrait
 {
-	protected function setBaseTraitProptected()
+	protected function setBaseTraitProtected()
 	{
 		$this->autoTimeStamp = true;
 	}
