@@ -38,11 +38,11 @@ if ( ! function_exists('is_super')) {
 if ( ! function_exists('find_model')) {
     /**
      * @param $name
-     * @param $thorw
+     * @param $throw
      * @return string|null
      * @throws Exception
      */
-    function find_model($name, $thorw = true)
+    function find_model($name, $throw = true)
     {
         if ( ! $namespaces = config('MODEL_NAMESPACES')) {
             $namespaces = ['\\App\\Model'];
@@ -55,8 +55,8 @@ if ( ! function_exists('find_model')) {
             }
         }
 
-        if ($thorw) {
-            throw new \Exception('Class Not Found: ' . $name);
+        if ($throw) {
+            throw new \Exception("Class Not Found: $name");
         }
         return null;
     }
