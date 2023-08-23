@@ -13,6 +13,12 @@ trait SplArray
 {
     use Events;
 
+    /**
+     * 有效期, s
+     * @var float|int
+     */
+    protected $expire = 7 * 86400;
+
     protected $redisPoolName = 'default';
 
     protected $splKey = 'spl-array-%s';
@@ -70,7 +76,7 @@ trait SplArray
             }
 
             $Spl = $this->_getSplArray();
-            $redis->set($key, serialize($Spl));
+            $redis->setEx($key, $this->expire, serialize($Spl));
             return $Spl;
 
         }, $this->redisPoolName);

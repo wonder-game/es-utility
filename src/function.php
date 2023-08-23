@@ -38,11 +38,11 @@ if ( ! function_exists('is_super')) {
 if ( ! function_exists('find_model')) {
     /**
      * @param $name
-     * @param $thorw
+     * @param $throw
      * @return string|null
      * @throws Exception
      */
-    function find_model($name, $thorw = true)
+    function find_model($name, $throw = true)
     {
         if ( ! $namespaces = config('MODEL_NAMESPACES')) {
             $namespaces = ['\\App\\Model'];
@@ -55,8 +55,8 @@ if ( ! function_exists('find_model')) {
             }
         }
 
-        if ($thorw) {
-            throw new \Exception('Class Not Found: ' . $name);
+        if ($throw) {
+            throw new \Exception("Class Not Found: $name");
         }
         return null;
     }
@@ -273,20 +273,22 @@ if ( ! function_exists('listdate')) {
      *
      * @param string|int $beginday 开始日期，格式为Ymd或者Y-m-d
      * @param string|int $endday 结束日期，格式为Ymd或者Y-m-d
-     * @param int $type 类型 1：日； 2：月； 3：季； 4：年
+     * @param string|int|bool $type 类型: 1|%d|%a|true-日； 2|%m|false-月； 3-季； 4|%y-年
+     * @param string $format value的格式
+     * @param string $keyfmt key的格式
      * @return array
      */
-    function listdate($beginday, $endday, $type = 2)
+    function listdate($beginday, $endday, $type = 2, $format = 'Ymd', $keyfmt = 'ymd')
     {
-        $dif = difdate($beginday, $endday, $type != 2);
-
+        $type = is_numeric($type) ? (int)$type : $type;
+        $dif = difdate($beginday, $endday, ! ($type === 2 || $type === '%m' || $type === false));
+        $arr = [];
         // 季
-        if ($type == 3) {
+        if ($type === 3) {
             // 开始的年份, 结束的年份
             $arry = [date('Y', strtotime($beginday)), date('Y', strtotime($endday))];
             // 开始的月份, 结束的月份
             $arrm = [date('m', strtotime($beginday)), date('m', strtotime($endday))];
-            $arrym = [];
 
             $quarter = ['04', '07', 10, '01'];
             $come = false; // 入栈的标识
@@ -310,30 +312,29 @@ if ( ! function_exists('listdate')) {
                 }
             } while ($by <= $arry[1]);
         } // 年
-        elseif ($type == 4) {
+        elseif ($type === 4 || $type === '%y') {
             $begintime = substr($beginday, 0, 4);
             for ($i = 0; $i <= $dif; ++$i) {
                 $arr[$begintime - 1] = $begintime . '0101'; // p2018=>strtotime(20190101)
                 ++$begintime;
             }
         } else {
-            // 日期 p180302=>strtotime(20180304)
-            if ($type === true || $type == 1) {
-                $format = 'Y-m-d';
+            // 日期 p180302=>strtotime(20180303)
+            if ($type === true || $type === 1 || $type === '%d') {
                 $unit = 'day';
-                $d = '';
             } // 月份 p1803=>strtotime(20180401)
-            elseif ($type === false || $type == 2) {
-                $format = 'Y-m';
+            else {
                 $unit = 'month';
-                $d = '01';
             }
 
             $begintime = strtotime(date($format, strtotime($beginday)));
             for ($i = 0; $i <= $dif; ++$i) {
                 $key = strtotime("+$i $unit", $begintime);
-                $format = str_replace('-', '', $format);
-                $arr[date(strtolower($format), $key - 3600 * 24)] = date(ucfirst($format), $key) . $d;
+                $arr[date($keyfmt ?: 'ymd', $key - 3600 * 24)] = date($format, $key);
+            }
+            // 如果想要将下标变为自增
+            if ( ! $keyfmt) {
+                $arr = array_values($arr);
             }
         }
         return $arr;
@@ -343,22 +344,20 @@ if ( ! function_exists('listdate')) {
 
 if ( ! function_exists('difdate')) {
     /**
-     * 计算两个日期相差多少天或多少月
+     * 计算两个日期之间的间隔(天、月、年等)
+     *
+     * @param string $beginday 开始时间
+     * @param string|null $endday 结束时间
+     * @param string|bool $format 间隔类型：%y-年；%m|false-月；%a|true-天；
+     * @return int
      */
-    function difdate($beginday, $endday, $d = false)
+    function difdate($beginday, $endday, $format = '%a')
     {
-        $beginstamp = strtotime($beginday);
-        $endstamp = strtotime($endday);
-
-        // 相差多少个月
-        if ( ! $d) {
-            list($date_1['y'], $date_1['m']) = explode('-', date('Y-m', $beginstamp));
-            list($date_2['y'], $date_2['m']) = explode('-', date('Y-m', $endstamp));
-            return ($date_2['y'] - $date_1['y']) * 12 + $date_2['m'] - $date_1['m'];
+        if (is_bool($format)) {
+            $format = $format === true ? '%a' : '%m';
         }
-
-        // 相差多少天
-        return ceil(($endstamp - $beginstamp) / (3600 * 24));
+        $interval = date_diff(date_create($beginday), date_create($endday));
+        return (int)$interval->format($format);
     }
 }
 
