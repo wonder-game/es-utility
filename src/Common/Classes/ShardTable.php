@@ -72,7 +72,7 @@ class ShardTable extends SplBean
      * @param int $sdate 开始时间,格式20180101
      * @param int $edate 结束时间,格式20180203
      * @param string $field 分区字段
-     * @param int $type 分区类型。1：日； 2：月； 3：季； 4：年；
+     * @param int $type 分区类型: 1-日； 2-月； 3-季； 4-年
      * @param bool $showtab 是否需求执行show table以确认表是否存在
      * @return void|array
      */
@@ -100,7 +100,7 @@ class ShardTable extends SplBean
         if ($sdate >= $edate) {
             return $this->_reMsg('开始日期必须小于结束日期', 1);
         }
-        $arr = listdate($sdate, $edate, $type);
+        $arr = listdate($sdate, $edate, $type, $type == 2 ? 'Ym01' : 'Ymd', $type == 2 ? 'ym' : 'ymd');
         if (empty($arr)) {
             return;
         }
