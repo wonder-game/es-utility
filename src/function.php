@@ -849,5 +849,33 @@ if ( ! function_exists('http_tracker')) {
             }
         };
     }
+}
 
+
+if ( ! function_exists('format_keyval')) {
+    function format_keyval($kv = [])
+    {
+        $data = [];
+        foreach ($kv as $arr) {
+            if (empty($arr['Key']) || empty($arr['Value'])) {
+                continue;
+            }
+            $data[$arr['Key']] = $arr['Value'];
+        }
+        return $data;
+    }
+}
+
+if ( ! function_exists('unformat_keyval')) {
+    function unformat_keyval($kv = [])
+    {
+        $result = [];
+        foreach ($kv as $key => $value) {
+            $result[] = [
+                'Key' => $key,
+                'Value' => $value
+            ];
+        }
+        return $result;
+    }
 }
