@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Crontab\Drive;
+namespace WonderGame\EsUtility\Crontab\Driver;
 
 use EasySwoole\ORM\AbstractModel;
 use WonderGame\EsUtility\Model\Admin\CrontabTrait;
