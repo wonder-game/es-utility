@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Crontab\Drive;
+namespace WonderGame\EsUtility\Crontab\Driver;
 
 use EasySwoole\HttpClient\HttpClient;
 use WonderGame\EsUtility\Common\Classes\LamOpenssl;
@@ -9,9 +9,11 @@ class Http implements Interfaces
 {
     public function list(): array
     {
-        $url = rtrim(config('CRONTAB.url'), '/') . '/list';
+        $url = rtrim(config('CRONTAB.url'), '/') . '/api/crontab/list';
         $HttpClient = new HttpClient($url);
+        //echo $url;
         $body = $this->body(config('CRONTAB.post') ?: []);
+        //print_r($body);
         $Resp = $HttpClient->post($body);
 
         $json = $Resp->getBody();
@@ -54,30 +56,22 @@ class Http implements Interfaces
 
     protected function body($data = [])
     {
-        $config = config('CRONTAB');
-        switch (strtolower($data['encry'] = $config['encry']['type'] ?? '')) {
+        switch (strtolower($data['encry'] = config('CRONTAB.encry'))) {
             case 'rsa':
-                $rsaConfig = $config['encry']['rsa'] ?? config('RSA');
-                if (empty($rsaConfig)) {
-                    throw new \Exception('Missing configuration: CRONTAB.encry.rsa');
-                }
+                $rsaConfig = config('RSA');
                 $openssl = LamOpenssl::getInstance($rsaConfig['private'], $rsaConfig['public']);
                 return [
                     'encry' => $data['encry'],
                     $rsaConfig['key'] => $openssl->encrypt(json_encode($data))
                 ];
-            case 'md5':
-                if (empty($config['encry']['md5']['key'])) {
-                    throw new \Exception('Missing configuration: CRONTAB.encry.md5');
-                }
-                $time = time();
-                $data['time'] = $time;
 
-                $sign = $data['encry'] . $time . $config['encry']['md5']['key'];
-                $data['sign'] = md5($sign);
+            case 'md5':
+                $data['time'] = time();
+                $data['sign'] = sign($data['encry'] . $data['time']);
                 return $data;
+
             default:
-                throw new \Exception('Error configuration: CRONTAB.encry.type');
+                throw new \Exception('Error configuration: CRONTAB.encry');
         }
     }
 }

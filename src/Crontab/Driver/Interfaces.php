@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Crontab\Drive;
+namespace WonderGame\EsUtility\Crontab\Driver;
 
 interface Interfaces
 {

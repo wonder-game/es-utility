@@ -9,8 +9,8 @@ use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EasySwoole\Utility\File;
 use EasySwoole\EasySwoole\Trigger;
-use WonderGame\EsUtility\Crontab\Drive\Interfaces;
-use WonderGame\EsUtility\Crontab\Drive\Mysql;
+use WonderGame\EsUtility\Crontab\Driver\Interfaces;
+use WonderGame\EsUtility\Crontab\Driver\Mysql;
 use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 
 class Crontab extends AbstractCronTask
@@ -54,7 +54,7 @@ class Crontab extends AbstractCronTask
     public function run(int $taskId, int $workerIndex)
     {
         $config = config('CRONTAB');
-        $Drive = $this->drive($config['drive']);
+        $Drive = $this->driver($config['driver']);
         $backupFile = $config['backup'] ?: (config('LOG.dir') . '/crontab.data');
 
         try {
@@ -127,7 +127,7 @@ class Crontab extends AbstractCronTask
         }
     }
 
-    protected function drive($name = 'Mysql'): Interfaces
+    protected function driver($name = 'Mysql'): Interfaces
     {
         if (empty($name)) {
             $name = Mysql::class;
@@ -143,11 +143,11 @@ class Crontab extends AbstractCronTask
         } else {
             $Ref = new \ReflectionClass(static::class);
             $nameSpace = $Ref->getNamespaceName();
-            $name = $nameSpace . '\\Drive\\' . ucfirst($name);
+            $name = $nameSpace . '\\Driver\\' . ucfirst($name);
             if (class_exists($name)) {
                 return new $name();
             } else {
-                throw new \Exception('Class Not found: ' . $name);
+                throw new \Exception("Class Not found: $name");
             }
         }
     }

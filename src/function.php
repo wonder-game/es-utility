@@ -879,3 +879,27 @@ if ( ! function_exists('unformat_keyval')) {
         return $result;
     }
 }
+
+if ( ! function_exists('sign')) {
+    /**
+     * 简单的签名与验签
+     * @param string|array $data 要参与签名的数据
+     * @param string|null $sign 有传值则表示要验签
+     * @param string $key 指定密钥，空则取 config('ENCRYPT.apikey')
+     * @return string|bool  返回签名或验签结果
+     */
+    function sign($data, $sign = null, $key = '')
+    {
+        $key = $key ?: config('ENCRYPT.apikey');
+        if ( ! $key) {
+            throw new \Exception('Missing configuration: ENCRYPT.apikey');
+        }
+
+        if (is_array($data)) {
+            ksort($data);
+            $data = json_encode($data);
+        }
+        $hash = md5($data . $key);
+        return is_null($sign) ? $hash : $hash === $sign;
+    }
+}
