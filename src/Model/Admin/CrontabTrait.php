@@ -11,6 +11,7 @@ trait CrontabTrait
 
     protected function setBaseTraitProtected()
     {
+        parent::setBaseTraitProtected();
         $this->autoTimeStamp = true;
         $this->hashWhere = ['status' => [[0, 2], 'IN']];
     }
