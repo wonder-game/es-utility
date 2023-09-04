@@ -903,3 +903,20 @@ if ( ! function_exists('sign')) {
         return is_null($sign) ? $hash : $hash === $sign;
     }
 }
+
+if ( ! function_exists('report_redis_key')) {
+
+    /**
+     * 返回上报队列里的redis-key
+     * @param string $key 归类.具体动作
+     * @return string
+     */
+    function report_redis_key($key = '')
+    {
+        $k = explode('.', $key);
+        return config("REPORT.$key")
+            // 定义啥就是啥
+            ?// 例如： Report:Origin-Active
+            : (config('REPORT.PREFIX') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
+    }
+}
