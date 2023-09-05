@@ -908,13 +908,14 @@ if ( ! function_exists('report_redis_key')) {
 
     /**
      * 返回上报队列里的redis-key
-     * @param string $key 归类.具体动作
+     * @param string $key 具体动作 或 归类.具体动作
+     * @param string $type 归类
      * @return string
      */
-    function report_redis_key($key = '')
+    function report_redis_key($key = '', $type = 'origin')
     {
-        $k = explode('.', $key);
-        return config("REPORT.$key")
+        $k = strpos($key, '.') ? explode('.', $key) : [$type, $key];
+        return config("REPORT.$k[0].$k[1]")
             // 定义啥就是啥
             ?// 例如： Report:Origin-Active
             : (config('REPORT.PREFIX') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
