@@ -173,7 +173,7 @@ trait HttpTrackerTrait
 
         } catch (\Exception | \Throwable $e) {
             $Mysqli && $Mysqli->close();
-            $this->error(\App\Common\Http\Code::ERROR_OTHER, $e->getMessage());
+            $this->error(Code::ERROR_OTHER, $e->getMessage());
         }
     }
 
