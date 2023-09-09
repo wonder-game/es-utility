@@ -13,4 +13,7 @@ class Code extends Status
 	const VERSION_LATER = 1001;
 	// 强制刷新
 	const VERSION_FORCE = 1002;
+
+    // 没有为评分的会话complete
+    const NO_COMPLETE_TOPIC = 1100;
 }
