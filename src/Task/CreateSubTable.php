@@ -87,9 +87,7 @@ class CreateSubTable implements TaskInterface
             $builder = new QueryBuilder();
             $builder->raw("CREATE TABLE  IF NOT EXISTS `{$fullName}` LIKE `{$name}_0`;");
             DbManager::getInstance()->query($builder, true, $connectionName);
-        }
-        catch (\EasySwoole\Mysqli\Exception\Exception | \Throwable $e)
-        {
+        } catch (\EasySwoole\Mysqli\Exception\Exception|\Throwable $e) {
             $title = '创建分表失败';
             dingtalk_text($title, "$title [$connectionName . $fullName] : " . $e->getMessage());
             wechat_notice($title, $e->getMessage());

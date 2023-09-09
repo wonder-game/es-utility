@@ -4,27 +4,27 @@ namespace WonderGame\EsUtility\Model\Admin;
 
 trait PackageModelTrait
 {
-	protected function setBaseTraitProtected()
-	{
-		$this->sort = ['sort' => 'asc', 'id' => 'desc'];
-	}
+    protected function setBaseTraitProtected()
+    {
+        $this->sort = ['sort' => 'asc', 'id' => 'desc'];
+    }
 
-	public function getPackageAll($where = [])
-	{
-		if ($where) {
-			$this->where($where);
-		}
-		return $this->setOrder()->all();
-	}
+    public function getPackageAll($where = [])
+    {
+        if ($where) {
+            $this->where($where);
+        }
+        return $this->setOrder()->all();
+    }
 
-	public function getPackageKeyValue()
-	{
-		$all = $this->getPackageAll();
+    public function getPackageKeyValue()
+    {
+        $all = $this->getPackageAll();
 
-		$pkg = [];
-		foreach ($all as $key => $value) {
-			$pkg[$value['pkgbnd']] = $value['name'];
-		}
-		return $pkg;
-	}
+        $pkg = [];
+        foreach ($all as $key => $value) {
+            $pkg[$value['pkgbnd']] = $value['name'];
+        }
+        return $pkg;
+    }
 }

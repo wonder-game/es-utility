@@ -29,5 +29,7 @@ trait Events
         $res && $this->_after_cache();
     }
 
-    protected function _after_cache() {}
+    protected function _after_cache()
+    {
+    }
 }

@@ -6,9 +6,9 @@ namespace WonderGame\EsUtility\Crontab;
 use Cron\CronExpression;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
+use EasySwoole\EasySwoole\Trigger;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EasySwoole\Utility\File;
-use EasySwoole\EasySwoole\Trigger;
 use WonderGame\EsUtility\Crontab\Driver\Interfaces;
 use WonderGame\EsUtility\Crontab\Driver\Mysql;
 use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
@@ -61,7 +61,7 @@ class Crontab extends AbstractCronTask
             $list = $Drive->list();
             // 成功记录到文件, todo 运行一次的任务此时还未修改
             $this->backupFile($backupFile, $list);
-        } catch (\Exception | \Throwable $e) {
+        } catch (\Exception|\Throwable $e) {
             // 失败降级从文件读取
             if ( ! file_exists($backupFile) || ! ($str = file_get_contents($backupFile))) {
                 // 连文件都没有，说明从未正常运行过
@@ -176,7 +176,7 @@ class Crontab extends AbstractCronTask
         if (strpos($className, '\\') === false) {
             $Ref = new \ReflectionClass($dftTpl);
             $nameSpace = $Ref->getNamespaceName();
-            $className = $nameSpace . '\\'. ucfirst($className);
+            $className = $nameSpace . '\\' . ucfirst($className);
         }
 
         $RefFull = new \ReflectionClass($className);

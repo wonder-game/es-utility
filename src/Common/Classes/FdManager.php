@@ -4,9 +4,9 @@
 namespace WonderGame\EsUtility\Common\Classes;
 
 use EasySwoole\Component\Singleton;
+use EasySwoole\Component\TableManager;
 use EasySwoole\EasySwoole\ServerManager;
 use Swoole\Table;
-use EasySwoole\Component\TableManager;
 
 /**
  * uid与fd，SwooleTable存储

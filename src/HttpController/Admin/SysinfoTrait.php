@@ -13,12 +13,12 @@ trait SysinfoTrait
     {
         $where = [];
         isset($this->get['status']) && $this->get['status'] !== '' && $where['status'] = $this->get['status'];
-		foreach (['varname', 'remark'] as $col) {
+        foreach (['varname', 'remark'] as $col) {
             empty($this->get[$col]) or $where[$col] = ["%{$this->get[$col]}%", 'like'];
-		}
+        }
 
         return $this->_search($where);
-	}
+    }
 
     public function _add($return = false)
     {
@@ -40,11 +40,11 @@ trait SysinfoTrait
         return parent::_edit($return);
     }
 
-	protected function __writeBefore()
-	{
-		$post = $this->post;
-		if (empty($post['varname']) || empty($post['value']) || ! isset($post['type'])) {
-			throw new HttpParamException('Params invalid');
-		}
-	}
+    protected function __writeBefore()
+    {
+        $post = $this->post;
+        if (empty($post['varname']) || empty($post['value']) || ! isset($post['type'])) {
+            throw new HttpParamException('Params invalid');
+        }
+    }
 }

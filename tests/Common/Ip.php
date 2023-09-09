@@ -2,8 +2,8 @@
 
 namespace Tests\Common;
 
-use PHPUnit\Framework\TestCase;
 use EasySwoole\Http\Request as EsRequest;
+use PHPUnit\Framework\TestCase;
 
 /**
  * php easyswoole phpunit tests/Common/Ip.php

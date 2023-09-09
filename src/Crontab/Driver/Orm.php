@@ -3,7 +3,6 @@
 namespace WonderGame\EsUtility\Crontab\Driver;
 
 use EasySwoole\ORM\AbstractModel;
-use WonderGame\EsUtility\Model\Admin\CrontabTrait;
 
 class Orm implements Interfaces
 {

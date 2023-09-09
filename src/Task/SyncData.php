@@ -87,10 +87,8 @@ class SyncData implements TaskInterface
             $data['extension'] or $data['extension'] = [];
 
             // 其它加入extension
-            foreach ($orgs as $k => $v)
-            {
-                if (! in_array($k, $columns + ['ip', config('RSA.key'), 'instime', 'updtime']))
-                {
+            foreach ($orgs as $k => $v) {
+                if ( ! in_array($k, $columns + ['ip', config('RSA.key'), 'instime', 'updtime'])) {
                     $data['extension'][$k] = $v;
                 }
             }
@@ -109,14 +107,12 @@ class SyncData implements TaskInterface
                 $insertId = $model->_clone()->data($data)->duplicate(array_keys($data))->save();
                 $orgs[$pk] = is_bool($insertId) ? $data[$pk] : $insertId;
             }
-        }
-        catch (\Exception | \Throwable $e)
-        {
+        } catch (\Exception|\Throwable $e) {
             $title = '数据同步失败';
 
             dingtalk_text($title, "$title: class: $className, 错误信息: {$e->getMessage()}");
             wechat_notice($title, "class: $className, 错误信息: {$e->getMessage()}");
-            trace("数据同步失败, class: $className, data: " . json_encode($data, JSON_UNESCAPED_UNICODE) . $e->__toString() , 'info', 'sync');
+            trace("数据同步失败, class: $className, data: " . json_encode($data, JSON_UNESCAPED_UNICODE) . $e->__toString(), 'info', 'sync');
         }
 
         // 清除缓存， 由对应model事件执行
@@ -136,10 +132,8 @@ class SyncData implements TaskInterface
         }
 
         // 兼容0值
-        if (isset($orgs[$pk]) && $orgs[$pk] !== '')
-        {
-            if ($row = $model->where($pk, $orgs[$pk])->get())
-            {
+        if (isset($orgs[$pk]) && $orgs[$pk] !== '') {
+            if ($row = $model->where($pk, $orgs[$pk])->get()) {
                 // 备份删除数据
                 $this->_delete_backup($row);
                 // 执行删除
@@ -152,12 +146,13 @@ class SyncData implements TaskInterface
 //            $model->cacheDel($orgs[$pk], null);
         }
     }
+
     // 记录，用于误删恢复
     protected function _delete_backup(AbstractModel $model)
     {
         // 记录原始data
         $rawArray = $model->toRawArray();
-        trace("[{$this->delBakupKey}_data]". json_encode($rawArray, JSON_UNESCAPED_UNICODE));
+        trace("[{$this->delBakupKey}_data]" . json_encode($rawArray, JSON_UNESCAPED_UNICODE));
 
         // 构造恢复SQL
         $builder = new QueryBuilder();

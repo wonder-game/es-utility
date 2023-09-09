@@ -2,7 +2,6 @@
 
 namespace WonderGame\EsUtility\Common\OrmCache;
 
-use EasySwoole\ORM\AbstractModel;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 
