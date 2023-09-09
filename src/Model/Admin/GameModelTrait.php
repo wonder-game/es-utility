@@ -3,6 +3,9 @@
 namespace WonderGame\EsUtility\Model\Admin;
 
 
+use EasySwoole\ORM\AbstractModel;
+use WonderGame\EsUtility\Model\BaseModelTrait;
+
 trait GameModelTrait
 {
     protected function setBaseTraitProtected()
@@ -33,6 +36,7 @@ trait GameModelTrait
 
     public function getGameAll($where = [])
     {
+        /* @var AbstractModel|BaseModelTrait $this */
         if ($where) {
             $this->where($where);
         }
@@ -41,13 +45,14 @@ trait GameModelTrait
 
     /**
      * 获取id => name 键值对
-     * @param array $where
+     * @param array $idArray
      * @return array|null
      * @throws \EasySwoole\ORM\Exception\Exception
      * @throws \Throwable
      */
     public function getKeyVlaueByid($idArray = [])
     {
+        /* @var AbstractModel $this */
         if ($idArray) {
             $this->where(['id' => [$idArray, 'in']]);
         }

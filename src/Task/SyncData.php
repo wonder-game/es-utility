@@ -6,6 +6,7 @@ use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
+use WonderGame\EsUtility\Model\BaseModelTrait;
 
 /**
  * 异步更新从库数据
@@ -57,7 +58,7 @@ class SyncData implements TaskInterface
     protected function doSync($className)
     {
         if ( ! class_exists($className)) {
-            return;
+            return false;
         }
 
         // 单独处理删除操作
@@ -67,13 +68,13 @@ class SyncData implements TaskInterface
 
         $orgs = $this->data['data'] ?? [];
         if (empty($orgs)) {
-            return;
+            return false;
         }
 
         /** @var AbstractModel | \App\Model\Sdk\Game $model */
         $model = new $className();
         if ( ! $model instanceof AbstractModel) {
-            return;
+            return false;
         }
 
         $schemaInfo = $model->schemaInfo();
@@ -121,7 +122,7 @@ class SyncData implements TaskInterface
 
     protected function _delete($className)
     {
-        /** @var AbstractModel | \App\Model\Log\Game $model */
+        /** @var AbstractModel | BaseModelTrait | \App\Model\Log\Game $model */
         $model = new $className();
 
         $pk = $model->getPk();

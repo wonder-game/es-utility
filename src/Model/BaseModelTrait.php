@@ -62,7 +62,7 @@ trait BaseModelTrait
      * 数据写入前对extension字段的值进行处理
      * @access protected
      * @param array $extension 原数据
-     * @return string 处理后的值
+     * @return string|array 处理后的值
      */
     protected function setExtensionAttr($extension = [])
     {

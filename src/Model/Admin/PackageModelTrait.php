@@ -2,6 +2,9 @@
 
 namespace WonderGame\EsUtility\Model\Admin;
 
+use EasySwoole\ORM\AbstractModel;
+use WonderGame\EsUtility\Model\BaseModelTrait;
+
 trait PackageModelTrait
 {
     protected function setBaseTraitProtected()
@@ -11,6 +14,7 @@ trait PackageModelTrait
 
     public function getPackageAll($where = [])
     {
+        /* @var AbstractModel|BaseModelTrait $this */
         if ($where) {
             $this->where($where);
         }
@@ -22,7 +26,7 @@ trait PackageModelTrait
         $all = $this->getPackageAll();
 
         $pkg = [];
-        foreach ($all as $key => $value) {
+        foreach ($all as $value) {
             $pkg[$value['pkgbnd']] = $value['name'];
         }
         return $pkg;
