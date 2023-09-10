@@ -27,9 +27,9 @@ class LamLog implements LoggerInterface
         $this->logDir = $logDir ?: '';
     }
 
-    public function log($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug'): string
+    public function log($msg, int $logLevel = self::LOG_LEVEL_INFO, string $category = 'debug'): string
     {
-        $str = $this->_preAct($msg, $level, $category, 'log');
+        $str = $this->_preAct($msg, $logLevel, $category, 'log');
 
         // 立即写入
         if ($category === self::CATE_IMMEDIATE || Coroutine::getCid() < 0) {
@@ -44,9 +44,9 @@ class LamLog implements LoggerInterface
         return $str;
     }
 
-    public function console($msg, int $level = self::LOG_LEVEL_INFO, string $category = 'debug')
+    public function console($msg, int $logLevel = self::LOG_LEVEL_INFO, string $category = 'debug')
     {
-        $str = $this->_preAct($msg, $level, $category, 'console');
+        $str = $this->_preAct($msg, $logLevel, $category, 'console');
         $cid = Coroutine::getCid();
         fwrite(STDOUT, "[CID=$cid]$str\n");
     }
@@ -74,7 +74,7 @@ class LamLog implements LoggerInterface
         return true;
     }
 
-    private function _preAct($msg, int &$level = self::LOG_LEVEL_INFO, string $category = 'console', string $func = 'log')
+    private function _preAct($msg, int &$logLevel = self::LOG_LEVEL_INFO, string $category = 'console', string $func = 'log')
     {
         if ( ! is_scalar($msg)) {
             $msg = json_encode($msg, JSON_UNESCAPED_UNICODE);
@@ -91,13 +91,13 @@ class LamLog implements LoggerInterface
             $date = date(DateUtils::FULL, $time);
         }
 
-        $level = $this->levelMap($level);
+        $logLevel = $this->levelMap($logLevel);
 
-        $str = "[$date][$category][$level]$msg";
+        $str = "[$date][$category][$logLevel]$msg";
 
         if ($func == 'log') {
-            if (in_array($level, config('LOG.apart_level'))) {
-                $this->merge($level, $str);
+            if (in_array($logLevel, config('LOG.apart_level'))) {
+                $this->merge($logLevel, $str);
             } elseif (in_array($category, config('LOG.apart_category'))) {
                 $this->merge($category, $str);
             } else {

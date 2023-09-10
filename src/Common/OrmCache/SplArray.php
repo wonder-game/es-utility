@@ -34,12 +34,14 @@ trait SplArray
 
     protected function _getCacheKey()
     {
+        /* @var AbstractModel $this */
         $table = $this->getTableName();
         return sprintf($this->splKey, $table);
     }
 
     protected function _getSplArray()
     {
+        /* @var AbstractModel $this */
         if ($this->splWhere) {
             $this->where($this->splWhere);
         }

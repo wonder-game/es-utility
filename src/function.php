@@ -70,7 +70,7 @@ if ( ! function_exists('model')) {
      * @param bool|numeric $inject bool:注入连接, numeric: 注入连接并切换到指定时区
      * @return AbstractModel
      */
-    function model(string $name = '', array $data = [], $inject = false)
+    function model(string $name = '', array $data = [], $inject = false): AbstractModel
     {
         // 允许传递多级命名空间
         $space = '';
@@ -122,9 +122,9 @@ if ( ! function_exists('model_admin')) {
      * @param string $name
      * @param array $data
      * @param bool|numeric $inject
-     * @return \EasySwoole\ORM\AbstractModel
+     * @return AbstractModel
      */
-    function model_admin(string $name = '', array $data = [], $inject = false)
+    function model_admin(string $name = '', array $data = [], $inject = false): AbstractModel
     {
         return model('Admin\\' . ucfirst($name), $data, $inject);
     }
@@ -135,9 +135,9 @@ if ( ! function_exists('model_log')) {
      * @param string $name
      * @param array $data
      * @param bool|numeric $inject
-     * @return \EasySwoole\ORM\AbstractModel
+     * @return AbstractModel
      */
-    function model_log(string $name = '', array $data = [], $inject = false)
+    function model_log(string $name = '', array $data = [], $inject = false): AbstractModel
     {
         return model('Log\\' . ucfirst($name), $data, $inject);
     }

@@ -2,6 +2,7 @@
 
 namespace WonderGame\EsUtility\Common\OrmCache;
 
+use EasySwoole\ORM\AbstractModel;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 
@@ -28,12 +29,14 @@ trait Sets
 
     protected function _getCacheKey()
     {
+        /* @var AbstractModel $this */
         $table = $this->getTableName();
         return sprintf($this->memberKey, $table);
     }
 
     protected function _getCacheData()
     {
+        /* @var AbstractModel $this */
         if ($this->memberWhere) {
             $this->where($this->memberWhere);
         }
