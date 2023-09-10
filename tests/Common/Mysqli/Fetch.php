@@ -34,8 +34,7 @@ class Fetch extends TestCase
         $Builder->get($this->tableName);
         $Generator = $Mysqli->fetch($Builder);
 
-        foreach ($Generator as $key => $row)
-        {
+        foreach ($Generator as $key => $row) {
             var_dump($row, \Swoole\Coroutine::getCid(), '================ row, cid');
         }
         $Mysqli->close();

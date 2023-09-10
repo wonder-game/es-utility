@@ -27,11 +27,11 @@ trait AuthTrait
     protected $uploadKey = 'file';
 
     /**********************************************************************
-    * 权限认证相关属性                                                      *
-    *     1. 子类无需担心重写覆盖，校验时会反射获取父类属性值，并做合并操作       *
-    *     2. 对于特殊场景也可直接重写 setPolicy 方法操作Policy                *
-    *     3. 大小写不敏感                                                   *
-    ***********************************************************************/
+     * 权限认证相关属性                                                      *
+     *     1. 子类无需担心重写覆盖，校验时会反射获取父类属性值，并做合并操作       *
+     *     2. 对于特殊场景也可直接重写 setPolicy 方法操作Policy                *
+     *     3. 大小写不敏感                                                   *
+     ***********************************************************************/
 
     // 别名认证
     protected array $_authAlias = ['change' => 'edit', 'export' => 'index'];
@@ -57,7 +57,6 @@ trait AuthTrait
     // 返回主体数据
     protected function _getEntityData($id = 0)
     {
-        /** @var AbstractModel $Admin */
         $Admin = model_admin('Admin');
         // 当前用户信息
         return $Admin->where('id', $id)->get();
@@ -122,7 +121,6 @@ trait AuthTrait
         $currentClassName = strtolower($this->getStaticClassName());
         $fullPath = "/$currentClassName/$currentAction";
 
-        /** @var AbstractModel $Menu */
         $Menu = model_admin('Menu');
         // 设置用户权限
         $userMenu = $this->getUserMenus();

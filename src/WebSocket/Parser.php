@@ -4,9 +4,9 @@ namespace WonderGame\EsUtility\WebSocket;
 
 use EasySwoole\EasySwoole\ServerManager;
 use EasySwoole\Socket\AbstractInterface\ParserInterface;
-use EasySwoole\Socket\Client\WebSocket;
 use EasySwoole\Socket\Bean\Caller;
 use EasySwoole\Socket\Bean\Response;
+use EasySwoole\Socket\Client\WebSocket;
 
 /**
  * Websocket解析器
@@ -17,25 +17,25 @@ class Parser implements ParserInterface
 {
     /**
      * decode
-     * @param  string         $raw    客户端原始消息
-     * @param  WebSocket      $client WebSocket Client 对象
+     * @param string $raw 客户端原始消息
+     * @param WebSocket $client WebSocket Client 对象
      * @return Caller         Socket  调用对象
      */
-    public function decode($raw, $client) : ? Caller
+    public function decode($raw, $client): ?Caller
     {
         $data = json_decode($raw, true);
         if ( ! is_array($data)) {
             return null;
         }
 
-        $class = '\\App\\Websocket\\Controller\\'. (ucfirst($data['class'] ?? 'Index'));
-        if (!class_exists($class)) {
+        $class = '\\App\\Websocket\\Controller\\' . (ucfirst($data['class'] ?? 'Index'));
+        if ( ! class_exists($class)) {
             $this->respClient($client, "WebSocket Controller not fount: {$class}");
             return null;
         }
 
         $action = $data['action'] ?? 'index';
-        if (!method_exists($class, $action)) {
+        if ( ! method_exists($class, $action)) {
             $this->respClient($client, "WebSocket Action not fount: {$class}.{$action}");
             return null;
         }
@@ -48,13 +48,14 @@ class Parser implements ParserInterface
         $caller->setArgs($data);
         return $caller;
     }
+
     /**
      * encode
-     * @param  Response $response Socket Response 对象
-     * @param  WebSocket $client WebSocket Client 对象
+     * @param Response $response Socket Response 对象
+     * @param WebSocket $client WebSocket Client 对象
      * @return string 发送给客户端的消息
      */
-    public function encode(Response $response, $client) : ? string
+    public function encode(Response $response, $client): ?string
     {
         /**
          * 这里返回响应给客户端的信息
@@ -62,8 +63,7 @@ class Parser implements ParserInterface
          */
         $message = $response->getMessage();
         // 默认是 WEBSOCKET_OPCODE_TEXT 类型，转文本
-        if (is_array($message))
-        {
+        if (is_array($message)) {
             $message = json_encode($message);
         }
         return $message;

@@ -2,8 +2,8 @@
 
 namespace WonderGame\EsUtility\WebSocket\Controller;
 
-use EasySwoole\Socket\AbstractInterface\Controller;
 use EasySwoole\EasySwoole\ServerManager;
+use EasySwoole\Socket\AbstractInterface\Controller;
 use EasySwoole\Socket\Client\WebSocket;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 
@@ -12,13 +12,13 @@ use WonderGame\EsUtility\Common\Classes\CtxRequest;
  */
 trait BaseControllerTrait
 {
-    protected function onRequest(?string $actionName):bool
+    protected function onRequest(?string $actionName): bool
     {
         CtxRequest::getInstance()->caller = $this->caller();
         return parent::onRequest($actionName);
     }
 
-    protected function onException(\Throwable $throwable):void
+    protected function onException(\Throwable $throwable): void
     {
         \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
     }

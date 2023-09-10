@@ -171,9 +171,9 @@ trait HttpTrackerTrait
             $result = parent::__after_index($this->toArray($data), $total) + ['sql' => $sql];
             $this->success($result);
 
-        } catch (\Exception | \Throwable $e) {
+        } catch (\Exception|\Throwable $e) {
             $Mysqli && $Mysqli->close();
-            $this->error(\App\Common\Http\Code::ERROR_OTHER, $e->getMessage());
+            $this->error(Code::ERROR_OTHER, $e->getMessage());
         }
     }
 
@@ -215,7 +215,7 @@ trait HttpTrackerTrait
 
             $data = ['count' => intval($count), 'sql' => $sql];
             return $return ? $data : $this->success($data);
-        } catch (\Exception | \Throwable $e) {
+        } catch (\Exception|\Throwable $e) {
             $Mysqli && $Mysqli->close();
             if ($return) {
                 throw $e;

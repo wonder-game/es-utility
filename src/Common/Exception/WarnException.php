@@ -12,9 +12,9 @@ class WarnException extends \Exception
      * @param string $message 用户可见
      * @param int $code
      * @param array $data
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
-    public function __construct($message = "", $code = Code::ERROR_OTHER, array $data = [], Throwable $previous = null)
+    public function __construct($message = "", $code = Code::ERROR_OTHER, array $data = [], \Throwable $previous = null)
     {
         $this->data = $data;
         parent::__construct($message, $code, $previous);

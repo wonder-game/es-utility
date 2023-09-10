@@ -3,8 +3,8 @@
 namespace WonderGame\EsUtility\Common\OrmCache;
 
 use EasySwoole\ORM\AbstractModel;
-use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Redis\Redis;
+use EasySwoole\RedisPool\RedisPool;
 
 /**
  * 字符串缓存，适用于单行缓存
@@ -106,6 +106,7 @@ trait Strings
 
     protected function _getCacheKey($id)
     {
+        /* @var AbstractModel $this */
         if (is_array($id)) {
             ksort($id);
             $str = urldecode(http_build_query($id));
@@ -121,6 +122,7 @@ trait Strings
      */
     protected function _getByUnique($id)
     {
+        /* @var AbstractModel $this */
         /** @var AbstractModel $data */
         $data = $this->get($id);
         return $data ? $data->toArray() : [];
@@ -128,6 +130,7 @@ trait Strings
 
     protected function _getBloomData()
     {
+        /* @var AbstractModel $this */
         if ($this->bloomWhere) {
             $this->where($this->bloomWhere);
         }
@@ -136,6 +139,7 @@ trait Strings
 
     protected function _getBloomKey()
     {
+        /* @var AbstractModel $this */
         $tableName = $this->getTableName();
         return sprintf($this->bloomKey, $tableName);
     }
@@ -149,6 +153,7 @@ trait Strings
 
     protected function _getPk()
     {
+        /* @var AbstractModel $this */
         $pk = $this->schemaInfo()->getPkFiledName();
         // todo 联合主键，暂主观认为第一个字段为唯一标识，后续得补充条件
         is_array($pk) && $pk = $pk[0];
@@ -278,6 +283,7 @@ trait Strings
 
     protected function _after_cache()
     {
+        /* @var AbstractModel $this */
         $data = $this->toArray();
         $pk = $this->_getPk();
 

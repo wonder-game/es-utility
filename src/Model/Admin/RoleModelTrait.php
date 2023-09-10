@@ -6,11 +6,11 @@ use EasySwoole\ORM\AbstractModel;
 
 trait RoleModelTrait
 {
-	protected function setBaseTraitProtected()
-	{
+    protected function setBaseTraitProtected()
+    {
         $this->autoTimeStamp = true;
-		$this->sort = ['sort' => 'asc', 'id' => 'asc'];
-	}
+        $this->sort = ['sort' => 'asc', 'id' => 'asc'];
+    }
 
     protected static function onBeforeDelete(AbstractModel $model)
     {
@@ -18,12 +18,12 @@ trait RoleModelTrait
         return ! is_super($model['id']);
     }
 
-	protected function setMenuAttr($data)
-	{
-		return is_array($data) ? implode(',', $data) : $data;
-	}
+    protected function setMenuAttr($data)
+    {
+        return is_array($data) ? implode(',', $data) : $data;
+    }
 
-	protected function setGameidAttr($data)
+    protected function setGameidAttr($data)
     {
         return $this->setMenuAttr($data);
     }

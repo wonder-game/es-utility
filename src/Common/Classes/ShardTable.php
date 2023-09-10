@@ -162,7 +162,7 @@ class ShardTable extends SplBean
                 $var = $$var;
                 if ($var && preg_match($var, $v)) {
                     $var = "{$t}_table";
-                    array_push($$var, $v);
+                    $$var[] = $v;
                     break;
                 }
             }
@@ -195,8 +195,8 @@ class ShardTable extends SplBean
 
     /**
      * 返回信息
-     * $msg 返回信息
-     * $code 状态码,0-成功,非0-失败
+     * @param string $msg 返回信息
+     * @param int $code 状态码：0-成功；非0-失败
      * return array
      */
     private function _reMsg($msg = '', $code = 0)

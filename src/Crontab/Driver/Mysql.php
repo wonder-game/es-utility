@@ -32,8 +32,7 @@ class Mysql implements Interfaces
         } elseif (is_string($where)) {
             $Builder->where($where);
         } elseif (is_array($where)) {
-            foreach ($where as $whereField => $whereValue)
-            {
+            foreach ($where as $whereField => $whereValue) {
                 if (is_array($whereValue)) {
                     $Builder->where($whereField, ...$whereValue);
                 } else {

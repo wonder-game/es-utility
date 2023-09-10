@@ -2,8 +2,6 @@
 
 namespace WonderGame\EsUtility\HttpController\Admin;
 
-use EasySwoole\ORM\AbstractModel;
-
 trait RoleTrait
 {
     protected function __search()

@@ -4,9 +4,9 @@
 namespace WonderGame\EsUtility\Common\Classes;
 
 use EasySwoole\Component\Singleton;
+use EasySwoole\Component\TableManager;
 use EasySwoole\EasySwoole\ServerManager;
 use Swoole\Table;
-use EasySwoole\Component\TableManager;
 
 /**
  * uid与fd，SwooleTable存储
@@ -59,7 +59,7 @@ class FdManager
     /**
      * 为减小hash冲突率，加key前缀
      * @param string $tableName
-     * @param $key
+     * @param string $key
      * @return string
      */
     public function getRowKey(string $tableName, $key)
@@ -86,7 +86,7 @@ class FdManager
     }
 
     /**
-     * @param $uid
+     * @param string $uid
      * @param $fd
      * @return array
      */
@@ -107,6 +107,7 @@ class FdManager
         }
         $array[] = $fd;
         $table->set($rowKey, [$this->fdColumnName => $this->fmtFds($array)]);
+        return $array;
     }
 
     /**
@@ -159,7 +160,7 @@ class FdManager
 
     /**
      * 为uid内的所有链接执行function
-     * @param $uid
+     * @param string $uid
      * @param callable $call function ($fd) {}
      * @return false|void
      */
@@ -201,7 +202,7 @@ class FdManager
 
     /**
      * 获取uid的在线连接数
-     * @param $uid
+     * @param string $uid
      * @return int
      */
     public function onlineNum($uid)
@@ -218,7 +219,7 @@ class FdManager
     }
 
     /**
-     * @param $fd
+     * @param string $fd
      * @return bool|mixed
      */
     public function fdExist($fd)

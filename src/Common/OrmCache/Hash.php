@@ -8,6 +8,7 @@ use EasySwoole\RedisPool\RedisPool;
 
 /**
  * Hash缓存，适用于全表缓存
+ * @extends AbstractModel
  */
 trait Hash
 {
@@ -27,6 +28,7 @@ trait Hash
 
     protected function _getCacheKey()
     {
+        /* @var AbstractModel $this */
         $table = $this->getTableName();
         return sprintf($this->hashKey, $table);
     }
@@ -43,6 +45,7 @@ trait Hash
 
     protected function _getCacheData()
     {
+        /* @var AbstractModel $this */
         if ($this->hashWhere) {
             $this->where($this->hashWhere);
         }

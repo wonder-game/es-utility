@@ -73,15 +73,13 @@ trait CrontabTrait
     {
         $result = [];
         $data = $this->cacheHGetAll();
-        foreach ($data as &$value)
-        {
+        foreach ($data as &$value) {
             $continue = false;
-            foreach ($columns as $col)
-            {
+            foreach ($columns as $col) {
                 if (isset($value[$col]) && is_string($value[$col])) {
                     $value[$col] = explode(',', $value[$col]);
                 }
-                $is = (isset($where[$col]) && ( ! is_array($value[$col]) || ! in_array($where[$col], $value[$col]) ));
+                $is = (isset($where[$col]) && ( ! is_array($value[$col]) || ! in_array($where[$col], $value[$col])));
                 if ($is) {
                     $continue = true;
                     break;

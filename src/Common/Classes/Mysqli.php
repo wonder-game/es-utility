@@ -5,6 +5,7 @@ namespace WonderGame\EsUtility\Common\Classes;
 
 use EasySwoole\Mysqli\Client;
 use EasySwoole\Mysqli\Config;
+use EasySwoole\Mysqli\Exception\Exception;
 use EasySwoole\Mysqli\QueryBuilder;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\ORM\Db\Cursor;
@@ -51,7 +52,7 @@ class Mysqli extends MysqliClient
      * 获取非虚拟列字段
      * @param $tableName
      * @return array
-     * @throws \EasySwoole\Mysqli\Exception\Exception
+     * @throws Exception
      */
     public function fullColumns($tableName): array
     {
@@ -66,7 +67,7 @@ class Mysqli extends MysqliClient
      * 获取数据表主键
      * @param $tableName
      * @return array
-     * @throws \EasySwoole\Mysqli\Exception\Exception
+     * @throws Exception
      */
     public function getPrimaryKey($tableName): array
     {
@@ -151,7 +152,7 @@ class Mysqli extends MysqliClient
     /**
      * 设置连接时区
      * @param string $tzn 格式为: -5 或 -5:00 或 8 或 +8:00 ...
-     * @throws \EasySwoole\Mysqli\Exception\Exception
+     * @throws Exception
      */
     public function setTimeZone($tzn)
     {

@@ -3,10 +3,6 @@
 
 namespace WonderGame\EsUtility\Common\Classes;
 
-use EasySwoole\Component\WaitGroup;
-use EasySwoole\HttpClient\Exception\InvalidUrl;
-use EasySwoole\HttpClient\HttpClient;
-use EasySwoole\Redis\Exception\RedisException;
 use EasySwoole\Trigger\Location;
 use EasySwoole\Trigger\TriggerInterface;
 

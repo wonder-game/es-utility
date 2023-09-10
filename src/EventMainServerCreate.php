@@ -176,10 +176,10 @@ class EventMainServerCreate extends SplBean
 
     protected function watchHotReload()
     {
-        $watchConfig = (array) $this->hotReloadWatchDirs;
+        $watchConfig = (array)$this->hotReloadWatchDirs;
 
         // 本地开发环境可固定开启
-		if ( ! is_env('dev')) {
+        if ( ! is_env('dev')) {
             return;
         }
 
@@ -269,11 +269,11 @@ class EventMainServerCreate extends SplBean
     /**
      * 侦听进程、协程、连接池信息
      * config结构： 'PROCESS_INFO' => [
-                        'isopen' => true,           // 是否开启
-                        'timer' => 5000,            // 定时器间隔时间
-                        'pool' => 'log',            // 写入redis连接池
-                        'queue' => 'ProcessInfo',   // 写入队列名
-                    ]
+     * 'isopen' => true,           // 是否开启
+     * 'timer' => 5000,            // 定时器间隔时间
+     * 'pool' => 'log',            // 写入redis连接池
+     * 'queue' => 'ProcessInfo',   // 写入队列名
+     * ]
      * @return void
      */
     public static function listenProcessInfo()
