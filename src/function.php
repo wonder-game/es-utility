@@ -24,7 +24,7 @@ use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
 if ( ! function_exists('is_super')) {
     /**
      * 是否超级管理员
-     * @param $rid
+     * @param int $rid
      * @return bool
      */
     function is_super($rid = null)
@@ -37,8 +37,8 @@ if ( ! function_exists('is_super')) {
 
 if ( ! function_exists('find_model')) {
     /**
-     * @param $name
-     * @param $throw
+     * @param string $name
+     * @param bool $throw
      * @return string|null
      * @throws Exception
      */
@@ -728,8 +728,8 @@ if ( ! function_exists('sysinfo')) {
 if ( ! function_exists('array_merge_decode')) {
     /**
      * array_merge_decode
-     * @param $array
-     * @param $merge
+     * @param array $array
+     * @param array $merge
      * @return array
      */
     function array_merge_decode($array, $merge = [])
@@ -788,7 +788,7 @@ if ( ! function_exists('is_module')) {
 if ( ! function_exists('memory_convert')) {
     /**
      * 转换内存单位
-     * @param $bytes
+     * @param numeric $bytes
      * @return string
      */
     function memory_convert($bytes)
@@ -819,7 +819,7 @@ if ( ! function_exists('get_google_service_account')) {
 
     /**
      * Google服务账号文件路径
-     * @param $pkgbnd
+     * @param string $pkgbnd
      * @return string
      */
     function get_google_service_account($pkgbnd)
@@ -905,7 +905,6 @@ if ( ! function_exists('sign')) {
 }
 
 if ( ! function_exists('report_redis_key')) {
-
     /**
      * 返回上报队列里的redis-key
      * @param string $key 具体动作 或 归类.具体动作
