@@ -66,6 +66,7 @@ trait SplArray
      */
     public function cacheSpl($key = null, $default = null)
     {
+        /* @var \EasySwoole\Spl\SplArray $Spl */
         $Spl = RedisPool::invoke(function (Redis $redis) {
             $key = $this->_getCacheKey();
 

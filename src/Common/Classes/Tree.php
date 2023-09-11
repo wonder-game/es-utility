@@ -126,7 +126,7 @@ class Tree extends SplBean
         }
 
         foreach ($tree as $item) {
-            if ($item[$this->pidKey] == 0) {  // todo 处理rootId
+            if (isset($item[$this->pidKey]) && $item[$this->pidKey] == 0) {  // todo 处理rootId
                 $this->tree[] = $item;
             }
         }
