@@ -94,9 +94,16 @@ trait AuthTrait
         $this->operinfo = $data->toArray();
         $this->operinfo['role'] = $relation;
 
+        $this->operinfoAfter();
+
         // 将管理员信息挂载到Request
         CtxRequest::getInstance()->withOperinfo($this->operinfo);
         return $this->checkAuth();
+    }
+
+    protected function operinfoAfter()
+    {
+
     }
 
     /**
