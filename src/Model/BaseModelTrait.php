@@ -78,11 +78,10 @@ trait BaseModelTrait
 
         /*
          * 如果需要合并extension，需要在模型内部的setBaseTraitProtected方法中将extSave属性改为merge
-         * 或者在实例化模型后，外部调用extSave('merge')方法
+         * 或者在实例化模型后，外部调用setExtSave('merge')方法
          */
         /* @var AbstractModel $this */
         if ($this->_extSave == 'merge') {
-            $pk = $this->schemaInfo()->getPkFiledName();
             // 现有数据
             $ext = $this->toArray()['extension'] ?? [];
             $ext or $ext = [];
@@ -177,13 +176,14 @@ trait BaseModelTrait
         DbManager::getInstance()->rollback($this->getQueryConnection());
     }
 
-    // 为避免与属性修改器冲突，特意不以get或set开头
-    public function extSave($way = null)
-    {
-        if ( ! $way) {
-            return $this->_extSave;
-        }
 
+    public function getExtSave()
+    {
+        return $this->_extSave;
+    }
+
+    public function setExtSave($way = null)
+    {
         in_array($way, ['merge', 'replace']) && $this->_extSave = $way;
         return $this;
     }
