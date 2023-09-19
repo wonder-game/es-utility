@@ -255,15 +255,40 @@ if ( ! function_exists('array_sort_multi')) {
     {
         if ( ! $data) return [];
         $arrsort = [];
-        foreach ($data as $uniqid => $row) {
-            foreach ($row as $key => $value) {
-                $arrsort[$key][$uniqid] = $value;
+        foreach ($data as $uniqid => &$row) {
+            foreach ($row as $key => &$value) {
+                $arrsort[$key][$uniqid] = $value = format_number($value, 2, true);
             }
+            unset($value);
         }
+        unset($row);
         if ($direction) {
             array_multisort($arrsort[$field], $direction, $data);
         }
         return $data;
+    }
+}
+
+if ( ! function_exists('format_number')) {
+    /**
+     * 格式化数字或百分比
+     * @param numeric|string $num 要处理的数字或百分比
+     * @param numeric $prec 小数点后的精度
+     * @param bool $multiply 如果是百分比是否要乘以100
+     * @return numeric|string
+     */
+    function format_number($num, $prec = 2, $multiply = true)
+    {
+        $num = trim($num);
+        $percent = false;
+
+        // 百分比
+        if (preg_match('/[0-9.]+%$/', $num)) {
+            $percent = true;
+            $num = ($multiply ? 100 : 1) * (float)$num;
+        }
+        is_numeric($num) && $num = str_replace('.00', '', sprintf("%01.{$prec}f", $num));
+        return $num . ($percent ? '%' : '');
     }
 }
 
