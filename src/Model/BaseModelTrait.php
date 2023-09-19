@@ -15,6 +15,9 @@ trait BaseModelTrait
 
     protected $sort = ['id' => 'desc'];
 
+    // 编辑提交时 extension字段的处理方式： merge-合并；replace-覆盖
+    protected $_extSave = 'replace';
+
     public function __construct($data = [], $tabname = '', $gameid = '')
     {
         // $tabname > $this->tableName > $this->_getTable()
@@ -70,13 +73,27 @@ trait BaseModelTrait
         if (is_array($extension) && in_array(array_key_first($extension), ['[I]', '[F]', '[N]'])) {
             return $extension;
         }
+
+        $ext = [];
+
+        /*
+         * 如果需要合并extension，需要在模型内部的setBaseTraitProtected方法中将extSave属性改为merge
+         * 或者在实例化模型后，外部调用setExtSave('merge')方法
+         */
+        /* @var AbstractModel $this */
+        if ($this->_extSave == 'merge') {
+            // 现有数据
+            $ext = $this->toArray()['extension'] ?? [];
+            $ext or $ext = [];
+        }
+
         if (is_string($extension)) {
             $extension = json_decode($extension, true);
             if ( ! $extension) {
                 return json_encode(new \stdClass());
             }
         }
-        return json_encode($extension);
+        return json_encode(array_merge_multi($ext, $extension));
     }
 
     protected function setInstimeAttr($instime, $all)
@@ -157,5 +174,17 @@ trait BaseModelTrait
     {
         /* @var AbstractModel $this */
         DbManager::getInstance()->rollback($this->getQueryConnection());
+    }
+
+
+    public function getExtSave()
+    {
+        return $this->_extSave;
+    }
+
+    public function setExtSave($way = null)
+    {
+        in_array($way, ['merge', 'replace']) && $this->_extSave = $way;
+        return $this;
     }
 }
