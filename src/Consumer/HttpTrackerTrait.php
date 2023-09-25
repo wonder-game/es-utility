@@ -2,9 +2,11 @@
 
 namespace WonderGame\EsUtility\Consumer;
 
+use EasySwoole\Redis\Redis;
+
 trait HttpTrackerTrait
 {
-    protected function consume($data = '')
+    protected function consume($data = [], Redis $redis = null)
     {
         try {
 
