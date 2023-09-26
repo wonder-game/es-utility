@@ -65,7 +65,7 @@ trait BaseTrait
                     }
                     try {
                         if ( ! empty($this->args['json'])) {
-                            $data = json_decode($data);
+                            $data = json_decode($data, true);
                         }
                         $this->consume($data, $Redis);
                     } catch (\Throwable $throwable) {
