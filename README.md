@@ -23,7 +23,6 @@
      │      │     ├── ExceptionTrigger 自定义异常处理器，将异常上报至redis或http
      │      │     ├── FdManager  WebSocket连接符管理，共享内存(Swoole\Table)实现
      │      │     ├── LamJwt jwt
-     │      │     ├── LamLog 自定义日志处理器
      │      │     ├── LamOpenssl RSA数据加密和解密
      │      │     ├── LamUnit 辅助工具类
      │      │     ├── Mysqli 对MysqlClient的二次封装
@@ -37,6 +36,7 @@
      │      │     ├── Dictionary 国际化字典，项目请`继承`它
      │      │     └── Languages I18n助手类，主要用来注册、设置
      │      │
+     │      ├── Logs 自定义日志处理器
      │      └── OrmCache 模型缓存组件，已实现 String、Hash、Set、SplArray
      │
      ├── HttpController

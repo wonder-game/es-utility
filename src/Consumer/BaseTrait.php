@@ -21,8 +21,8 @@ trait BaseTrait
      * 'queue' => 'queue_login',                  // 监听的redis队列名
      * 'tick' => 1000,                                // 多久运行一次，单位毫秒, 默认1000毫秒
      * 'limit' => 200,                                // 单次出队列的阈值, 默认200
-     * 'coroutine' => false                            // 是否为每条数据开启协程
-     * 'pool' => 'default'                             // redis连接池名称
+     * 'pool' => 'default'                            // redis连接池名称
+     * 'json' => false                                // 是否需要json_decode
      * ],
      *
      */
@@ -36,10 +36,11 @@ trait BaseTrait
 
     /**
      * 消费单条数据，由子类继承实现
-     * @param string $data 每一条队列数据
+     * @param string|array $data 每一条队列数据
+     * @param Redis|null $redis redis连接
      * @return mixed
      */
-    abstract protected function consume($data = '');
+    abstract protected function consume($data = [], Redis $redis = null);
 
     /**
      * EasySwoole自定义进程入口
@@ -63,14 +64,10 @@ trait BaseTrait
                         break;
                     }
                     try {
-                        $openCoroutine = $this->args['coroutine'] ?? false;
-                        if ($openCoroutine) {
-                            go(function () use ($data) {
-                                $this->consume($data);
-                            });
-                        } else {
-                            $this->consume($data);
+                        if ( ! empty($this->args['json'])) {
+                            $data = json_decode($data, true);
                         }
+                        $this->consume($data, $Redis);
                     } catch (\Throwable $throwable) {
                         \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
                     }
