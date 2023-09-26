@@ -45,7 +45,7 @@ trait BaseTrait
     /**
      * EasySwoole自定义进程入口
      */
-    public function run()
+    public function run($arg)
     {
         /* @var AbstractProcess $this */
         $this->args = $this->getArg();
