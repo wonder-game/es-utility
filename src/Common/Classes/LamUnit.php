@@ -53,6 +53,11 @@ class LamUnit
             $utility['versioncode'] = 1;
         }
 
+        // 修复旧包的android
+        if ($request->getRequestParam('android') && ! $request->getRequestParam('androidid')) {
+            $utility['androidid'] = $request->getRequestParam('android');
+        }
+
         self::withParams($request, $utility, false);
     }
 
