@@ -122,7 +122,7 @@ trait HttpTrackerTrait
         try {
             $data = $Mysqli->query($builder)->getResult();
             if (empty($data)) {
-                $data = parent::__after_index([], 0) + ['sql' => $sql];
+                $data = parent::__after_index() + ['sql' => $sql];
                 $this->success($data);
                 return;
             }

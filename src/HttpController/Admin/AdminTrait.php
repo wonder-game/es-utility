@@ -22,13 +22,13 @@ trait AdminTrait
         return $this->_search($where);
     }
 
-    protected function __after_index($items, $total)
+    protected function __after_index($items = [], $total = 0, $summer = [])
     {
         foreach ($items as &$value) {
             unset($value['password']);
             $value->relation;
         }
-        return parent::__after_index($items, $total);
+        return parent::__after_index($items, $total, $summer);
     }
 
     /**

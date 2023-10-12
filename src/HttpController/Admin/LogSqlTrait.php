@@ -32,12 +32,12 @@ trait LogSqlTrait
         return null;
     }
 
-    protected function __after_index($items, $total)
+    protected function __after_index($items = [], $total = 0, $summer = [])
     {
         foreach ($items as &$value) {
             $value->relation = $value->relation ?? [];
         }
 
-        return parent::__after_index($items, $total);
+        return parent::__after_index($items, $total, $summer);
     }
 }
