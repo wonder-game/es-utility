@@ -354,9 +354,9 @@ trait AuthTrait
         return $return ? $data : $this->success($data);
     }
 
-    protected function __after_index($items, $total)
+    protected function __after_index($items, $total, $summer = [])
     {
-        return [config('fetchSetting.listField') => $items, config('fetchSetting.totalField') => $total];
+        return [config('fetchSetting.listField') => $items, config('fetchSetting.totalField') => $total] + ($summer ? [config('fetchSetting.footerField') => $summer] : []);
     }
 
     protected function __with($column = 'relation')
