@@ -354,7 +354,7 @@ trait AuthTrait
         return $return ? $data : $this->success($data);
     }
 
-    protected function __after_index($items, $total, $summer = [])
+    protected function __after_index($items = [], $total = 0, $summer = [])
     {
         return [config('fetchSetting.listField') => $items, config('fetchSetting.totalField') => $total] + ($summer ? [config('fetchSetting.footerField') => $summer] : []);
     }
@@ -418,7 +418,7 @@ trait AuthTrait
 
         // todo 希望优化为fetch模式
         $items = $this->Model->all($where);
-        $data = $this->__after_index($items, 0)[config('fetchSetting.listField')];
+        $data = $this->__after_index($items)[config('fetchSetting.listField')];
 
         // 是否需要合并合计行，如需合并，data为索引数组，为空字段需要占位
 
