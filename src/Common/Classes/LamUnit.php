@@ -43,11 +43,6 @@ class LamUnit
         // 获取IP
         $utility = ['ip' => ip($request)];
 
-        // 销售渠道
-        if ( ! $request->getRequestParam('dtorid')) {
-            $utility['dtorid'] = $request->getRequestParam('os') == 1 ? 3 : 4;
-        }
-
         // 包序号（版本序号）
         if ( ! $request->getRequestParam('versioncode')) {
             $utility['versioncode'] = 1;
