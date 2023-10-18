@@ -221,9 +221,9 @@ trait Strings
         }, $this->redisPoolName);
     }
 
-    public function cacheGet($id)
+    public function cacheGet($id, $mergeExt = null)
     {
-        return RedisPool::invoke(function (Redis $redis) use ($id) {
+        return RedisPool::invoke(function (Redis $redis) use ($id, $mergeExt) {
 
             if ($this->bloom) {
                 $bloomKey = $id;
@@ -261,7 +261,7 @@ trait Strings
                 return false;
             }
             is_string($data) && $data = json_decode_ext($data);
-            $this->mergeExt && $data = $this->_mergeExt($data);
+            (is_null($mergeExt) ? $this->mergeExt : $mergeExt) && $data = $this->_mergeExt($data);
             return $data;
         }, $this->redisPoolName);
     }
