@@ -67,6 +67,15 @@ trait HttpTrackerTrait
             $builder->where("($str)");
         }
 
+        // 响应参数查询 data.result
+        if ( ! empty($filter['rp_key']) && ! empty($filter['rp_value'])) {
+
+            $sym = strpos($filter['rp_value'], '%') !== false ? 'LIKE' : '=';
+
+            $str = "response->'$.data.result.$filter[rp_key]' $sym '$filter[rp_value]'";
+            $builder->where("($str)");
+        }
+
         // 自定义部分
         if ($my = trim($filter['sql'])) {
             $builder->where("($my)");
