@@ -54,7 +54,7 @@ trait HttpTrackerTrait
         }
 
         // 请求参数查询, GET,POST,JSON
-        if ( ! empty($filter['rq_key']) && ! empty($filter['rq_value'])) {
+        if ( ! empty($filter['rq_key']) && isset($filter['rq_value']) && $filter['rq_value'] !== '' ) {
 
             $sym = strpos($filter['rq_value'], '%') !== false ? 'LIKE' : '=';
 
@@ -68,7 +68,7 @@ trait HttpTrackerTrait
         }
 
         // 响应参数查询 data.result
-        if ( ! empty($filter['rp_key']) && ! empty($filter['rp_value'])) {
+        if ( ! empty($filter['rp_key']) && isset($filter['rp_value']) && $filter['rp_value'] !== '' ) {
 
             $sym = strpos($filter['rp_value'], '%') !== false ? 'LIKE' : '=';
 
@@ -76,7 +76,7 @@ trait HttpTrackerTrait
             $builder->where("($str)");
         }
 
-        // 自定义部分
+        // 自定义部分::
         if ($my = trim($filter['sql'])) {
             $builder->where("($my)");
         }
