@@ -209,7 +209,7 @@ if ( ! function_exists('parse_name')) {
     /**
      * 字符串命名风格转换
      * @param string $name 字符串
-     * @param integer $type 转换类型  0 将Java风格转换为C的风格 1 将C风格转换为Java的风格
+     * @param integer $type 转换类型  0-将Java风格转换为C的风格，即：驼峰=>下划线； 1-将C风格转换为Java的风格，即：下划线=>驼峰
      * @param bool $ucfirst 首字母是否大写（驼峰规则）
      * @return string
      */
