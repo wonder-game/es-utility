@@ -483,20 +483,20 @@ if ( ! function_exists('lang')) {
 
 
 if ( ! function_exists('wechat_notice')) {
-    function wechat_notice($title = '', $content = '', $color = '#32CD32')
+    function wechat_notice($title = '', $content = '', $color = '#32CD32', $name = 'default')
     {
         EsNotify::getInstance()->doesOne('wechat', new Notice([
             'templateId' => config('WX_TPLID.notice'),
             'title' => $title,
             'content' => $content,
             'color' => $color
-        ]));
+        ]), $name);
     }
 }
 
 
 if ( ! function_exists('wechat_warning')) {
-    function wechat_warning($file, $line, $servername, $message, $color = '#FF0000')
+    function wechat_warning($file, $line, $servername, $message, $color = '#FF0000', $name = 'default')
     {
         EsNotify::getInstance()->doesOne('wechat', new Warning([
             'templateId' => config('WX_TPLID.warning'),
@@ -505,24 +505,24 @@ if ( ! function_exists('wechat_warning')) {
             'servername' => $servername,
             'message' => $message,
             'color' => $color
-        ]));
+        ]), $name);
     }
 }
 
 
 if ( ! function_exists('dingtalk_text')) {
-    function dingtalk_text($content = '', $at = true)
+    function dingtalk_text($content = '', $at = true, $name = 'default')
     {
         EsNotify::getInstance()->doesOne('dingtalk', new Text([
             'content' => $content,
             'isAtAll' => $at
-        ]));
+        ]), $name);
     }
 }
 
 
 if ( ! function_exists('dingtalk_markdown')) {
-    function dingtalk_markdown($title = '', $text = '', $at = true)
+    function dingtalk_markdown($title = '', $text = '', $at = true, $name = 'default')
     {
         if (is_array($text)) {
             $arr = ['### **' . $title . '**'];
@@ -536,7 +536,7 @@ if ( ! function_exists('dingtalk_markdown')) {
             'title' => $title,
             'text' => $text,
             'isAtAll' => $at
-        ]));
+        ]), $name);
     }
 }
 

@@ -12,7 +12,6 @@ use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Socket\AbstractInterface\ParserInterface;
 use EasySwoole\Spl\SplBean;
 use WonderGame\EsNotify\EsNotify;
-use WonderGame\EsNotify\Interfaces\ConfigInterface;
 
 class EventMainServerCreate extends SplBean
 {
@@ -53,15 +52,22 @@ class EventMainServerCreate extends SplBean
     /**
      * @var null ['key' => new EsNotify/Config([])]
      */
-    protected $notifyConfig = null;
+    //protected $notifyConfig = null;
 
     protected $consumerJobs = null;
 
     protected function initialize(): void
     {
-        if (is_null($this->notifyConfig)) {
-            $this->notifyConfig = config('ES_NOTIFY');
-        }
+        //if (is_null($this->notifyConfig)) {
+        //foreach (config('ES_NOTIFY') as $key => $val) {
+        // foreach ($val as $k => $v) {
+        ///* @var \WonderGame\EsNotify\DingTalk\Config|\WonderGame\EsNotify\WeChat\Config $cls */
+        // $cls = "\\WonderGame\\EsNotify\\{ucfirst($key)}\\Config";
+        // $this->notifyConfig[$key][$k] = new $cls($v, true);
+        //}
+        //}
+        //$this->notifyConfig = config('ES_NOTIFY');
+        // }
     }
 
     public function run()
@@ -251,19 +257,40 @@ class EventMainServerCreate extends SplBean
         $watcher->attachServer(ServerManager::getInstance()->getSwooleServer());
     }
 
-    protected function registerNotify()
+    static public function registerNotify()
     {
+        if ( ! is_array(config('ES_NOTIFY'))) {
+            return;
+        }
+        foreach (config('ES_NOTIFY') as $key => $val) {
+            if ( ! is_array($val)) {
+                continue;
+            }
+            /* @var \WonderGame\EsNotify\DingTalk\Config|\WonderGame\EsNotify\WeChat\Config $cls */
+            $cls = '\\WonderGame\\EsNotify\\' . ucfirst($key) . '\\Config';
+
+            foreach ($val as $k => $v) {
+                EsNotify::getInstance()->register(new $cls($v, true), $key, $k);
+
+
+                //$this->notifyConfig[$key][$k] = new $cls($v, true);
+            }
+        }
+
+        /*
+
         $config = $this->notifyConfig;
         if ( ! is_array($config)) {
             return;
         }
         foreach ($config as $name => $cfg) {
+
             if ($cfg instanceof ConfigInterface) {
                 EsNotify::getInstance()->register($cfg, $name);
             } else {
                 trace("EsNotify 注册失败: $name");
             }
-        }
+        }*/
     }
 
     /**
