@@ -12,7 +12,6 @@ use WonderGame\EsNotify\DingTalk\Message\Markdown;
 use WonderGame\EsNotify\DingTalk\Message\Text;
 use WonderGame\EsNotify\EsNotify;
 use WonderGame\EsNotify\WeChat\Message\Notice;
-use WonderGame\EsNotify\WeChat\Message\Warning;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
@@ -483,28 +482,22 @@ if ( ! function_exists('lang')) {
 
 
 if ( ! function_exists('wechat_notice')) {
-    function wechat_notice($title = '', $content = '', $color = '#32CD32', $name = 'default')
+    function wechat_notice($content = '', $name = 'default')
     {
         EsNotify::getInstance()->doesOne('wechat', new Notice([
-            'templateId' => config('WX_TPLID.notice'),
-            'title' => $title,
+            'templateId' => config("ES_NOTIFY.wechat.$name.tplId.notice"),
             'content' => $content,
-            'color' => $color
         ]), $name);
     }
 }
 
 
 if ( ! function_exists('wechat_warning')) {
-    function wechat_warning($file, $line, $servername, $message, $color = '#FF0000', $name = 'default')
+    function wechat_warning($content = '', $name = 'default')
     {
-        EsNotify::getInstance()->doesOne('wechat', new Warning([
-            'templateId' => config('WX_TPLID.warning'),
-            'file' => $file,
-            'line' => $line,
-            'servername' => $servername,
-            'message' => $message,
-            'color' => $color
+        EsNotify::getInstance()->doesOne('wechat', new Notice([
+            'templateId' => config("ES_NOTIFY.wechat.$name.tplId.warning"),
+            'content' => $content,
         ]), $name);
     }
 }
