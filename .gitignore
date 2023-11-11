@@ -2,7 +2,6 @@
 .vscode
 .tgitconfig
 vendor
-composer.lock
 /.phpunit.result.cache
 /produce.php
 /EasySwooleEvent.php
