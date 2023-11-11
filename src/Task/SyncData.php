@@ -109,15 +109,14 @@ class SyncData implements TaskInterface
                 $orgs[$pk] = is_bool($insertId) ? $data[$pk] : $insertId;
             }
         } catch (\Exception|\Throwable $e) {
-            $title = '数据同步失败';
-
-            dingtalk_text($title, "$title: class: $className, 错误信息: {$e->getMessage()}");
-            wechat_notice($title, "class: $className, 错误信息: {$e->getMessage()}");
-            trace("数据同步失败, class: $className, data: " . json_encode($data, JSON_UNESCAPED_UNICODE) . $e->__toString(), 'info', 'sync');
+            dingtalk_text($msg = "数据同步失败 class:$className, 错误信息: {$e->getMessage()}");
+            wechat_notice($msg);
+            trace("$msg, data: " . json_encode($data, JSON_UNESCAPED_UNICODE), 'info', 'sync');
         }
 
         // 清除缓存， 由对应model事件执行
 //        $model->cacheDel($orgs[$pk]);
+        return true;
     }
 
     protected function _delete($className)
@@ -129,7 +128,7 @@ class SyncData implements TaskInterface
 
         $orgs = $this->data['data'] ?? [];
         if (empty($orgs)) {
-            return;
+            return true;
         }
 
         // 兼容0值
@@ -146,6 +145,7 @@ class SyncData implements TaskInterface
             // 删缓存, 由对应model事件执行
 //            $model->cacheDel($orgs[$pk], null);
         }
+        return true;
     }
 
     // 记录，用于误删恢复
@@ -173,6 +173,6 @@ class SyncData implements TaskInterface
         $ding .= "- 执行SQL：{$sql}{$newline}";
         $ding .= "- 如需误删恢复，请查日志关键字：{$this->delBakupKey}";
         dingtalk_markdown('数据删除通知', $ding, false);
-        wechat_notice($title, $sql);
+        wechat_notice("$title $sql");
     }
 }
