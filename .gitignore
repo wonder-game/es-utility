@@ -1,6 +1,7 @@
 .idea
 .vscode
 .tgitconfig
+composer.lock
 vendor
 /.phpunit.result.cache
 /produce.php
