@@ -58,16 +58,7 @@ class EventMainServerCreate extends SplBean
 
     protected function initialize(): void
     {
-        //if (is_null($this->notifyConfig)) {
-        //foreach (config('ES_NOTIFY') as $key => $val) {
-        // foreach ($val as $k => $v) {
-        ///* @var \WonderGame\EsNotify\DingTalk\Config|\WonderGame\EsNotify\WeChat\Config $cls */
-        // $cls = "\\WonderGame\\EsNotify\\{ucfirst($key)}\\Config";
-        // $this->notifyConfig[$key][$k] = new $cls($v, true);
-        //}
-        //}
-        //$this->notifyConfig = config('ES_NOTIFY');
-        // }
+
     }
 
     public function run()
@@ -271,26 +262,8 @@ class EventMainServerCreate extends SplBean
 
             foreach ($val as $k => $v) {
                 EsNotify::getInstance()->register(new $cls($v, true), $key, $k);
-
-
-                //$this->notifyConfig[$key][$k] = new $cls($v, true);
             }
         }
-
-        /*
-
-        $config = $this->notifyConfig;
-        if ( ! is_array($config)) {
-            return;
-        }
-        foreach ($config as $name => $cfg) {
-
-            if ($cfg instanceof ConfigInterface) {
-                EsNotify::getInstance()->register($cfg, $name);
-            } else {
-                trace("EsNotify 注册失败: $name");
-            }
-        }*/
     }
 
     /**
