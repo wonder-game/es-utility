@@ -12,7 +12,6 @@ use WonderGame\EsNotify\DingTalk\Message\Markdown;
 use WonderGame\EsNotify\DingTalk\Message\Text;
 use WonderGame\EsNotify\EsNotify;
 use WonderGame\EsNotify\WeChat\Message\Notice;
-use WonderGame\EsNotify\WeChat\Message\Warning;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
@@ -209,7 +208,7 @@ if ( ! function_exists('parse_name')) {
     /**
      * 字符串命名风格转换
      * @param string $name 字符串
-     * @param integer $type 转换类型  0 将Java风格转换为C的风格 1 将C风格转换为Java的风格
+     * @param integer $type 转换类型  0-将Java风格转换为C的风格，即：驼峰=>下划线； 1-将C风格转换为Java的风格，即：下划线=>驼峰
      * @param bool $ucfirst 首字母是否大写（驼峰规则）
      * @return string
      */
@@ -483,46 +482,40 @@ if ( ! function_exists('lang')) {
 
 
 if ( ! function_exists('wechat_notice')) {
-    function wechat_notice($title = '', $content = '', $color = '#32CD32')
+    function wechat_notice($content = '', $name = 'default')
     {
         EsNotify::getInstance()->doesOne('wechat', new Notice([
-            'templateId' => config('WX_TPLID.notice'),
-            'title' => $title,
+            'templateId' => config("ES_NOTIFY.wechat.$name.tplId.notice"),
             'content' => $content,
-            'color' => $color
-        ]));
+        ]), $name);
     }
 }
 
 
 if ( ! function_exists('wechat_warning')) {
-    function wechat_warning($file, $line, $servername, $message, $color = '#FF0000')
+    function wechat_warning($content = '', $name = 'default')
     {
-        EsNotify::getInstance()->doesOne('wechat', new Warning([
-            'templateId' => config('WX_TPLID.warning'),
-            'file' => $file,
-            'line' => $line,
-            'servername' => $servername,
-            'message' => $message,
-            'color' => $color
-        ]));
+        EsNotify::getInstance()->doesOne('wechat', new Notice([
+            'templateId' => config("ES_NOTIFY.wechat.$name.tplId.warning"),
+            'content' => $content,
+        ]), $name);
     }
 }
 
 
 if ( ! function_exists('dingtalk_text')) {
-    function dingtalk_text($content = '', $at = true)
+    function dingtalk_text($content = '', $at = true, $name = 'default')
     {
         EsNotify::getInstance()->doesOne('dingtalk', new Text([
             'content' => $content,
             'isAtAll' => $at
-        ]));
+        ]), $name);
     }
 }
 
 
 if ( ! function_exists('dingtalk_markdown')) {
-    function dingtalk_markdown($title = '', $text = '', $at = true)
+    function dingtalk_markdown($title = '', $text = '', $at = true, $name = 'default')
     {
         if (is_array($text)) {
             $arr = ['### **' . $title . '**'];
@@ -536,7 +529,7 @@ if ( ! function_exists('dingtalk_markdown')) {
             'title' => $title,
             'text' => $text,
             'isAtAll' => $at
-        ]));
+        ]), $name);
     }
 }
 
