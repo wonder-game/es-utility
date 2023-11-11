@@ -58,11 +58,10 @@ class ShardTable extends SplBean
         }
         $Mysqli->close();
         if ($warning) {
-            $title = '数据表分区不足！！';
             $msg = "检测到以下表分区不足{$day}天：" . implode('、', $warning);
-            trace($title . $msg, 'info', 'worker');
-            dingtalk_text($title . $msg);
-            wechat_notice($title, $msg);
+            trace($msg, 'info', 'worker');
+            dingtalk_text($msg);
+            wechat_notice($msg);
         }
     }
 
@@ -203,8 +202,8 @@ class ShardTable extends SplBean
     {
         if ($code > 0) {
             $title = '执行分区错误: ';
-            dingtalk_text("$title  $msg", true);
-            wechat_notice($title, $msg);
+            dingtalk_text("$title $msg", true);
+            wechat_notice("$title $msg");
         }
         trace($msg, $code ? 'error' : 'info', 'crontab');
         return ['err' => $code, 'msg' => $msg];
