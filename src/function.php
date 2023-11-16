@@ -381,8 +381,9 @@ if ( ! function_exists('difdate')) {
         if (is_bool($format)) {
             $format = $format === true ? '%a' : '%m';
         }
+        /** @var DateInterval $interval */
         $interval = date_diff(date_create($beginday), date_create($endday));
-        return (int)$interval->format($format);
+        return $format === '%m' ? (($interval->format('%y') * 12) + $interval->format('%m')) : $interval->format($format);
     }
 }
 
