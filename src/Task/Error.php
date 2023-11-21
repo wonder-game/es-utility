@@ -45,12 +45,8 @@ class Error implements TaskInterface
             $message = implode($this->warp, $data);
             dingtalk_markdown($title, $message);
 
-            wechat_warning(
-                $this->data['file'],
-                $this->data['line'],
-                $servname . ' -> ' . $servername,
-                $this->data['message']
-            );
+            $message = "$title: {$this->data['message']}, 文件 {$this->data['file']} 第 {$this->data['line']} 行";
+            wechat_warning($message);
         }
     }
 
