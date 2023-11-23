@@ -68,7 +68,7 @@ trait BaseTrait
                             $data = json_decode($data, true);
                         }
                         $this->consume($data, $Redis);
-                    } catch (\Throwable $throwable) {
+                    } catch (\Exception | \Throwable $throwable) {
                         \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
                     }
                 }
