@@ -11,6 +11,7 @@ use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Socket\AbstractInterface\ParserInterface;
 use EasySwoole\Spl\SplBean;
+use EasySwoole\WordsMatch\WMServer;
 use WonderGame\EsNotify\EsNotify;
 
 class EventMainServerCreate extends SplBean
@@ -71,6 +72,7 @@ class EventMainServerCreate extends SplBean
         $this->registerConsumer();
         $this->watchHotReload();
         $this->registerNotify();
+        $this->wordsMatch();
 
         if (config('PROCESS_INFO.isopen')) {
             $this->EventRegister->add(EventRegister::onWorkerStart, [static::class, 'listenProcessInfo']);
@@ -341,5 +343,26 @@ class EventMainServerCreate extends SplBean
                 }, $cfg['pool'] ?? 'default');
             });
         }
+    }
+
+    /**
+     * 注册words-match服务
+     * @document https://www.easyswoole.com/Components/WordsMatch/introduction.html
+     * @return void
+     */
+    protected function wordsMatch()
+    {
+        if ( ! $cfg = config('WORDS_MATCH')) {
+            return;
+        }
+        // 配置 words-match
+        $wdConfig = new \EasySwoole\WordsMatch\Config();
+        $wdConfig->setDict($cfg['file']); // 配置 词库地址
+        $wdConfig->setMaxMEM($cfg['mem']??'512M'); // 配置 每个进程最大占用内存(M)，默认为 512 M
+        $wdConfig->setTimeout($cfg['timeout']??3.0); // 配置 内容检测超时时间。默认为 3.0 s
+        $wdConfig->setWorkerNum($cfg['num']??6); // 配置 进程数
+
+        // 注册服务
+        WMServer::getInstance($wdConfig)->attachServer(ServerManager::getInstance()->getSwooleServer());
     }
 }
