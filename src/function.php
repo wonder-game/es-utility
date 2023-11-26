@@ -142,6 +142,55 @@ if ( ! function_exists('model_log')) {
     }
 }
 
+
+if ( ! function_exists('model_pay')) {
+    function model_pay(string $name = '', array $data = [], $inject = false)
+    {
+        return model('Pay\\' . ucfirst($name), $data, $inject);
+    }
+}
+
+if ( ! function_exists('model_sdk')) {
+    function model_sdk(string $name = '', array $data = [], $inject = false)
+    {
+        return model('Sdk\\' . ucfirst($name), $data, $inject);
+    }
+}
+
+if ( ! function_exists('model_service')) {
+    function model_service(string $name = '', array $data = [], $inject = false)
+    {
+        return model('Service\\' . ucfirst($name), $data, $inject);
+    }
+}
+
+if ( ! function_exists('model_attr')) {
+    function model_attr(string $name = '', array $data = [], $inject = false)
+    {
+        return model('Attr\\' . ucfirst($name), $data, $inject);
+    }
+}
+
+if ( ! function_exists('model_media')) {
+    function model_media(string $name = '', array $data = [], $inject = false)
+    {
+        return model('Media\\' . ucfirst($name), $data, $inject);
+    }
+}
+
+if ( ! function_exists('model_oper')) {
+    /**
+     * @param string $name
+     * @param array $data
+     * @param bool|numeric $inject
+     * @return AbstractModel
+     */
+    function model_oper(string $name = '', array $data = [], $inject = false): AbstractModel
+    {
+        return model('Oper\\' . ucfirst($name), $data, $inject);
+    }
+}
+
 if ( ! function_exists('config')) {
     /**
      * 获取和设置配置参数
