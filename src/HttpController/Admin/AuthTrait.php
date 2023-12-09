@@ -234,15 +234,17 @@ trait AuthTrait
         return $model;
     }
 
+    /**
+     * @return bool|int|void
+     */
     public function _add($return = false)
     {
         if ($this->isHttpPost()) {
             $result = $this->Model->data($this->post)->save();
             if ($return) {
                 return $result;
-            } else {
-                $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_6);
             }
+            return $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_6);
         }
     }
 
@@ -275,15 +277,17 @@ trait AuthTrait
         return $return ? $model->toArray() : $this->success($model->toArray());
     }
 
+    /**
+     * @param bool $return 是否需要返回目标数据
+     */
     public function _del($return = false)
     {
         $model = $this->__getModel();
         $result = $model->destroy();
         if ($return) {
             return $model->toArray();
-        } else {
-            $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_14);
         }
+        return $result ? $this->success() : $this->error(Code::ERROR_OTHER, Dictionary::ADMIN_AUTHTRAIT_14);
     }
 
     public function _change($return = false)
@@ -370,6 +374,9 @@ trait AuthTrait
         return $this;
     }
 
+    /**
+     * 排序，支持叠加
+     */
     protected function __order()
     {
         $sortField = $this->get['_sortField'] ?? ''; // 排序字段
@@ -377,10 +384,13 @@ trait AuthTrait
 
         $order = [];
         if ($sortField && $sortValue) {
+            $sortField = explode(',', $sortField);
             // 去掉前端的end后缀
-//            $sortValue = substr($sortValue, 0, -3);
-            $sortValue = str_replace('end', '', $sortValue);
-            $order[$sortField] = $sortValue;
+            $sortValue = explode(',', str_replace('end', '', $sortValue));
+            foreach ($sortField as $k => $v) {
+                // 如无对应的指定顺序则保持与第一个字段的相同
+                $order[$v] = $sortValue[$k] ?? $sortValue[0];
+            }
         }
 
         $this->Model->setOrder($order);
