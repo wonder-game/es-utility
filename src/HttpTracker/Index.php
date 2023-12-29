@@ -26,6 +26,8 @@ class Index extends PointContext
             'GET' => $request->getQueryParams(),
             'POST' => $request->getParsedBody(),
             'JSON' => json_decode($request->getBody()->__toString(), true),
+            // 主要是记录微信支付回调
+            'XML' => json_decode(json_encode(simplexml_load_string($request->getSwooleRequest()->rawContent(), 'SimpleXMLElement', LIBXML_NOCDATA)), true)
         ], $merge);
     }
 
