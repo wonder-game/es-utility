@@ -15,7 +15,9 @@ class Index extends PointContext
 
     public static function startArgsRequest(Request $request, array $merge = [])
     {
-        return array_merge([
+        libxml_use_internal_errors(true);
+        $_body = $request->getBody()->__toString() ?: $request->getSwooleRequest()->rawContent();
+        $arr = [
             'url' => $request->getUri()->__toString(),
             'ip' => ip($request),
             'method' => $request->getMethod(),
@@ -25,10 +27,11 @@ class Index extends PointContext
 //            'server' => $request->getServerParams(),
             'GET' => $request->getQueryParams(),
             'POST' => $request->getParsedBody(),
-            'JSON' => json_decode($request->getBody()->__toString(), true),
+            'JSON' => json_decode($_body, true),
             // 主要是记录微信支付回调
-            'XML' => json_decode(json_encode(simplexml_load_string($request->getSwooleRequest()->rawContent(), 'SimpleXMLElement', LIBXML_NOCDATA)), true)
-        ], $merge);
+            'XML' => json_decode(json_encode(simplexml_load_string($_body, 'SimpleXMLElement', LIBXML_NOCDATA)), true)
+        ];
+        return array_merge($arr, $merge);
     }
 
     public static function endArgsResponse(Response $response, array $merge = [])
