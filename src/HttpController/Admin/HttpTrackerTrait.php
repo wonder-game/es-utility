@@ -53,13 +53,13 @@ trait HttpTrackerTrait
             }
         }
 
-        // 请求参数查询, GET,POST,JSON
+        // 请求参数查询, GET,POST,JSON,XML
         if ( ! empty($filter['rq_key']) && isset($filter['rq_value']) && $filter['rq_value'] !== '' ) {
 
             $sym = strpos($filter['rq_value'], '%') !== false ? 'LIKE' : '=';
 
             $arr = [];
-            foreach (['GET', 'POST', 'JSON'] as $k) {
+            foreach (['GET', 'POST', 'JSON', 'XML'] as $k) {
                 $arr[] = "request->'$.$k.$filter[rq_key]' $sym '$filter[rq_value]'";
             }
 
