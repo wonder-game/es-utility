@@ -983,9 +983,9 @@ if ( ! function_exists('report_redis_key')) {
     function report_redis_key($key = '', $type = 'origin')
     {
         $k = strpos($key, '.') ? explode('.', $key) : [$type, $key];
-        return config("QUEUE.log.$k[0].$k[1]")
+        return config("REPORT.$k[0].$k[1]")
             // 定义啥就是啥
             ?// 例如： Report:Origin-Active
-            : (config('QUEUE.log.prefix') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
+            : (config('REPORT.PREFIX') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
     }
 }
