@@ -17,6 +17,7 @@ use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
+use WonderGame\EsUtility\Common\OrmCache\Strings;
 use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
 
 
@@ -67,7 +68,7 @@ if ( ! function_exists('model')) {
      * @param string $name Model名称
      * @param array $data
      * @param bool|numeric $inject bool:注入连接, numeric: 注入连接并切换到指定时区
-     * @return AbstractModel
+     * @return AbstractModel|Strings
      */
     function model(string $name = '', array $data = [], $inject = false): AbstractModel
     {
@@ -982,9 +983,9 @@ if ( ! function_exists('report_redis_key')) {
     function report_redis_key($key = '', $type = 'origin')
     {
         $k = strpos($key, '.') ? explode('.', $key) : [$type, $key];
-        return config("REPORT.$k[0].$k[1]")
+        return config("QUEUE.log.$k[0].$k[1]")
             // 定义啥就是啥
             ?// 例如： Report:Origin-Active
-            : (config('REPORT.PREFIX') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
+            : (config('QUEUE.log.prefix') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
     }
 }
