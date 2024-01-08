@@ -106,7 +106,7 @@ trait HttpTrackerTrait
         }
 
         $sql = $builder->getLastQuery();
-        $this->success($sql);
+        return $this->success($sql);
     }
 
     // 模拟模型获取器
@@ -228,7 +228,7 @@ trait HttpTrackerTrait
             if ($return) {
                 throw $e;
             } else {
-                $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
+               return $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
             }
         }
     }
