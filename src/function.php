@@ -833,7 +833,7 @@ if ( ! function_exists('get_mode')) {
 if ( ! function_exists('is_env')) {
     /**
      * 判断当前运行环境
-     * @param string $env dev|test|produce|user.test|sdk.dev|...
+     * @param string|array $env dev|test|produce|user.test|sdk.dev|...
      * @return bool
      */
     function is_env($env = 'dev')
@@ -845,12 +845,13 @@ if ( ! function_exists('is_env')) {
 
 if ( ! function_exists('is_module')) {
     /**
-     * @param string $name log|sdk|pay|user|admin|account|....
+     * @param string|array $name log|sdk|pay|user|admin|account|....
      * @return bool
      */
     function is_module($name = 'log')
     {
-        return get_mode('mode') === $name;
+        $_mode = get_mode('mode');
+        return is_array($name) ? in_array($_mode, $name) : $_mode === $name;
     }
 }
 
