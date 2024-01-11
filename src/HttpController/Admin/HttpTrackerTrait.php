@@ -54,7 +54,7 @@ trait HttpTrackerTrait
         }
 
         // 请求参数查询, GET,POST,JSON,XML
-        if ( ! empty($filter['rq_key']) && isset($filter['rq_value']) && $filter['rq_value'] !== '' ) {
+        if ( ! empty($filter['rq_key']) && isset($filter['rq_value']) && $filter['rq_value'] !== '') {
 
             $sym = strpos($filter['rq_value'], '%') !== false ? 'LIKE' : '=';
 
@@ -68,7 +68,7 @@ trait HttpTrackerTrait
         }
 
         // 响应参数查询 data.result
-        if ( ! empty($filter['rp_key']) && isset($filter['rp_value']) && $filter['rp_value'] !== '' ) {
+        if ( ! empty($filter['rp_key']) && isset($filter['rp_value']) && $filter['rp_value'] !== '') {
 
             $sym = strpos($filter['rp_value'], '%') !== false ? 'LIKE' : '=';
 
@@ -106,7 +106,7 @@ trait HttpTrackerTrait
         }
 
         $sql = $builder->getLastQuery();
-        $this->success($sql);
+        return $this->success($sql);
     }
 
     // 模拟模型获取器
@@ -189,13 +189,12 @@ trait HttpTrackerTrait
     // 单条复发
     public function _repeat($return = false)
     {
-        $pointId = $this->post['pointId'];
-        if (empty($pointId)) {
-            throw new HttpParamException('PointId id empty.');
+        if (empty($this->post['point_id']) || empty($this->post['instime'])) {
+            throw new HttpParamException('point_id 或 instime 不能为空');
         }
-        $row = $this->Model->where('point_id', $pointId)->get();
+        $row = $this->Model->where($this->post)->get();
         if ( ! $row) {
-            throw new HttpParamException('PointId id Error: ' . $pointId);
+            throw new HttpParamException("找不到原始记录 $this->post[point_id]");
         }
 
         $response = $row->repeatOne();
@@ -229,7 +228,7 @@ trait HttpTrackerTrait
             if ($return) {
                 throw $e;
             } else {
-                $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
+               return $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
             }
         }
     }
