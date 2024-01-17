@@ -6,6 +6,7 @@ use EasySwoole\I18N\I18N;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\ORM\Db\MysqliClient;
 use EasySwoole\ORM\DbManager;
+use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
 use WonderGame\EsNotify\DingTalk\Message\Markdown;
@@ -244,7 +245,7 @@ if ( ! function_exists('defer_redis')) {
     /**
      * 返回redis句柄资源
      * @param string $poolname 标识
-     * @return \EasySwoole\Redis\Redis
+     * @return Redis
      */
     function defer_redis($poolname = 'default')
     {
@@ -984,9 +985,35 @@ if ( ! function_exists('report_redis_key')) {
     function report_redis_key($key = '', $type = 'origin')
     {
         $k = strpos($key, '.') ? explode('.', $key) : [$type, $key];
-        return config("REPORT.$k[0].$k[1]")
+        return config("QUEUE.log.$k[0].$k[1]")
             // 定义啥就是啥
             ?// 例如： Report:Origin-Active
-            : (config('REPORT.PREFIX') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
+            : (config('QUEUE.log.prefix') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
+    }
+}
+
+
+if ( ! function_exists('redis_list_push')) {
+    /**
+     * 入redis队列
+     * @param Redis $redis
+     * @param string $key
+     * @param mixed $data
+     * @param bool $left 是否lpush，默认为rpush
+     * @return false|int|Redis
+     */
+    function redis_list_push(Redis $redis, string $key, $data, bool $left = false)
+    {
+        if ( ! is_scalar($data)) {
+            $data = json_encode($data);
+        }
+        $clusterNumber = config('QUEUE.clusterNumber');
+        if ($clusterNumber > 0) {
+            mt_rand();
+            $index = mt_rand(-1, $clusterNumber);
+            $index > 0 && $key .= ".$index";
+        }
+
+        return $left ? $redis->lPush($key, $data) : $redis->rPush($key, $data);
     }
 }

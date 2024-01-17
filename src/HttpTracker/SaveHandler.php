@@ -30,10 +30,7 @@ class SaveHandler implements SaveHandlerInterface
             try {
                 RedisPool::invoke(function (Redis $redis) use ($array, $globalArg) {
                     foreach ($array as $value) {
-                        $redis->lPush(
-                            $this->config['queue'],
-                            json_encode(array_merge($value, $globalArg ?? []), JSON_UNESCAPED_UNICODE)
-                        );
+                        redis_list_push($redis, $this->config['queue'], array_merge($value, $globalArg ?? []), true);
                     }
                 }, $this->config['redis-name']);
             } catch (\Exception|\Throwable $e) {

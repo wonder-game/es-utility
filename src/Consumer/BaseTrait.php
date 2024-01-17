@@ -3,6 +3,7 @@
 namespace WonderGame\EsUtility\Consumer;
 
 use EasySwoole\Component\Process\AbstractProcess;
+use EasySwoole\EasySwoole\Trigger;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use WonderGame\EsUtility\EventMainServerCreate;
@@ -31,7 +32,7 @@ trait BaseTrait
     protected function onException(\Throwable $throwable, ...$args)
     {
         // 消费的consume是运行在回调内的，在consume发生的异常基本走不到这里
-        \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+        Trigger::getInstance()->throwable($throwable);
     }
 
     /**
@@ -41,6 +42,22 @@ trait BaseTrait
      * @return mixed
      */
     abstract protected function consume($data = [], Redis $redis = null);
+
+    public function getListenQueues()
+    {
+        // 在集群模式中，将队列数据均匀分布在不同分片的槽位中
+        $clusterNumber = config('QUEUE.clusterNumber');
+        $queue = $this->args['queue'];
+
+        $list[] = $queue;
+        if ($clusterNumber > 0) {
+            for ($i = 0; $i <= $clusterNumber; ++$i) {
+                $list[] = "$queue.$i";
+            }
+        }
+
+        return $list;
+    }
 
     /**
      * EasySwoole自定义进程入口
@@ -54,25 +71,29 @@ trait BaseTrait
             EventMainServerCreate::listenProcessInfo();
         }
 
-        $this->addTick($this->args['tick'] ?? 1000, function () {
+        $queues = $this->getListenQueues();
+        foreach ($queues as $queue) {
 
-            RedisPool::invoke(function (Redis $Redis) {
+            $this->addTick($this->args['tick'] ?? 1000, function () use ($queue) {
 
-                for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i) {
-                    $data = $Redis->lPop($this->args['queue']);
-                    if ( ! $data) {
-                        break;
-                    }
-                    try {
-                        if ( ! empty($this->args['json'])) {
-                            $data = json_decode($data, true);
+                RedisPool::invoke(function (Redis $Redis) use ($queue) {
+
+                    for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i) {
+                        $data = $Redis->lPop($queue);
+                        if ( ! $data) {
+                            break;
                         }
-                        $this->consume($data, $Redis);
-                    } catch (\Exception | \Throwable $throwable) {
-                        \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+                        try {
+                            if ( ! empty($this->args['json'])) {
+                                $data = json_decode($data, true);
+                            }
+                            $this->consume($data, $Redis);
+                        } catch (\Exception|\Throwable $throwable) {
+                            Trigger::getInstance()->throwable($throwable);
+                        }
                     }
-                }
-            }, $this->args['pool'] ?? 'default');
-        });
+                }, $this->args['pool'] ?? 'default');
+            });
+        }
     }
 }
