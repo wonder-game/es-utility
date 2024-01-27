@@ -282,13 +282,14 @@ if ( ! function_exists('array_sort_multi')) {
     /**
      * 二维数组按某字段排序
      */
-    function array_sort_multi($data = [], $field = '', $direction = SORT_DESC)
+    function array_sort_multi($data = [], $field = '', $direction = SORT_DESC, $fmt = true)
     {
         if ( ! $data) return [];
         $arrsort = [];
         foreach ($data as $uniqid => &$row) {
             foreach ($row as $key => &$value) {
-                $arrsort[$key][$uniqid] = $value = format_number($value, 2, true);
+                $fmt && $value = format_number($value, 2, true);
+                $arrsort[$key][$uniqid] = $value;
             }
             unset($value);
         }
