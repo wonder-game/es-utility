@@ -962,15 +962,16 @@ if ( ! function_exists('report_redis_key')) {
      * 返回上报队列里的redis-key
      * @param string $key 具体动作 或 归类.具体动作
      * @param string $type 归类
+     * @param string $sys 系统
      * @return string
      */
-    function report_redis_key($key = '', $type = 'origin')
+    function report_redis_key($key = '', $type = 'origin', $sys = 'log')
     {
         $k = strpos($key, '.') ? explode('.', $key) : [$type, $key];
-        return config("QUEUE.log.$k[0].$k[1]")
+        return config("QUEUE.$sys.$k[0].$k[1]")
             // 定义啥就是啥
             ?// 例如： Report:Origin-Active
-            : (config('QUEUE.log.prefix') . ucfirst($k[0]) . '-' . ucfirst($k[1]));
+            : (config("QUEUE.$sys.prefix") . ucfirst($k[0]) . '-' . ucfirst($k[1]));
     }
 }
 
