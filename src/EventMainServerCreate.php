@@ -144,10 +144,9 @@ class EventMainServerCreate extends SplBean
         if ( ! is_array($jobs)) {
             return;
         }
-        $group = config('SERVER_NAME') . '.my';
-        foreach ($jobs as $value) {
+        $group = config('SERVER_NAME') . '.my.';
 
-            $proName = $group . '.' . $value['name'];
+        foreach ($jobs as $value) {
 
             $class = $value['class'];
             if (empty($class) || ! class_exists($class)) {
@@ -160,15 +159,22 @@ class EventMainServerCreate extends SplBean
                 unset($value['process_config']);
             }
 
-            for ($i = 0; $i < $psnum; ++$i) {
-                $cfg = array_merge([
-                    'processName' => $proName . '.' . $i,
-                    'processGroup' => $group,
-                    'arg' => $value,
-                    'enableCoroutine' => true,
-                ], $proCfg);
-                $processConfig = new \EasySwoole\Component\Process\Config($cfg);
-                \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
+            // 如果Redis池配置为数组，则遍历所有Redis
+            $pool = $value['pool'] ?? 'default';
+            $pools = is_array($pool) ? $pool : [$pool];
+
+            foreach ($pools as $pool) {
+                $proName = "$group$pool.$value[name]";
+                for ($i = 0; $i < $psnum; ++$i) {
+                    $cfg = array_merge([
+                        'processName' => $proName . '.' . $i,
+                        'processGroup' => $group,
+                        'arg' => ['pool' => $pool] + $value,
+                        'enableCoroutine' => true,
+                    ], $proCfg);
+                    $processConfig = new \EasySwoole\Component\Process\Config($cfg);
+                    \EasySwoole\Component\Process\Manager::getInstance()->addProcess(new $class($processConfig));
+                }
             }
         }
     }
@@ -358,9 +364,9 @@ class EventMainServerCreate extends SplBean
         // 配置 words-match
         $wdConfig = new \EasySwoole\WordsMatch\Config();
         $wdConfig->setDict($cfg['file']); // 配置 词库地址
-        $wdConfig->setMaxMEM($cfg['mem']??'512M'); // 配置 每个进程最大占用内存(M)，默认为 512 M
-        $wdConfig->setTimeout($cfg['timeout']??3.0); // 配置 内容检测超时时间。默认为 3.0 s
-        $wdConfig->setWorkerNum($cfg['num']??6); // 配置 进程数
+        $wdConfig->setMaxMEM($cfg['mem'] ?? '512M'); // 配置 每个进程最大占用内存(M)，默认为 512 M
+        $wdConfig->setTimeout($cfg['timeout'] ?? 3.0); // 配置 内容检测超时时间。默认为 3.0 s
+        $wdConfig->setWorkerNum($cfg['num'] ?? 6); // 配置 进程数
 
         // 注册服务
         WMServer::getInstance($wdConfig)->attachServer(ServerManager::getInstance()->getSwooleServer());

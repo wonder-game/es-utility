@@ -71,35 +71,30 @@ trait BaseTrait
             EventMainServerCreate::listenProcessInfo();
         }
 
-        // 如果Redis池配置为数组，则遍历所有Redis
-        $pool = $this->args['pool'] ?? 'default';
-        $pools = is_array($pool) ? $pool : [$pool];
-        foreach ($pools as $pool) {
-            // 分片处理
-            $queues = $this->getListenQueues();
-            foreach ($queues as $queue) {
+        // 分片处理
+        $queues = $this->getListenQueues();
+        foreach ($queues as $queue) {
 
-                $this->addTick($this->args['tick'] ?? 1000, function () use ($queue, $pool) {
+            $this->addTick($this->args['tick'] ?? 1000, function () use ($queue) {
 
-                    RedisPool::invoke(function (Redis $Redis) use ($queue) {
+                RedisPool::invoke(function (Redis $Redis) use ($queue) {
 
-                        for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i) {
-                            $data = $Redis->lPop($queue);
-                            if ( ! $data) {
-                                break;
-                            }
-                            try {
-                                if ( ! empty($this->args['json'])) {
-                                    $data = json_decode($data, true);
-                                }
-                                $this->consume($data, $Redis);
-                            } catch (\Exception|\Throwable $throwable) {
-                                Trigger::getInstance()->throwable($throwable);
-                            }
+                    for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i) {
+                        $data = $Redis->lPop($queue);
+                        if ( ! $data) {
+                            break;
                         }
-                    }, $pool);
-                });
-            }
+                        try {
+                            if ( ! empty($this->args['json'])) {
+                                $data = json_decode($data, true);
+                            }
+                            $this->consume($data, $Redis);
+                        } catch (\Exception|\Throwable $throwable) {
+                            Trigger::getInstance()->throwable($throwable);
+                        }
+                    }
+                }, $this->args['pool'] ?? 'default');
+            });
         }
     }
 }
