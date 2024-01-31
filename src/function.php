@@ -311,6 +311,9 @@ if ( ! function_exists('format_number')) {
      */
     function format_number($num, $prec = 2, $multiply = true)
     {
+        if ( ! is_scalar($num)) {
+            return $num;
+        }
         $num = trim($num);
         $percent = false;
 
