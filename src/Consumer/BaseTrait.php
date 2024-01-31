@@ -71,14 +71,14 @@ trait BaseTrait
             EventMainServerCreate::listenProcessInfo();
         }
 
+        // TODO 待优化为移入addTick并从sysinfo取?
         // 分片处理
         $queues = $this->getListenQueues();
-        foreach ($queues as $queue) {
 
-            $this->addTick($this->args['tick'] ?? 1000, function () use ($queue) {
+        $this->addTick($this->args['tick'] ?? 1000, function () use ($queues) {
 
-                RedisPool::invoke(function (Redis $Redis) use ($queue) {
-
+            RedisPool::invoke(function (Redis $Redis) use ($queues) {
+                foreach ($queues as $queue) {
                     for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i) {
                         $data = $Redis->lPop($queue);
                         if ( ! $data) {
@@ -93,8 +93,8 @@ trait BaseTrait
                             Trigger::getInstance()->throwable($throwable);
                         }
                     }
-                }, $this->args['pool'] ?? 'default');
-            });
-        }
+                }
+            }, $this->args['pool'] ?? 'default');
+        });
     }
 }
