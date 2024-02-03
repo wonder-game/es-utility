@@ -994,9 +994,12 @@ if ( ! function_exists('redis_list_push')) {
             $data = json_encode($data);
         }
         $clusterNumber = config('QUEUE.clusterNumber');
-        if ($clusterNumber > 0) {
+        $clusterNumberWrite = config('QUEUE.clusterNumberWrite');
+        // 写一定要比读小！！！不然redis会爆！！！
+        $cn = min($clusterNumber ?: 0, $clusterNumberWrite ?: 0);
+        if ($cn > 0) {
             mt_rand();
-            $index = mt_rand(-1, $clusterNumber);
+            $index = mt_rand(-1, $cn);
             $index > 0 && $key .= ".$index";
         }
 
