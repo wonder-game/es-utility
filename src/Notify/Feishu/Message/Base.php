@@ -41,28 +41,23 @@ abstract class Base extends SplBean implements MessageInterface
     public function getAtArray()
     {
         $at = [];
-        switch ($this->isAtAll) {
-            case true:
-                $at = [
-                    [
-                        'tag' => 'at',
-                        'user_id' => 'all',
-                        'user_name' => '所有人',
-                    ]
+        if ($this->isAtAll === true) {
+            $at = [
+                [
+                    'tag' => 'at',
+                    'user_id' => 'all',
+                    'user_name' => '所有人',
+                ]
+            ];
+        } else if (is_array($this->isAtAll)) {
+            foreach ($this->atUserID as $key => $value) {
+                if (! in_array($key, $this->isAtAll)) continue;
+                $at[] = [
+                    'tag' => 'at',
+                    'user_id' => $value['id'],
+                    'user_name' => $value['name'],
                 ];
-                break;
-            case false:
-                break;
-            default:
-                foreach (['atOpenID', 'atUserID'] as $item) {
-                    foreach ($this->{$item} as $id => $name) {
-                        $at[] = [
-                            'tag' => 'at',
-                            'user_id' => $id,
-                            'user_name' => $name,
-                        ];
-                    }
-                }
+            }
         }
 
         return $at;

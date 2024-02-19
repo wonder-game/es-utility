@@ -20,7 +20,7 @@ class Notify implements NotifyInterface
     }
 
     /**
-     * @document https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot
+     * @document https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#%E6%94%AF%E6%8C%81%E5%8F%91%E9%80%81%E7%9A%84%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E8%AF%B4%E6%98%8E
      * 自定义机器人的频率控制和普通应用不同，为 100 次/分钟，5 次/秒
      * @param MessageInterface $message
      * @return void

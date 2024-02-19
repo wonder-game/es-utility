@@ -32,7 +32,8 @@
     "easyswoole/wechat": "^2.0",
     "ext-json": "*",
     "ext-iconv": "*",
-    "ext-mbstring": "*"
+    "ext-mbstring": "*",
+    "easyswoole/http-client": "^1.5"
   },
   "autoload": {
     "psr-4": {
