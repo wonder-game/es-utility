@@ -9,13 +9,6 @@ use EasySwoole\ORM\DbManager;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
-use WonderGame\EsUtility\Notify\DingTalk\Message\Markdown;
-use WonderGame\EsUtility\Notify\DingTalk\Message\Text;
-use WonderGame\EsUtility\Notify\Feishu\Message\Textarea;
-use WonderGame\EsUtility\Notify\Feishu\Message\Text AS FeishuText;
-use WonderGame\EsUtility\Notify\Feishu\Message\Card;
-use WonderGame\EsUtility\Notify\EsNotify;
-use WonderGame\EsUtility\Notify\WeChat\Message\Notice;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
@@ -23,6 +16,13 @@ use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\OrmCache\Strings;
 use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
+use WonderGame\EsUtility\Notify\DingTalk\Message\Markdown;
+use WonderGame\EsUtility\Notify\DingTalk\Message\Text;
+use WonderGame\EsUtility\Notify\EsNotify;
+use WonderGame\EsUtility\Notify\Feishu\Message\Card;
+use WonderGame\EsUtility\Notify\Feishu\Message\Text as FeishuText;
+use WonderGame\EsUtility\Notify\Feishu\Message\Textarea;
+use WonderGame\EsUtility\Notify\WeChat\Message\Notice;
 
 
 if ( ! function_exists('is_super')) {
@@ -520,6 +520,17 @@ if ( ! function_exists('lang')) {
     }
 }
 
+if ( ! function_exists('notice')) {
+    function notice($content = '', $title = null, $name = 'default')
+    {
+        // 富文本
+        if ($title) {
+            config('ES_NOTIFY.driver') == 'feishu' ? feishu_textarea($content, true, $name) : dingtalk_markdown($title, $content, true, $name);
+        } else {
+            config('ES_NOTIFY.driver') == 'feishu' ? feishu_text($content, true, $name) : dingtalk_text($content, true, $name);
+        }
+    }
+}
 
 if ( ! function_exists('wechat_notice')) {
     function wechat_notice($content = '', $name = 'default')
