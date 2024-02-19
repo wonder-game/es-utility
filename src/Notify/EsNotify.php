@@ -7,7 +7,7 @@ use WonderGame\EsUtility\Notify\Interfaces\ConfigInterface;
 use WonderGame\EsUtility\Notify\Interfaces\MessageInterface;
 use WonderGame\EsUtility\Notify\Interfaces\NotifyInterface;
 
-class EsUtility
+class EsNotify
 {
     use Singleton;
 

@@ -109,7 +109,7 @@ class SyncData implements TaskInterface
                 $orgs[$pk] = is_bool($insertId) ? $data[$pk] : $insertId;
             }
         } catch (\Exception|\Throwable $e) {
-            dingtalk_text($msg = "数据同步失败 class:$className, 错误信息: {$e->getMessage()}");
+            notice($msg = "数据同步失败 class:$className, 错误信息: {$e->getMessage()}");
             wechat_notice($msg);
             trace("$msg, data: " . json_encode($data, JSON_UNESCAPED_UNICODE), 'info', 'sync');
         }
@@ -172,7 +172,7 @@ class SyncData implements TaskInterface
         $ding .= "- 删除行数: {$rowCount}{$newline}";
         $ding .= "- 执行SQL：{$sql}{$newline}";
         $ding .= "- 如需误删恢复，请查日志关键字：{$this->delBakupKey}";
-        dingtalk_markdown('数据删除通知', $ding, false);
+        notice($ding, '数据删除通知');
         wechat_notice("$title $sql");
     }
 }

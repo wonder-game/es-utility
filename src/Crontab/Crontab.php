@@ -37,18 +37,15 @@ class Crontab extends AbstractCronTask
     public function throwable($row, string $message)
     {
         trace($message, 'error');
-//        Trigger::getInstance()->throwable(new \Exception($message));
-
-        $title = 'Crontab异常';
         $text = implode(" \n\n ", [
-            '### **' . $title . '**',
+            '### **Crontab异常**',
             '- 服务器: ' . config('SERVNAME'),
             '- 项 目：' . config('SERVER_NAME'),
             "- id: {$row['id']}",
             "- name: {$row['name']}",
             "- 详 情：$message",
         ]);
-        dingtalk_markdown($title, $text);
+        notice($text);
     }
 
     public function run(int $taskId, int $workerIndex)

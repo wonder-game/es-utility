@@ -26,10 +26,10 @@
     "easyswoole/i18n": "^1.0",
     "easyswoole/policy": "^1.0",
     "easyswoole/file-watcher": "^1.0",
-    "wonder-game/es-notify": "1.1.*",
     "easyswoole/tracker": "^1.1",
     "easyswoole/swoole-ide-helper": "^1.3",
     "easyswoole/words-match": "^1.1",
+    "easyswoole/wechat": "^2.0",
     "ext-json": "*",
     "ext-iconv": "*",
     "ext-mbstring": "*"

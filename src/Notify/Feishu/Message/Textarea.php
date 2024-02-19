@@ -1,6 +1,6 @@
 <?php
 
-namespace WonderGame\EsUtility\Feishu\Message;
+namespace WonderGame\EsUtility\Notify\Feishu\Message;
 
 class Textarea extends Base
 {

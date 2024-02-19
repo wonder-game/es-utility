@@ -12,7 +12,7 @@ use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Socket\AbstractInterface\ParserInterface;
 use EasySwoole\Spl\SplBean;
 use EasySwoole\WordsMatch\WMServer;
-use WonderGame\EsNotify\EsNotify;
+use WonderGame\EsUtility\Notify\EsNotify;
 
 class EventMainServerCreate extends SplBean
 {
@@ -49,11 +49,6 @@ class EventMainServerCreate extends SplBean
         'reload_before' => null, // callback worker process reload 前
         'reload_after' => null, // callback worker process reload 后
     ];
-
-    /**
-     * @var null ['key' => new EsNotify/Config([])]
-     */
-    //protected $notifyConfig = null;
 
     protected $consumerJobs = null;
 
@@ -265,8 +260,8 @@ class EventMainServerCreate extends SplBean
             if ( ! is_array($val)) {
                 continue;
             }
-            /* @var \WonderGame\EsNotify\DingTalk\Config|\WonderGame\EsNotify\WeChat\Config $cls */
-            $cls = '\\WonderGame\\EsNotify\\' . ucfirst($key) . '\\Config';
+            /* @var \WonderGame\EsUtility\Notify\DingTalk\Config|\WonderGame\EsUtility\Notify\WeChat\Config|\WonderGame\EsUtility\Notify\Feishu\Config $cls */
+            $cls = '\\WonderGame\\EsUtility\\Notify\\' . ucfirst($key) . '\\Config';
 
             foreach ($val as $k => $v) {
                 EsNotify::getInstance()->register(new $cls($v, true), $key, $k);
