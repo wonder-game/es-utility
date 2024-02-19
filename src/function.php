@@ -9,10 +9,6 @@ use EasySwoole\ORM\DbManager;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
-use WonderGame\EsNotify\DingTalk\Message\Markdown;
-use WonderGame\EsNotify\DingTalk\Message\Text;
-use WonderGame\EsNotify\EsNotify;
-use WonderGame\EsNotify\WeChat\Message\Notice;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
@@ -20,6 +16,13 @@ use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\OrmCache\Strings;
 use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
+use WonderGame\EsUtility\Notify\DingTalk\Message\Markdown;
+use WonderGame\EsUtility\Notify\DingTalk\Message\Text;
+use WonderGame\EsUtility\Notify\EsNotify;
+use WonderGame\EsUtility\Notify\Feishu\Message\Card;
+use WonderGame\EsUtility\Notify\Feishu\Message\Text as FeishuText;
+use WonderGame\EsUtility\Notify\Feishu\Message\Textarea;
+use WonderGame\EsUtility\Notify\WeChat\Message\Notice;
 
 
 if ( ! function_exists('is_super')) {
@@ -517,6 +520,17 @@ if ( ! function_exists('lang')) {
     }
 }
 
+if ( ! function_exists('notice')) {
+    function notice($content = '', $title = null, $name = 'default')
+    {
+        // 富文本
+        if ($title) {
+            config('ES_NOTIFY.driver') == 'feishu' ? feishu_textarea($content, true, $name) : dingtalk_markdown($title, $content, true, $name);
+        } else {
+            config('ES_NOTIFY.driver') == 'feishu' ? feishu_text($content, true, $name) : dingtalk_text($content, true, $name);
+        }
+    }
+}
 
 if ( ! function_exists('wechat_notice')) {
     function wechat_notice($content = '', $name = 'default')
@@ -565,6 +579,39 @@ if ( ! function_exists('dingtalk_markdown')) {
         EsNotify::getInstance()->doesOne('dingTalk', new Markdown([
             'title' => $title,
             'text' => $text,
+            'isAtAll' => $at
+        ]), $name);
+    }
+}
+
+
+if ( ! function_exists('feishu_text')) {
+    function feishu_text($content = '', $at = true, $name = 'default')
+    {
+        EsNotify::getInstance()->doesOne('feishu', new FeishuText([
+            'content' => $content,
+            'isAtAll' => $at
+        ]), $name);
+    }
+}
+
+
+if ( ! function_exists('feishu_textarea')) {
+    function feishu_textarea($content = '', $at = true, $name = 'default')
+    {
+        EsNotify::getInstance()->doesOne('feishu', new Textarea([
+            'content' => $content,
+            'isAtAll' => $at
+        ]), $name);
+    }
+}
+
+
+if ( ! function_exists('feishu_card')) {
+    function feishu_card($content = '', $at = true, $name = 'default')
+    {
+        EsNotify::getInstance()->doesOne('feishu', new Card([
+            'content' => $content,
             'isAtAll' => $at
         ]), $name);
     }
