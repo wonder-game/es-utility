@@ -282,13 +282,13 @@ if ( ! function_exists('array_sort_multi')) {
     /**
      * 二维数组按某字段排序
      */
-    function array_sort_multi($data = [], $field = '', $direction = SORT_DESC, $fmt = true)
+    function array_sort_multi($data = [], $field = '', $direction = SORT_DESC, $fmt = true, $filterCols = [])
     {
         if ( ! $data) return [];
         $arrsort = [];
         foreach ($data as $uniqid => &$row) {
             foreach ($row as $key => &$value) {
-                $fmt && $value = format_number($value, 2, true);
+                $fmt && ! in_array($key, $filterCols) && $value = format_number($value, 2, true);
                 $arrsort[$key][$uniqid] = $value;
             }
             unset($value);
@@ -889,10 +889,24 @@ if ( ! function_exists('http_tracker')) {
      * 子链路记录，返回一个结束回调，必须保证结束回调被调用
      * @param string $pointName 标识名
      * @param array $data 除自定义参数外，这些key尽量传递完整：ip,method,path,url,GET,POST,JSON,server_name,header
+     * @param bool $in_go 是否在go函数内
      * @return Closure
      */
-    function http_tracker(string $pointName, array $data = [])
+    function http_tracker(string $pointName, array $data = [], bool $in_go = false)
     {
+        // TODO 代码可能有冗余，待优化
+        // 兼容go函数内的场景
+        if ( ! empty($data['in_go']) || $in_go) {
+            $point = HttpTracker::getInstance()->createStart($pointName);
+            $point && $point->setStartArg($data + ['server_name' => config('SERVNAME')]);
+
+            return function ($data = [], int $httpCode = 200) use ($point) {
+                if ($point) {
+                    $point->setEndArg(['httpStatusCode' => $httpCode, 'data' => $data])->end();
+                }
+            };
+        }
+
         $point = HttpTracker::getInstance()->startPoint();
         $childPoint = false;
         if ($point) {
