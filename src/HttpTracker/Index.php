@@ -25,12 +25,23 @@ class Index extends PointContext
             'server_name' => config('SERVNAME'),
             'header' => $request->getHeaders(),
 //            'server' => $request->getServerParams(),
+        ];
+
+        // 有值才记录
+        $extArr = [
             'GET' => $request->getQueryParams(),
             'POST' => $request->getParsedBody(),
             'JSON' => json_decode($_body, true),
             // 主要是记录微信支付回调
             'XML' => json_decode(json_encode(simplexml_load_string($_body, 'SimpleXMLElement', LIBXML_NOCDATA)), true)
         ];
+
+        foreach ($extArr as $key => $val) {
+            if ( ! empty($val)) {
+                $arr[$key] = $val;
+            }
+        }
+
         return array_merge($arr, $merge);
     }
 
