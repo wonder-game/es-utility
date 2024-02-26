@@ -299,9 +299,11 @@ class EventInitialize extends SplBean
 
                 LamUnit::setI18n($request);
 
-                $isTracker = ! is_null($this->httpTracker)
-                    && is_array($this->httpTrackerConfig['ignore_path'])
-                    && ! in_array($request->getUri()->getPath(), $this->httpTrackerConfig['ignore_path']);
+                $isTracker = ! is_null($this->httpTracker);
+                // 不记录的path
+                if (is_array($this->httpTrackerConfig['ignore_path']) && in_array($request->getUri()->getPath(), $this->httpTrackerConfig['ignore_path'])) {
+                    $isTracker = false;
+                }
                 if ($isTracker) {
                     $repeated = intval(stripos($request->getHeaderLine('user-agent'), ';HttpTracker') !== false);
                     // 开启链路追踪
@@ -341,9 +343,11 @@ class EventInitialize extends SplBean
                     }
                 }
 
-                $isTracker = ! is_null($this->httpTracker)
-                    && is_array($this->httpTrackerConfig['ignore_path'])
-                    && ! in_array($request->getUri()->getPath(), $this->httpTrackerConfig['ignore_path']);
+                $isTracker = ! is_null($this->httpTracker);
+                // 不记录的path
+                if (is_array($this->httpTrackerConfig['ignore_path']) && in_array($request->getUri()->getPath(), $this->httpTrackerConfig['ignore_path'])) {
+                    $isTracker = false;
+                }
                 if ($isTracker) {
                     $point = HttpTracker::getInstance()->startPoint();
                     $point && $point->setEndArg(HttpTracker::endArgsResponse($response))->end();
