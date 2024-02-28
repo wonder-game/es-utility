@@ -13,7 +13,7 @@ class Textarea extends Base
             'content' => [
                 'post' => [
                     'zh_cn' => [
-                        'tittle' => '程序异常',
+                        'title' => '程序异常',
                         'content' => [
                             [
                                 [

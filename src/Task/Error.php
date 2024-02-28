@@ -43,7 +43,7 @@ class Error implements TaskInterface
             }
 
             $message = implode($this->warp, $data);
-            notice($message);
+            notice($message, $title);
 
             $message = "$title: {$this->data['message']}, 文件 {$this->data['file']} 第 {$this->data['line']} 行";
             wechat_warning($message);
