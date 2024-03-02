@@ -2,6 +2,7 @@
 
 namespace WonderGame\EsUtility\HttpTracker;
 
+use EasySwoole\Http\Message\Status;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\Tracker\PointContext;
@@ -51,6 +52,12 @@ class Index extends PointContext
         if (is_string($data) && ($array = json_decode($data, true))) {
             $data = $array;
         }
-        return ['httpStatusCode' => $response->getStatusCode(), 'data' => $data] + $merge;
+        $code = $response->getStatusCode();
+
+        // 302重定向，则记录Location地址
+        if ($code === Status::CODE_MOVED_TEMPORARILY) {
+            $data = $response->getHeader('Location');
+        }
+        return ['httpStatusCode' => $code, 'data' => $data] + $merge;
     }
 }
