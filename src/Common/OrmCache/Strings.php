@@ -104,7 +104,7 @@ trait Strings
      */
     protected $delay = false;
 
-    protected function _getCacheKey($id)
+    public function getCacheKey($id)
     {
         /* @var AbstractModel $this */
         if (is_array($id)) {
@@ -198,7 +198,7 @@ trait Strings
     public function cacheSet($id, $data = [], $bloom = false)
     {
         return RedisPool::invoke(function (Redis $redis) use ($id, $data, $bloom) {
-            $key = $this->_getCacheKey($id);
+            $key = $this->getCacheKey($id);
 
             if (is_array($id)) {
                 $pk = $this->_getPk();
@@ -239,7 +239,7 @@ trait Strings
                 }
             }
 
-            $key = $this->_getCacheKey($id);
+            $key = $this->getCacheKey($id);
             $data = $redis->get($key);
             // 存储的是主键,则使用主键再次获取
             if (is_string($data) && strpos($data, $this->primarySb) === 0) {
@@ -269,7 +269,7 @@ trait Strings
     public function cacheDel($id)
     {
         return RedisPool::invoke(function (Redis $redis) use ($id) {
-            $key = $this->_getCacheKey($id);
+            $key = $this->getCacheKey($id);
             $status = $redis->del($key);
 
             $this->bloom && $this->bloomDel();

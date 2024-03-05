@@ -26,7 +26,7 @@ trait Hash
 
     protected $hashWhere = [];
 
-    protected function _getCacheKey()
+    public function getCacheKey()
     {
         /* @var AbstractModel $this */
         $table = $this->getTableName();
@@ -67,7 +67,7 @@ trait Hash
     public function cacheHGet($field)
     {
         return RedisPool::invoke(function (Redis $redis) use ($field) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
 
             $this->_chkHashKey($redis, $key);
 
@@ -83,7 +83,7 @@ trait Hash
     public function cacheHGetAll()
     {
         return RedisPool::invoke(function (Redis $redis) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
 
             $this->_chkHashKey($redis, $key);
 
@@ -98,7 +98,7 @@ trait Hash
     public function cacheDel()
     {
         return RedisPool::invoke(function (Redis $redis) {
-            return $redis->del($this->_getCacheKey());
+            return $redis->del($this->getCacheKey());
         }, $this->redisPoolName);
     }
 
