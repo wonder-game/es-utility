@@ -292,7 +292,7 @@ if ( ! function_exists('array_sort_multi')) {
         foreach ($data as $uniqid => &$row) {
             foreach ($row as $key => &$value) {
                 $fmt && ! in_array($key, $filterCols) && $value = format_number($value, 2, true);
-                $arrsort[$key][$uniqid] = $value;
+                $arrsort[$key][$uniqid] = str_replace('%', '', $value);
             }
             unset($value);
         }

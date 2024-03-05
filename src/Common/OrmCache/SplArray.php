@@ -32,7 +32,7 @@ trait SplArray
     protected $splFieldKey = '';
     protected $splFieldValue = '';
 
-    protected function _getCacheKey()
+    public function getCacheKey()
     {
         /* @var AbstractModel $this */
         $table = $this->getTableName();
@@ -68,7 +68,7 @@ trait SplArray
     {
         /* @var \EasySwoole\Spl\SplArray $Spl */
         $Spl = RedisPool::invoke(function (Redis $redis) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
 
             $data = $redis->get($key);
             if ($data !== false && ! is_null($data)) {
@@ -89,7 +89,7 @@ trait SplArray
     public function cacheDel()
     {
         return RedisPool::invoke(function (Redis $redis) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
             return $redis->del($key);
         }, $this->redisPoolName);
     }

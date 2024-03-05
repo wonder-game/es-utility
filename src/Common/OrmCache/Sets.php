@@ -27,7 +27,7 @@ trait Sets
      */
     protected $memberEmptyValue = 'test';
 
-    protected function _getCacheKey()
+    public function getCacheKey()
     {
         /* @var AbstractModel $this */
         $table = $this->getTableName();
@@ -46,7 +46,7 @@ trait Sets
     public function cacheSAdd()
     {
         RedisPool::invoke(function (Redis $redis) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
             $rows = $this->_getCacheData();
             if (empty($rows) || ! is_array($rows)) {
                 if (empty($this->memberEmptyValue)) {
@@ -61,7 +61,7 @@ trait Sets
     public function cacheDel()
     {
         return RedisPool::invoke(function (Redis $redis) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
             return $redis->del($key);
         }, $this->redisPoolName);
     }
@@ -69,7 +69,7 @@ trait Sets
     public function cacheIsMember($value)
     {
         return RedisPool::invoke(function (Redis $redis) use ($value) {
-            $key = $this->_getCacheKey();
+            $key = $this->getCacheKey();
             if ( ! $redis->exists($key)) {
                 $this->cacheSAdd();
             }
