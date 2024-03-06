@@ -64,6 +64,7 @@ trait BaseTrait
 
     /**
      * EasySwoole自定义进程入口
+     * @return void|bool
      */
     public function run($arg)
     {
@@ -73,6 +74,19 @@ trait BaseTrait
         if (config('PROCESS_INFO.isopen')) {
             EventMainServerCreate::listenProcessInfo();
         }
+
+        // 要执行的服务器 []代表不限制
+        $server = $this->args['server'] ?? [];
+        if (
+            $server
+            &&
+            defined('SERVNUM')
+            && ! in_array(SERVNUM, (array)$server)
+        ) {
+            return true;
+        }
+
+        unset($server);
 
         // TODO 待优化为移入addTick并从sysinfo取?
         // 分片处理
