@@ -12,6 +12,7 @@ use EasySwoole\Policy\PolicyNode;
 use EasySwoole\Utility\MimeType;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\DateUtils;
+use WonderGame\EsUtility\Common\Classes\Mysqli;
 use WonderGame\EsUtility\Common\Classes\XlsWriter;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
@@ -393,7 +394,24 @@ trait AuthTrait
             }
         }
 
-        $this->Model->setOrder($order);
+        if ($this->isExport) {
+            $sort = $this->Model->sort;
+            // 'id desc'
+            if (is_string($sort)) {
+                list($sortField, $sortValue) = explode(' ', $sort);
+                $order[$sortField] = $sortValue;
+            } // ['sort' => 'desc'] || ['sort' => 'desc', 'id' => 'asc']
+            else if (is_array($sort)) {
+                // 保证传值的最高优先级
+                foreach ($sort as $k => $v) {
+                    if ( ! isset($order[$k])) {
+                        $order[$k] = $v;
+                    }
+                }
+            }
+        } else {
+            $this->Model->setOrder($order);
+        }
         return $order;
     }
 
@@ -421,16 +439,34 @@ trait AuthTrait
             }
         }
 
+        // fetch模式+固定内存导出
+        $connectName = $this->Model->getConnectionName();
+        $Mysql = new Mysqli($connectName);
+        $Builder = new QueryBuilder();
+
+        // 处理where,此处where仅支持array与funciton，方法内请勿直接调用$this->Model->where()
         $where = $this->__with()->__search();
+        if (is_callable($where)) {
+            call_user_func($where, $Builder);
+        } elseif (is_array($where)) {
+            foreach ($where as $wk => $wv) {
+                if ( ! is_array($wv)) {
+                    $Builder->where($wk, $wv);
+                } else {
+                    $Builder->where($wk, ...$wv);
+                }
+            }
+        }
 
         // 处理排序
-        $this->__order();
+        $order = $this->__order();
+        foreach ($order as $ok => $ov) {
+            $Builder->orderBy($ok, $ov);
+        }
 
-        // todo 希望优化为fetch模式
-        $items = $this->Model->all($where);
-        $data = $this->__after_index($items)[config('fetchSetting.listField')];
+        $Builder->get($this->Model->getTableName());
 
-        // 是否需要合并合计行，如需合并，data为索引数组，为空字段需要占位
+        $Gener = $Mysql->fetch($Builder, $this->Model);
 
         // xlsWriter固定内存模式导出
         $excel = new XlsWriter();
@@ -441,7 +477,9 @@ trait AuthTrait
             $fileName = sprintf('export-%d-%s.xlsx', date(DateUtils::YmdHis), substr(uniqid(), -5));
         }
 
-        $excel->ouputFileByCursor($fileName, $th, $data);
+        $excel->ouputFileByCursor($fileName, $th, $Gener, function ($alldata) {
+            return $this->__after_index($alldata)[config('fetchSetting.listField')];
+        });
         $fullFilePath = $excel->getConfig('path') . $fileName;
 
         $this->response()->sendFile($fullFilePath);
