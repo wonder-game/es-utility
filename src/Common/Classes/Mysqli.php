@@ -121,11 +121,11 @@ class Mysqli extends MysqliClient
 
     /**
      * @param QueryBuilder $Builder
-     * @param string $modelName AbstractModel子类，否则为数组
+     * @param string | AbstractModel $modelName AbstractModel子类，否则为数组
      * @return \Generator
      * @throws \Throwable
      */
-    public function fetch(QueryBuilder $Builder, string $modelName = '')
+    public function fetch(QueryBuilder $Builder, $modelName = '')
     {
         // 如果之前非fetch模式，使用新配置重新创建链接
         if ( ! $this->config->isFetchMode()) {
@@ -137,14 +137,21 @@ class Mysqli extends MysqliClient
         /** @var Cursor $Cursor */
         $Cursor = $this->query($Builder, false)->getResult();
 
-        if ($modelName && class_exists($modelName) && is_subclass_of($modelName, AbstractModel::class)) {
+        $Cursor->setReturnAsArray(true);
+
+        // string
+        if ($modelName && is_string($modelName) && class_exists($modelName) && is_subclass_of($modelName, AbstractModel::class)) {
             $Cursor->setModelName($modelName);
             $Cursor->setReturnAsArray(false);
-        } else {
-            $Cursor->setReturnAsArray(true);
         }
 
         while ($ret = $Cursor->fetch()) {
+            // object
+            if ($modelName && $modelName instanceof AbstractModel) {
+                $model = clone $modelName;
+                $model->data($ret);
+                $ret = $model;
+            }
             yield $ret;
         }
     }
