@@ -482,6 +482,8 @@ trait AuthTrait
         });
         $fullFilePath = $excel->getConfig('path') . $fileName;
 
+        $Mysql->close();
+
         $this->response()->sendFile($fullFilePath);
 //        $this->response()->withHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $this->response()->withHeader('Content-Type', MimeType::getMimeTypeByExt('xlsx'));
