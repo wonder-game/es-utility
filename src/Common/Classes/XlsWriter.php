@@ -183,9 +183,10 @@ class XlsWriter
      * 导出，固定内存模式
      * @param string $file
      * @param array $header
-     * @param array $data
+     * @param array | \Generator $data
+     * @param callable | array | null $rowCall 多行处理回调，兼容__after_index
      */
-    public function ouputFileByCursor(string $file, array $header, array $data)
+    public function ouputFileByCursor(string $file, array $header, $data, $rowCall = null, $limit = 1000)
     {
         $suffix = '.xlsx';
         if (substr($file, -5) !== $suffix) {
@@ -194,17 +195,6 @@ class XlsWriter
 
         $thKeys = array_keys($header);
         $thValue = array_values($header);
-        $result = [];
-        // 过滤掉不在表头的字段
-        foreach ($data as $key => &$value) {
-            $row = [];
-            // 因为data只能是索引数组，所以这里按顺序十分重要
-            foreach ($thKeys as $col) {
-                $row[] = $value[$col] ?? '';
-            }
-            $row && $result[] = $row;
-            unset($data[$key]);
-        }
 
         // 新版本的constMemory增加了第三个参数用来兼容WPS，在这之前，如果传递3个参数会报错
         $Ref = new \ReflectionClass(get_class($this->excel));
@@ -212,10 +202,47 @@ class XlsWriter
         $cmy = count($RefMethod->getParameters()) < 3 ? [$file] : [$file, null, false];
         $fileObject = $this->excel->constMemory(...$cmy);
 
-        $this->setThStyle($fileObject)
-            ->header($thValue)
-            ->data($result)
-            ->output();
+        $excel = $this->setThStyle($fileObject)->header($thValue);
+
+        $doInsert = function (array $outputs) use ($rowCall, $excel, $thKeys) {
+            if ( ! is_null($rowCall)) {
+                $outputs = call_user_func($rowCall, $outputs);
+            }
+            $newarr = [];
+            // 过滤掉不在表头的字段
+            foreach ($outputs as $key => &$value) {
+                $row = [];
+                // 因为data只能是索引数组，所以这里按顺序十分重要
+                foreach ($thKeys as $col) {
+                    $row[] = $value[$col] ?? '';
+                }
+
+                $row && $newarr[] = $row;
+                unset($outputs[$key]);
+            }
+            // todo 兼容客户端a.b.c写法
+            $excel->data($newarr);
+        };
+
+        if (is_array($data)) {
+            $doInsert($data);
+        }
+        elseif ($data instanceof \Generator) {
+            $insert = [];
+            foreach ($data as $item) {
+                $insert[] = $item;
+                // 每千行落盘
+                if (count($insert) >= $limit) {
+                    $doInsert($insert);
+                    $insert = [];
+                }
+            }
+            // 余数落盘
+            if ($insert) {
+                $doInsert($insert);
+            }
+        }
+        $excel->output();
     }
 
     /**
