@@ -40,8 +40,7 @@ class LamUnit
     // 处理部分通用参数数组
     static public function utilityParam(Request $request)
     {
-        // 获取IP
-        $utility = ['ip' => ip($request)];
+        $utility = [];
 
         // 包序号（版本序号）
         if ( ! $request->getRequestParam('versioncode')) {
@@ -53,7 +52,7 @@ class LamUnit
             $utility['androidid'] = $request->getRequestParam('android');
         }
 
-        self::withParams($request, $utility, false);
+        self::withParams($request, $utility, false, [], ['ip' => ip($request)]);
     }
 
     /**
@@ -61,8 +60,9 @@ class LamUnit
      * @param array $array 要合并的数据
      * @param bool $merge 是否覆盖掉原参数的值
      * @param string|array $unset 要删除的量
+     * @param array $extend 扩展量（优先级最高的）
      */
-    static public function withParams(Request $request, $array = [], $merge = true, $unset = '')
+    static public function withParams(Request $request, $array = [], $merge = true, $unset = '', $extend = [])
     {
         $method = $request->getMethod();
         $params = $method == 'GET' ? $request->getQueryParams() : $request->getParsedBody();
@@ -73,6 +73,8 @@ class LamUnit
                 $params += $array;
             }
         }
+
+        $params = array_merge($params, $extend);
 
         if ($unset) {
             is_array($unset) or $unset = explode(',', $unset);
