@@ -1,18 +1,18 @@
-### 简介
+## 简介
 
     基于Easyswoole封装的一些Trait和Class，放到Composer仓库以实现多项目共用一套代码
 
-### 开始
+## 开始
 
 > composer require wonder-game/es-utility
 
-### 需要掌握的基础知识：
+## 需要掌握的基础知识：
 
 - [EasySwoole](http://www.easyswoole.com)
 - [Swoole](https://wiki.swoole.com)
 - [Composer](https://getcomposer.org)
 
-### 目录结构及常用介绍
+## 目录结构及常用介绍
 
     src 理解为EasySwoole的App目录
      ├── Common  主要放一些非EasySwoole的东
@@ -91,7 +91,7 @@ class MyAdminModel
 
 ```
 
-### 答疑解惑
+## 答疑解惑
 
 function.php 为何不写在此项目的composer.json
 
@@ -108,11 +108,11 @@ trait有哪些坑
     2. 不允许重载方法，当某些项目可能比方法多一个小逻辑时，需要及时调整代码的封装，否则需要整个复制多一份，日积月累，反而可能更难维护
     3. 由于 2 的限制，现将普通控制器方法的public方法名默认添加一个固定前缀，通过基础控制器 /src/HttpController/BaseControllerTrait.php 的 actionNotFound 方法来实现更加灵活的调用方式
 
-### 开发备忘
+## 开发备忘
 
     1. OrmCache/Strings的bloom功能使用时需注意：如果不同的系统（例如log, sdk）刚好用的是同一个redis实例，而且又刚好有同名的表(例如game,package)，请务必保证两表内容是同步的！！像pay.order_GAMEID分表和log.order_GAMEID分表，这个得注意了，因为它俩就是主键和内容都不同的，不能启用这个功能！！！
 
-### TODO
+## TODO
 
 - [x] 创建定时任务Crontab和消费任务Consumer，src/Common/Classes/Crontab移动至src/Crontab目录
 - [ ] 自定义Log处理器改为onLog + Event方式
@@ -123,8 +123,11 @@ trait有哪些坑
 - [ ] WebSocket实现导出全部，永不超时，进度实时可见，随时取消
 - [ ] 定义模型Class映射
 
-### 其他
+## 其他
 
 - [trait冲突解决](https://www.php.net/manual/zh/language.oop5.traits.php)
 - [XlsWriter](https://xlswriter-docs.viest.me/zh-cn)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=wonder-game/es-utility&type=Date)](https://star-history.com/#wonder-game/es-utility&Date)
