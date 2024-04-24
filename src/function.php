@@ -1069,3 +1069,135 @@ if ( ! function_exists('redis_list_push')) {
         return $left ? $redis->lPush($key, $data) : $redis->rPush($key, $data);
     }
 }
+
+if ( ! function_exists('repeat_array_keys')) {
+    /**
+     * 数组中指定的几个key脱敏处理
+     * @param array $data
+     * @param array $keys
+     * @param int $len
+     * @return array
+     */
+    function repeat_array_keys($data, array $keys = [], int $len = 10): array
+    {
+        if ( ! is_array($data) || empty($keys)) {
+            return $data;
+        }
+
+        foreach ($data as $key => &$val) {
+            if (in_array($key, $keys)) {
+
+                $prefix = substr($val, 0, $len);
+                $suffix = substr($val, 0 - $len);
+
+                $val = "$prefix***********$suffix";
+            }
+        }
+
+        return $data;
+    }
+}
+
+/******************** 云组件助手函数的封装 *********************/
+
+if ( ! function_exists('get_drivers')) {
+    /**
+     * 主函数，获取实例
+     * @param string $clsname 组件类名
+     * @param string $cfgname 配置的名称
+     * @param $config
+     * @return mixed
+     * @throws Exception
+     */
+    function get_drivers($clsname = '', $cfgname = '', $config = [])
+    {
+        $clsname = ucfirst($clsname);
+        $cfg = config($cfgname);
+        $driver = ucfirst($cfg["driver"]);
+
+        $cfg = $cfg[$cfg["driver"]] ?? $cfg['config'];
+        $className = "\\WonderGame\\EsUtility\\Common\\CloudLib\\$clsname\\$driver";
+        if ( ! class_exists($className)) {
+            throw new \Exception("$clsname Driver Not Found");
+        }
+        return new $className(array_merge($cfg, $config));
+    }
+}
+
+if ( ! function_exists('cdn')) {
+    /**
+     * 助手函数，返回cdn操作对象
+     * @param array $config
+     * @return \WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface
+     * @throws Exception
+     */
+    function cdn($config = []): \WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface
+    {
+        return get_drivers(__FUNCTION__, 'CDN_CLOUD', $config);
+    }
+}
+
+if ( ! function_exists('storage')) {
+    /**
+     * 助手函数，返回storage操作对象
+     * @param array $config
+     * @return \WonderGame\EsUtility\Common\CloudLib\Storage\StorageInterface
+     * @throws Exception
+     */
+    function storage($config = []): \WonderGame\EsUtility\Common\CloudLib\Storage\StorageInterface
+    {
+        return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
+    }
+}
+
+if ( ! function_exists('captcha')) {
+    /**
+     * 助手函数，返回captcha操作对象
+     * @param array $config
+     * @return \WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface
+     * @throws Exception
+     */
+    function captcha($config = []): \WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface
+    {
+        return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
+    }
+}
+
+if ( ! function_exists('dns')) {
+    /**
+     * 助手函数，返回dns操作对象
+     * @param array $config
+     * @return \WonderGame\EsUtility\Common\CloudLib\Dns\DnsInterface
+     * @throws Exception
+     */
+    function dns($config = []): \WonderGame\EsUtility\Common\CloudLib\Dns\DnsInterface
+    {
+        return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
+    }
+}
+
+if ( ! function_exists('email')) {
+    /**
+     * 助手函数，返回email操作对象
+     * @param array $config
+     * @return \WonderGame\EsUtility\Common\CloudLib\Email\EmailInterface
+     * @throws Exception
+     */
+    function email($config = []): \WonderGame\EsUtility\Common\CloudLib\Email\EmailInterface
+    {
+        return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
+    }
+}
+
+if ( ! function_exists('sms')) {
+    /**
+     * 助手函数，返回sms操作对象
+     * @param array $config
+     * @return \WonderGame\EsUtility\Common\CloudLib\Sms\SmsInterface
+     * @throws Exception
+     */
+    function sms($config = []): \WonderGame\EsUtility\Common\CloudLib\Sms\SmsInterface
+    {
+        return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
+    }
+}
