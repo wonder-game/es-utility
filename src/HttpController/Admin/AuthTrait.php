@@ -493,8 +493,7 @@ trait AuthTrait
         $this->response()->withHeader('Cache-Control', 'max-age=0');
         $this->response()->end();
 
-        // 下载完成就没有用了，延时删除掉
-        Timer::getInstance()->after(1000, function () use ($fullFilePath) {
+        \Swoole\Coroutine::defer(function () use ($fullFilePath) {
             @unlink($fullFilePath);
         });
     }
@@ -517,9 +516,8 @@ trait AuthTrait
 
             $dir = rtrim(config('UPLOAD.dir'), '/') . $join;
             // 当前控制器名做前缀
-            $arr = explode('\\', static::class);
-            $prefix = end($arr);
-            $fileName = uniqid($prefix . '_', true) . '.' . $suffix;
+            $ctlname = strtolower($this->getStaticClassName());
+            $fileName = uniqid($ctlname . '_', true) . '.' . $suffix;
 
             $fullPath = $dir . $fileName;
             $file->moveTo($fullPath);
@@ -529,6 +527,78 @@ trait AuthTrait
             $this->writeUpload($url);
         } catch (FileException $e) {
             $this->writeUpload('', Code::ERROR_OTHER, $e->getMessage());
+        }
+    }
+
+    /**
+     * 大文件分片上传，合并的操作耗时稍久，记得将客户端timeout设置大一些
+     * 1. 创建分片id， type=start
+     * 2. 上传每一个分片文件（客户端将File切割为Blob[]）
+     * 3. 合并所有分片，type=end
+     * @return void
+     * @throws \HttpParamException
+     */
+    public function _uploadPart($return = false)
+    {
+        if ($this->input['type'] === 'start') {
+
+            $ext = pathinfo($this->input['filename'], PATHINFO_EXTENSION);
+            mt_srand();
+            $uploadId = uniqid("$ext-") . '-' . mt_rand(10000, 99999);
+
+            return $return ? $uploadId : $this->success($uploadId);
+        }
+        elseif ($this->input['type'] === 'end')
+        {
+            if (empty($this->input['upload_id'])) {
+                throw new HttpParamException("参数错误：upload_id is empty");
+            }
+            $ctlname = strtolower($this->getStaticClassName());
+            $dir = rtrim(config('UPLOAD.dir'), '/') . "/$ctlname";
+            $uploadId = $this->input['upload_id'];
+            $relpath = "/$uploadId/";
+            $dir .= $relpath;
+
+            // 保持上传文件名不变
+            $filename = $this->input['filename'];
+
+            $parts = scandir($dir);
+            // $parts = array_diff($parts, ['.', '..', '.upload']);
+            // 过滤非分片标识符
+            $parts = array_filter($parts, function ($val) { return is_numeric($val); });
+            if (empty($parts)) {
+                throw new HttpParamException('分片文件未上传');
+            }
+
+            sort($parts);
+
+            $fp = fopen($dir . $filename, 'a');
+            foreach ($parts as $part) {
+                fwrite($fp, file_get_contents($dir . $part));
+                @ unlink($dir . $part);
+            }
+            fclose($fp);
+
+            // 相对路径
+            $localPath = $relpath . $filename;
+            return $return ? $localPath : $this->success($localPath);
+        } else {
+            /** @var \EasySwoole\Http\Message\UploadFile $file */
+            $file = $this->request()->getUploadedFile($this->uploadKey);
+
+            $uploadId = $this->input['upload_id'];
+            if (empty($uploadId) || ! isset($this->input['part'])) {
+                throw new HttpParamException('没有上传标识符');
+            }
+            $ctlname = strtolower($this->getStaticClassName());
+            $relpath = "/$uploadId/";
+            $dir = rtrim(config('UPLOAD.dir'), '/') . "/{$ctlname}{$relpath}";
+            is_dir($dir) or mkdir($dir, 0777, true);
+
+            $file->moveTo($dir . $this->input['part']);
+            // 相对路径
+            $localPath = $relpath . $this->input['part'];
+            return $return ? $localPath : $this->writeUpload($localPath);
         }
     }
 
