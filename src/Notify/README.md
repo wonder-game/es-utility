@@ -18,17 +18,14 @@
      ├── Wechat 微信实现
      └── Feishu 飞书实现
 
-## 开始
 
-> composer require wonder-game/es-notify
-
-#### 配置
+### 配置
 
 钉钉
 
 ```php
 <?php
-   $DingTalkConfig = new \WonderGame\EsNotify\DingTalk\Config([
+   $DingTalkConfig = new \WonderGame\EsUtility\Notify\DingTalk\Config([
             // 钉钉WebHook url
             'url' => 'your dingtalk url',
             // 密钥
@@ -42,7 +39,7 @@
 
 ```php
 <?php
-    $WeChatConfig = new \WonderGame\EsNotify\WeChat\Config([
+    $WeChatConfig = new \WonderGame\EsUtility\Notify\WeChat\Config([
             // 微信公众平台后台的 appid
             'appId' => '',
             // 微信公众平台后台配置的 AppSecret
@@ -64,7 +61,7 @@
 
 ```php
 <?php
-    $FeishuConfig = new \WonderGame\EsNotify\Feishu\Config([
+    $FeishuConfig = new \WonderGame\EsUtility\Notify\Feishu\Config([
             // 钉钉WebHook url
             'url' => 'your feishu url',
             // 密钥
@@ -81,7 +78,7 @@
 ```php
 <?php
 // Config为配置类
-\WonderGame\EsNotify\EsNotify::getInstance()->register('dingtalk', $Config);
+\WonderGame\EsUtility\Notify\EsNotify::getInstance()->register('dingtalk', $Config);
 ```
 
 
@@ -96,7 +93,7 @@
 <?php
 
 // 这是一个钉钉Markdown消息示例
-$message = new \WonderGame\EsNotify\DingTalk\Message\Markdown([
+$message = new \WonderGame\EsUtility\Notify\DingTalk\Message\Markdown([
         //消息标题
         'title' => 'Joyboo', 
         // 内容
@@ -109,12 +106,12 @@ $message = new \WonderGame\EsNotify\DingTalk\Message\Markdown([
         'isAtAll' => true
     ]);
 // 开始发送钉钉消息，key是注册时传入的key
-\WonderGame\EsNotify\EsNotify::getInstance()->doesOne('dingtalk', $message);
+\WonderGame\EsUtility\Notify\EsNotify::getInstance()->doesOne('dingtalk', $message);
 
 
 
 // 这是一个程序异常的消息示例
-$message = new \WonderGame\EsNotify\WeChat\Message\Warning([
+$message = new \WonderGame\EsUtility\Notify\WeChat\Message\Warning([
             'templateId' => '微信模板消息id',
             'file' => '发生异常的文件',
             'line' => '第几行',
@@ -124,7 +121,7 @@ $message = new \WonderGame\EsNotify\WeChat\Message\Warning([
             //'color' => ''
 ]);
 // 开始发送微信消息
-\WonderGame\EsNotify\EsNotify::getInstance()->doesOne('wechat', $message);
+\WonderGame\EsUtility\Notify\EsNotify::getInstance()->doesOne('wechat', $message);
 
 ```
 
@@ -137,14 +134,14 @@ $message = new \WonderGame\EsNotify\WeChat\Message\Warning([
 ```php
 <?php
 // 第一步： 构造配置类
-$DingTalkConfig = new \WonderGame\EsNotify\DingTalk\Config([
+$DingTalkConfig = new \WonderGame\EsUtility\Notify\DingTalk\Config([
                 // 动态传入你的配置
                 'url' => 'your dingtalk WebHook url',
                 'signKey' => 'your dingtalk sign key'
             ], true);
          
 // 第二步： 构造消息类
-$DingTalkMessage = new \WonderGame\EsNotify\DingTalk\Message\Markdown([
+$DingTalkMessage = new \WonderGame\EsUtility\Notify\DingTalk\Message\Markdown([
             'title' => '魔镜魔镜，谁是世界上最帅的人?',
             'text' => 'Joyboo无疑',
         ]);
@@ -165,3 +162,4 @@ $DingTalkConfig->getNotifyClass()->does($DingTalkMessage);
 
 - [钉钉-自定义机器人接入](https://open.dingtalk.com/document/group/custom-robot-access)
 - [EasySwoole-微信SDK-模板消息](http://www.easyswoole.com/Components/WeChat2.x/officialAccount/templateMessage.html)
+- [飞书-自定义机器人使用指南](https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot)

@@ -11,14 +11,24 @@ use EasySwoole\RedisPool\RedisPool;
  */
 trait BaseModelTrait
 {
+    /**
+     * 待废弃！在未来的大版本中会删除此属性，请使用subid替代
+     * @var mixed|string
+     */
     protected $gameid = '';
+
+    /**
+     * 分表标识，在后续的程序中应逐步使用subid来替换gameid，原因是分表不一定依靠gameid，应考虑变量和属性命名的规范性、合理性，避免误导使用者和阅读者
+     * @var mixed|string
+     */
+    protected $subid = '';
 
     protected $sort = ['id' => 'desc'];
 
     // 编辑提交时 extension字段的处理方式： merge-合并；replace-覆盖
     protected $_extSave = 'replace';
 
-    public function __construct($data = [], $tabname = '', $gameid = '')
+    public function __construct($data = [], $tabname = '', $subid = '')
     {
         // $tabname > $this->tableName > $this->_getTable()
         $tabname && $this->tableName = $tabname;
@@ -26,7 +36,8 @@ trait BaseModelTrait
             $this->tableName = $this->_getTable();
         }
 
-        $this->gameid = $gameid;
+        $this->gameid = $subid;
+        $this->subid = $subid;
 
 //        $this->autoTimeStamp = false;
         $this->createTime = 'instime';
@@ -99,6 +110,15 @@ trait BaseModelTrait
     protected function setInstimeAttr($instime, $all)
     {
         return is_numeric($instime) ? $instime : strtotime($instime);
+    }
+
+    /**
+     * 获取分表标识符
+     * @return mixed|string
+     */
+    public function getSubid()
+    {
+        return $this->subid;
     }
 
     public function scopeIndex()

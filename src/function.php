@@ -87,17 +87,17 @@ if ( ! function_exists('model')) {
 
         $name = parse_name($name, 1);
 
-        $gameid = '';
-        // 实例化XXX_gid模型
+        $subid = '';
+        // 实例化XXX_xx模型
         if (strpos($name, ':')) {
-            list($name, $gameid) = explode(':', $name);
+            list($name, $subid) = explode(':', $name);
         }
-        $tableName = $gameid != '' ? parse_name($name, 0, false) . "_$gameid" : '';
+        $tableName = $subid != '' ? parse_name($name, 0, false) . "_$subid" : '';
 
         $className = find_model($space . $name);
 
         /** @var AbstractModel $model */
-        $model = new $className($data, $tableName, $gameid);
+        $model = new $className($data, $tableName, $subid);
 
         // 注入连接(连接池连接)
         if (is_bool($inject) && $inject) {
