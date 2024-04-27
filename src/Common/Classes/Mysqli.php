@@ -149,6 +149,7 @@ class Mysqli extends MysqliClient
             // object
             if ($modelName && $modelName instanceof AbstractModel) {
                 $model = clone $modelName;
+                // $model = $modelName->_clone(); todo 若发现data有污染情况，可切换为此行
                 $model->data($ret);
                 $ret = $model;
             }
