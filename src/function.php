@@ -1061,7 +1061,7 @@ if ( ! function_exists('redis_list_push')) {
         // 写一定要比读小！！！不然redis会爆！！！
         $cn = min($clusterNumber ?: 0, $clusterNumberWrite ?: 0);
         if ($cn > 0) {
-            mt_rand();
+            mt_srand();
             $index = mt_rand(-1, $cn);
             $index > 0 && $key .= ".$index";
         }
