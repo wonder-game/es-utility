@@ -1112,9 +1112,9 @@ if ( ! function_exists('get_drivers')) {
     {
         $clsname = ucfirst($clsname);
         $cfg = config($cfgname);
-        $driver = ucfirst($cfg["driver"]);
+        $driver = ucfirst(is_array($cfg['driver']) ? $config['driver'] : $cfg['driver']);
 
-        $cfg = $cfg[$cfg["driver"]] ?? $cfg['config'];
+        $cfg = $cfg[$driver] ?? $cfg['config'];
         $className = "\\WonderGame\\EsUtility\\Common\\CloudLib\\$clsname\\$driver";
         if ( ! class_exists($className)) {
             throw new \Exception("$clsname Driver Not Found");
