@@ -30,8 +30,11 @@ class Alibaba extends Base
 
     protected $toAddress = '';
 
-    public function send($to = [], array $params = [])
+    public function send($to = [], array $params = [], bool $ingo = false)
     {
+        $parentId = $ingo ? ($params['parentId'] ?: '') : null;
+        unset($params['parentId']);
+
         if (is_string($to)) {
             $to = [$to];
         }
@@ -43,7 +46,7 @@ class Alibaba extends Base
             'url' => '__ALI_EMAIL__',
             'POST' => $log,
             'method' => 'POST',
-        ]);
+        ], $parentId);
 
         try {
             $Runtime = new RuntimeOptions();
@@ -63,7 +66,9 @@ class Alibaba extends Base
             $Client = new Dm($Config);
 
             $resp = $Client->singleSendMailWithOptions($Request, $Runtime);
-
+            if ($resp->body->code != 'OK') {
+                notice('阿里云邮件发送失败1: ' . $resp->body->message);
+            }
             $arr = $resp->toMap();
             $endFn($arr, 200);
             return true;
@@ -71,8 +76,8 @@ class Alibaba extends Base
             if ( ! ($error instanceof TeaError)) {
                 $error = new TeaError([], $error->getMessage(), $error->getCode(), $error);
             }
+            $endFn($error->toString(), $error->getCode());
             trace("阿里云邮件发送失败: " . $error->toString(), 'error');
-            $endFn($error->toString(), intval($error->getCode()));
             return false;
         }
     }

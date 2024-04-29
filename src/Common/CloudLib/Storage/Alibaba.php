@@ -74,15 +74,9 @@ class Alibaba extends Base
     }
 
     /**
-     * @param $file
-     * @param $key
-     * @param $partSize
-     * @param $options
-     * @return void
-     * @throws OssException
-     * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
+     * @document https://help.aliyun.com/zh/oss/user-guide/multipart-upload-12?spm=a2c4g.11186623.0.0.5ff17b87QSvl4E
      */
-    public function uploadPart($file, $key, $partSize = 5 * 1024 *1024, $options = [])
+    public function uploadPart($file, $key, $partSize = 10 * 1024 *1024, $options = [])
     {
         // 初始化一个分块上传事件, 也就是初始化上传Multipart, 获取upload id
         try {

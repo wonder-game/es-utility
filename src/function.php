@@ -936,17 +936,16 @@ if ( ! function_exists('http_tracker')) {
      * 子链路记录，返回一个结束回调，必须保证结束回调被调用
      * @param string $pointName 标识名
      * @param array $data 除自定义参数外，这些key尽量传递完整：ip,method,path,url,GET,POST,JSON,server_name,header
-     * @param bool $in_go 是否在go函数内
-     * @param string $parentId 父级的pointId
+     * @param string|null $parentId 父级的pointId(在go函数内才需要传)
      * @return Closure
      */
-    function http_tracker(string $pointName, array $data = [], bool $in_go = false, string $parentId = '')
+    function http_tracker(string $pointName, array $data = [], $parentId = null)
     {
         // TODO 代码可能有冗余，待优化
         // 兼容go函数内的场景
-        if ($in_go) {
+        if ( ! is_null($parentId)) {
             $point = HttpTracker::getInstance()->createStart($pointName);
-            ! empty($parentId) && $point->setParentId($parentId);
+            $parentId && $point->setParentId($parentId);
             $point && $point->setStartArg($data + ['server_name' => config('SERVNAME')]);
 
             return function ($data = [], int $httpCode = 200) use ($point) {
