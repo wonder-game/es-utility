@@ -65,6 +65,7 @@ class Tencent extends Base
         } finally {
             is_resource($stream) && fclose($stream);
         }
+        return false;
     }
 
     public function delete($key, $options = [])
@@ -81,13 +82,18 @@ class Tencent extends Base
         }
     }
 
-    public function uploadPart($file, $key, $partSize = 5 * 1024 * 1024, $options = [])
+    public function uploadPart($file, $key, $partSize = 10 * 1024 * 1024, $options = [])
     {
 
     }
 
-    public function doesObjectExist($key, $options = [])
+    function doesObjectExist($key, $options = [])
     {
-
+        try {
+            return $this->client->doesObjectExist($this->bucket,ltrim($key, '/'));
+        } catch (\Exception $e) {
+            trace($e->getMessage(), 'error');
+            throw $e;
+        }
     }
 }

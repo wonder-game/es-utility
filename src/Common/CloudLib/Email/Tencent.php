@@ -47,8 +47,11 @@ class Tencent extends Base
      */
     protected $region = '';
 
-    public function send($to = [], array $params = [])
+    public function send($to = [], array $params = [], bool $ingo = false)
     {
+        $parentId = $ingo ? ($params['parentId'] ?: '') : null;
+        unset($params['parentId']);
+
         try {
             $Request = new SendEmailRequest();
             $Request->fromJsonString(json_encode([
@@ -65,7 +68,7 @@ class Tencent extends Base
                 'url' => '__TENCENT_EMAIL__',
                 'POST' => $Request->serialize(),
                 'method' => 'POST',
-            ]);
+            ], $parentId);
 
             $Credential = new Credential($this->secretId, $this->secretKey);
             $Client = new SesClient($Credential, $this->region);
@@ -75,15 +78,14 @@ class Tencent extends Base
             $str = $resp->toJsonString();
             $array = json_decode($str, true);
 
-            $isSuccess = ! isset($array['Error']);
-            if ( ! $isSuccess) {
+            if (isset($array['Error'])) {
                 trace("腾讯云邮件发送失败1: $str", 'error');
+                return false;
             }
 
             $endFn($array);
 
-            return $isSuccess;
-
+            return true;
         } catch (TencentCloudSDKException $e) {
             $msg = "腾讯云邮件发送失败2: " . $e->__toString();
             trace($msg, 'error');

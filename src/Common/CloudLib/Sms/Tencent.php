@@ -35,9 +35,13 @@ class Tencent extends Base
      */
     protected $region = '';
 
-    public function send($to = [], array $params = [])
+    public function send($to = [], array $params = [], bool $ingo = false)
     {
         $this->phoneNumberSet = is_string($to) ? [$to] : $to;
+
+        $type = $params['type'];
+        $parentId = $ingo ? ($params['parentId'] ?: '') : null;
+        unset($params['type'], $params['parentId']);
 
         $params = array_values(array_map('strval', $params));
         $this->templateParamSet = $params;
@@ -47,7 +51,7 @@ class Tencent extends Base
             $Request->fromJsonString(json_encode([
                 'PhoneNumberSet' => $this->phoneNumberSet,
                 'SmsSdkAppId' => $this->smsSdkAppId,
-                'TemplateId' => $this->templateId,
+                'TemplateId' => is_array($this->templateId) ? ($this->templateId[$type] ?? $this->templateId['-1']) : $this->templateId,
                 'SignName' => $this->signName ?: null,
                 'TemplateParamSet' => $this->templateParamSet,
             ]));
@@ -56,28 +60,31 @@ class Tencent extends Base
                 'url' => '__TENCENT_SMS__',
                 'POST' => $Request->serialize(),
                 'method' => 'POST',
-            ]);
+            ], $parentId);
 
             $Credential = new Credential($this->secretId, $this->secretKey);
             $Client = new SmsClient($Credential, $this->region);
+
+            // 注意：以下代码可在开发模式下请根据需要开启或关闭
+            if (is_env('dev')) {
+                return true;
+            }
 
             $resp = $Client->SendSms($Request);
 
             $str = $resp->toJsonString();
             $array = json_decode($str, true);
 
-            $isSuccess = ! isset($array['Error']);
-            if ( ! $isSuccess) {
-                trace("腾讯云{$this->callName}发送失败1: $str", 'error');
+            if (isset($array['Error'])) {
+                notice("腾讯云发送失败1: $str");
+                return false;
             }
 
             $endFn($array);
 
-            return $isSuccess;
-
+            return true;
         } catch (TencentCloudSDKException $e) {
-            $msg = "腾讯云短信发送失败2: " . $e->__toString();
-            trace($msg, 'error');
+            notice($msg = '腾讯云短信发送失败2: ' . $e->__toString());
             is_callable($endFn) && $endFn($msg, 431);
             return false;
         }

@@ -27,8 +27,12 @@ class Alibaba extends Base
 
     protected $templateParam = '';
 
-    public function send($to = [], array $params = [])
+    public function send($to = [], array $params = [], bool $ingo = false)
     {
+        $type = $params['type'];
+        $parentId = $ingo ? ($params['parentId'] ?: '') : null;
+        unset($params['type'], $params['parentId']);
+
         $this->phoneNumbers = implode(',', is_string($to) ? [$to] : $to);
         $this->templateParam = json_encode($params);
 
@@ -37,14 +41,14 @@ class Alibaba extends Base
             'url' => '__ALI_SMS__',
             'POST' => $log,
             'method' => 'POST',
-        ]);
+        ], $parentId);
 
         try {
             $Runtime = new RuntimeOptions();
             $Request = new SendSmsRequest([
                 'phoneNumbers' => $this->phoneNumbers,
                 'signName' => $this->signName,
-                'templateCode' => $this->templateCode,
+                'templateCode' => is_array($this->templateCode) ? ($this->templateCode[$type] ?? $this->templateCode['-1']) : $this->templateCode,
                 'templateParam' => $this->templateParam
             ]);
             $Config = new Config([
@@ -55,8 +59,15 @@ class Alibaba extends Base
             $Config->endpoint = $this->endpoint;
             $Client = new Dysmsapi($Config);
 
-            $resp = $Client->sendSmsWithOptions($Request, $Runtime);
+            // 注意：以下代码可在开发模式下请根据需要开启或关闭
+            if (is_env('dev')) {
+                return true;
+            }
 
+            $resp = $Client->sendSmsWithOptions($Request, $Runtime);
+            if ($resp->body->code != 'OK') {
+                notice('阿里云短信发送失败: ' . $resp->body->message);
+            }
             $arr = $resp->toMap();
             $endFn($arr, 200);
             return true;
@@ -64,8 +75,8 @@ class Alibaba extends Base
             if ( ! ($error instanceof TeaError)) {
                 $error = new TeaError([], $error->getMessage(), $error->getCode(), $error);
             }
-            trace("阿里云短信发送失败: " . $error->__toString(), 'error');
-            $endFn($error->__toString(), intval($error->getCode()));
+            $endFn($error->__toString(), $error->getCode());
+            notice('阿里云短信发送失败: ' . $error->__toString());
             return false;
         }
     }

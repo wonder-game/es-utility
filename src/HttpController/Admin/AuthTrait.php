@@ -659,6 +659,7 @@ trait AuthTrait
 
             $filter['begintime'] = strtotime($filter['begintime']);
             $filter['beginday'] = date(DateUtils::YMD, $filter['begintime']);
+            $filter['beginfmt'] = date(DateUtils::FMT_1, $filter['begintime']);
         }
 
         if (isset($filter['endtime'])) {
@@ -668,8 +669,8 @@ trait AuthTrait
 
             $filter['endtime'] = strtotime($filter['endtime']);
             $filter['endday'] = date(DateUtils::YMD, $filter['endtime']);
+            $filter['endfmt'] = date(DateUtils::FMT_1, $filter['endtime']);
         }
-
 
         $extColName = ['gameid', 'pkgbnd', 'adid'];
 
