@@ -530,6 +530,15 @@ trait AuthTrait
         }
     }
 
+    // 分片上传的主目录
+    protected function getUploadPartDir()
+    {
+        $ctlname = strtolower($this->getStaticClassName());
+        $dir = rtrim(config('UPLOAD.dir'), '/') . "/$ctlname";
+        is_dir($dir) or @ mkdir($dir, 0777, true);
+        return $dir;
+    }
+
     /**
      * 大文件分片上传，合并的操作耗时稍久，记得将客户端timeout设置大一些
      * 1. 创建分片id， type=start
@@ -553,9 +562,10 @@ trait AuthTrait
             if (empty($this->input['upload_id'])) {
                 throw new HttpParamException("参数错误：upload_id is empty");
             }
-            $ctlname = strtolower($this->getStaticClassName());
-            $dir = rtrim(config('UPLOAD.dir'), '/') . "/$ctlname";
+
             $uploadId = $this->input['upload_id'];
+
+            $dir = $this->getUploadPartDir();
             $relpath = "/$uploadId/";
             $dir .= $relpath;
 
@@ -590,9 +600,9 @@ trait AuthTrait
             if (empty($uploadId) || ! isset($this->input['part'])) {
                 throw new HttpParamException('没有上传标识符');
             }
-            $ctlname = strtolower($this->getStaticClassName());
+            $dir = $this->getUploadPartDir();
             $relpath = "/$uploadId/";
-            $dir = rtrim(config('UPLOAD.dir'), '/') . "/{$ctlname}{$relpath}";
+            $dir .= $relpath;
             is_dir($dir) or mkdir($dir, 0777, true);
 
             $file->moveTo($dir . $this->input['part']);
