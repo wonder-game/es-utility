@@ -61,6 +61,7 @@ class Alibaba extends Base
 
             // 注意：以下代码可在开发模式下请根据需要开启或关闭
             if (is_env('dev')) {
+                $endFn('env: dev ok');
                 return true;
             }
 
