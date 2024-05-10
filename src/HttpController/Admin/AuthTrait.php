@@ -493,7 +493,8 @@ trait AuthTrait
         $this->response()->withHeader('Cache-Control', 'max-age=0');
         $this->response()->end();
 
-        \Swoole\Coroutine::defer(function () use ($fullFilePath) {
+        // 不可以使用defer删除
+        Timer::getInstance()->after(3000, function () use ($fullFilePath) {
             @unlink($fullFilePath);
         });
     }
