@@ -208,22 +208,19 @@ trait Strings
 
             if (is_array($id)) {
                 $pk = $this->_getPk();
-                if (is_array($data) && ! empty($data) && isset($data[$pk])) {
+                if (is_array($data) && isset($data[$pk])) {
                     $this->cacheSet($data[$pk], $data);
-                    $value = $this->primarySb . $data[$pk];
-                } else {
-                    $value = $this->penetrationSb;
+                    $data = $this->primarySb . $data[$pk];
                 }
-            } else {
-                is_array($data) && ($encode = json_encode($data, JSON_UNESCAPED_UNICODE)) && $data = $encode;
-                $value = $data ?: $this->penetrationSb;
             }
+
+            is_array($data) && $data = json_encode($data, JSON_UNESCAPED_UNICODE);
 
             $bloom && $this->bloom && $this->bloomDel();
 
             mt_srand();
             $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
-            return $redis->setEx($key, $expire, $value);
+            return $redis->setEx($key, $expire, $data);
         }, $this->redisPoolName);
     }
 
@@ -247,6 +244,12 @@ trait Strings
 
             $key = $this->getCacheKey($id);
             $data = $redis->get($key);
+
+            // 防穿透标识
+            if ($data === $this->penetrationSb) {
+                return false;
+            }
+
             // 存储的是主键,则使用主键再次获取
             if (is_string($data) && strpos($data, $this->primarySb) === 0) {
                 // 再次获取时无需校验了
@@ -263,9 +266,7 @@ trait Strings
                 }
                 $data && $this->cacheSet($id, $data);
             }
-            if ($data === $this->penetrationSb) {
-                return false;
-            }
+
             is_string($data) && $data = json_decode_ext($data);
             (is_null($mergeExt) ? $this->mergeExt : $mergeExt) && $data = $this->_mergeExt($data);
             return $data;
