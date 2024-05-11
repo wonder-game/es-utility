@@ -27,7 +27,13 @@ trait Strings
     protected $expireOffset = 12 * 3600;
 
     /**
-     * 穿透标识
+     * 是否要生成防穿透标识
+     * @var string
+     */
+    public $penetrate = true;
+
+    /**
+     * 防穿透标识
      * @var string
      */
     private $penetrationSb = 'PENETRATION';
@@ -252,10 +258,10 @@ trait Strings
             // 没有数据，从数据表获取
             if (is_null($data) || $data === false) {
                 $data = $this->_getByUnique($id);
-                if (empty($data)) {
+                if ( ! $data && $this->penetrate) {
                     $data = $this->penetrationSb;
                 }
-                $this->cacheSet($id, $data);
+                $data && $this->cacheSet($id, $data);
             }
             if ($data === $this->penetrationSb) {
                 return false;
