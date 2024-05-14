@@ -152,8 +152,10 @@ trait Strings
 
     protected function _mergeExt($data)
     {
-        isset($data['extension']) && is_array($data['extension']) && $data += $data['extension'];
-        unset($data['extension']);
+        if (isset($data['extension']) && is_array($data['extension'])) {
+            $data += $data['extension'];
+            unset($data['extension']);
+        }
         return $data;
     }
 
@@ -269,7 +271,7 @@ trait Strings
 
             is_string($data) && $data = json_decode_ext($data);
             (is_null($mergeExt) ? $this->mergeExt : $mergeExt) && $data = $this->_mergeExt($data);
-            return $data;
+            return $data === $this->penetrationSb ? false : $data;
         }, $this->redisPoolName);
     }
 
