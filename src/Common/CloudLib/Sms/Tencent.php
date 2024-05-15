@@ -75,13 +75,12 @@ class Tencent extends Base
             $str = $resp->toJsonString();
             $array = json_decode($str, true);
 
+            $endFn($array);
+
             if (isset($array['Error'])) {
                 notice("腾讯云发送失败1: $str");
                 return false;
             }
-
-            $endFn($array);
-
             return true;
         } catch (TencentCloudSDKException $e) {
             notice($msg = '腾讯云短信发送失败2: ' . $e->__toString());

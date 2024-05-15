@@ -66,12 +66,15 @@ class Alibaba extends Base
             }
 
             $resp = $Client->sendSmsWithOptions($Request, $Runtime);
-            if ($resp->body->code != 'OK') {
-                notice('阿里云短信发送失败: ' . $resp->body->message);
-            }
             $arr = $resp->toMap();
             $endFn($arr, 200);
-            return true;
+
+            $isSuccess = $resp->body->code === 'OK';
+
+            if ( ! $isSuccess) {
+                notice('阿里云短信发送失败: ' . $resp->body->message);
+            }
+            return $isSuccess;
         } catch (\Exception $error) {
             if ( ! ($error instanceof TeaError)) {
                 $error = new TeaError([], $error->getMessage(), $error->getCode(), $error);
