@@ -264,6 +264,9 @@ class EventMainServerCreate extends SplBean
             $cls = '\\WonderGame\\EsUtility\\Notify\\' . ucfirst($key) . '\\Config';
 
             foreach ($val as $k => $v) {
+                if ( ! is_array($v)) {
+                    continue;
+                }
                 EsNotify::getInstance()->register(new $cls($v, true), $key, $k);
             }
         }
