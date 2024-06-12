@@ -57,7 +57,7 @@ class Tencent extends Base
                 'Key' => $key,
                 'Body' => $stream
             ]);
-            return $result['Location'];
+
         } catch (ServiceResponseException $e) {
             trace(sprintf('%s, %s', $e, $e->getCosErrorType()), 'error');
         } catch (\Exception $e) {
@@ -65,7 +65,10 @@ class Tencent extends Base
         } finally {
             is_resource($stream) && fclose($stream);
         }
-        return false;
+        if ( ! empty($e)) {
+            throw  $e;
+        }
+        return $result['Location'];
     }
 
     public function delete($key, $options = [])
@@ -90,7 +93,7 @@ class Tencent extends Base
     function doesObjectExist($key, $options = [])
     {
         try {
-            return $this->client->doesObjectExist($this->bucket,ltrim($key, '/'));
+            return $this->client->doesObjectExist($this->bucket, ltrim($key, '/'));
         } catch (\Exception $e) {
             trace($e->getMessage(), 'error');
             throw $e;
