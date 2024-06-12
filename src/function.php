@@ -457,7 +457,7 @@ if ( ! function_exists('verify_token')) {
         }
         // 验证JWT
         $jwt = LamJwt::verifyToken($token, '', false);
-        $jwt['data'] = $jwt['data'] + ($jwt['data']['data'] ?? []);
+        is_array($jwt['data']) && $jwt['data'] = $jwt['data'] + ($jwt['data']['data'] ?? []);
         if ($jwt['status'] != 1 || empty($jwt['data'][$key])) {
             throw new HttpParamException('jwt有误', Code::CODE_UNAUTHORIZED);
         }
