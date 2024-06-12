@@ -123,6 +123,7 @@ trait Strings
     }
 
     /**
+     * 从数据表查询记录。注意此方法可能在具体模型里进行重写！
      * @param string|array $id 主键值 | ['key' => 'value']
      * @return array
      */

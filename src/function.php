@@ -12,6 +12,12 @@ use EasySwoole\Spl\SplArray;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
+use WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface;
+use WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface;
+use WonderGame\EsUtility\Common\CloudLib\Dns\DnsInterface;
+use WonderGame\EsUtility\Common\CloudLib\Email\EmailInterface;
+use WonderGame\EsUtility\Common\CloudLib\Sms\SmsInterface;
+use WonderGame\EsUtility\Common\CloudLib\Storage\StorageInterface;
 use WonderGame\EsUtility\Common\Exception\HttpParamException;
 use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\Common\OrmCache\Strings;
@@ -457,7 +463,7 @@ if ( ! function_exists('verify_token')) {
         }
         // 验证JWT
         $jwt = LamJwt::verifyToken($token, '', false);
-        $jwt['data'] = $jwt['data'] + ($jwt['data']['data'] ?? []);
+        is_array($jwt['data']) && $jwt['data'] = $jwt['data'] + ($jwt['data']['data'] ?? []);
         if ($jwt['status'] != 1 || empty($jwt['data'][$key])) {
             throw new HttpParamException('jwt有误', Code::CODE_UNAUTHORIZED);
         }
@@ -846,6 +852,7 @@ if ( ! function_exists('array_merge_decode')) {
     }
 }
 
+
 if ( ! function_exists('get_mode')) {
     /**
      * 获取当前运行环境
@@ -864,6 +871,7 @@ if ( ! function_exists('get_mode')) {
     }
 }
 
+
 if ( ! function_exists('is_env')) {
     /**
      * 判断当前运行环境
@@ -877,6 +885,7 @@ if ( ! function_exists('is_env')) {
     }
 }
 
+
 if ( ! function_exists('is_module')) {
     /**
      * @param string|array $name log|sdk|pay|user|admin|account|....
@@ -888,6 +897,7 @@ if ( ! function_exists('is_module')) {
         return is_array($name) ? in_array($_mode, $name) : $_mode === $name;
     }
 }
+
 
 if ( ! function_exists('memory_convert')) {
     /**
@@ -904,6 +914,7 @@ if ( ! function_exists('memory_convert')) {
     }
 }
 
+
 if ( ! function_exists('json_decode_ext')) {
     /**
      * json_decode的加强版，自动将extension字段处理为数组类型
@@ -919,6 +930,7 @@ if ( ! function_exists('json_decode_ext')) {
     }
 }
 
+
 if ( ! function_exists('get_google_service_account')) {
 
     /**
@@ -931,6 +943,7 @@ if ( ! function_exists('get_google_service_account')) {
         return EASYSWOOLE_ROOT . "/../utility/google-service-account_$pkgbnd.json";
     }
 }
+
 
 if ( ! function_exists('http_tracker')) {
     /**
@@ -985,6 +998,7 @@ if ( ! function_exists('format_keyval')) {
     }
 }
 
+
 if ( ! function_exists('unformat_keyval')) {
     function unformat_keyval($kv = [])
     {
@@ -998,6 +1012,7 @@ if ( ! function_exists('unformat_keyval')) {
         return $result;
     }
 }
+
 
 if ( ! function_exists('sign')) {
     /**
@@ -1022,6 +1037,7 @@ if ( ! function_exists('sign')) {
         return is_null($sign) ? $hash : $hash === $sign;
     }
 }
+
 
 if ( ! function_exists('report_redis_key')) {
     /**
@@ -1069,6 +1085,7 @@ if ( ! function_exists('redis_list_push')) {
         return $left ? $redis->lPush($key, $data) : $redis->rPush($key, $data);
     }
 }
+
 
 if ( ! function_exists('repeat_array_keys')) {
     /**
@@ -1124,27 +1141,29 @@ if ( ! function_exists('get_drivers')) {
     }
 }
 
+
 if ( ! function_exists('cdn')) {
     /**
      * 助手函数，返回cdn操作对象
      * @param array $config
-     * @return \WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface
+     * @return CdnInterface
      * @throws Exception
      */
-    function cdn($config = []): \WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface
+    function cdn($config = []): CdnInterface
     {
         return get_drivers(__FUNCTION__, 'CDN_CLOUD', $config);
     }
 }
 
+
 if ( ! function_exists('storage')) {
     /**
      * 助手函数，返回storage操作对象
      * @param array $config
-     * @return \WonderGame\EsUtility\Common\CloudLib\Storage\StorageInterface
+     * @return StorageInterface
      * @throws Exception
      */
-    function storage($config = []): \WonderGame\EsUtility\Common\CloudLib\Storage\StorageInterface
+    function storage($config = []): StorageInterface
     {
         return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
     }
@@ -1154,50 +1173,177 @@ if ( ! function_exists('captcha')) {
     /**
      * 助手函数，返回captcha操作对象
      * @param array $config
-     * @return \WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface
+     * @return CaptchaInterface
      * @throws Exception
      */
-    function captcha($config = []): \WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface
+    function captcha($config = []): CaptchaInterface
     {
         return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
     }
 }
+
 
 if ( ! function_exists('dns')) {
     /**
      * 助手函数，返回dns操作对象
      * @param array $config
-     * @return \WonderGame\EsUtility\Common\CloudLib\Dns\DnsInterface
+     * @return DnsInterface
      * @throws Exception
      */
-    function dns($config = []): \WonderGame\EsUtility\Common\CloudLib\Dns\DnsInterface
+    function dns($config = []): DnsInterface
     {
         return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
     }
 }
+
 
 if ( ! function_exists('email')) {
     /**
      * 助手函数，返回email操作对象
      * @param array $config
-     * @return \WonderGame\EsUtility\Common\CloudLib\Email\EmailInterface
+     * @return EmailInterface
      * @throws Exception
      */
-    function email($config = []): \WonderGame\EsUtility\Common\CloudLib\Email\EmailInterface
+    function email($config = []): EmailInterface
     {
         return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
     }
 }
 
+
 if ( ! function_exists('sms')) {
     /**
      * 助手函数，返回sms操作对象
      * @param array $config
-     * @return \WonderGame\EsUtility\Common\CloudLib\Sms\SmsInterface
+     * @return SmsInterface
      * @throws Exception
      */
-    function sms($config = []): \WonderGame\EsUtility\Common\CloudLib\Sms\SmsInterface
+    function sms($config = []): SmsInterface
     {
         return get_drivers(__FUNCTION__, strtoupper(__FUNCTION__), $config);
+    }
+}
+
+/******************** 媒体或渠道常用函数的封装 *********************/
+
+if ( ! function_exists('get_media_byauth')) {
+    /**
+     * 根据权限值获取媒体ids
+     * @param int $auth 权限值
+     * @return array
+     */
+    function get_media_byauth(int $auth = 0)
+    {
+        $medias = array_filter(config('MEDIA'), function ($arr) use ($auth) {
+            return in_array($auth, $arr['auth'] ?? []);
+        });
+        return array_column($medias ?: [], 'id');
+    }
+}
+
+
+if ( ! function_exists('get_media_byid')) {
+    /**
+     * 根据媒体id获取媒体信息
+     * @param int $id 媒体id
+     * @param string $field 仅返回指定字段
+     * @return array|string
+     */
+    function get_media_byid(int $id = 0, string $field = '')
+    {
+        $media = array_column(config('MEDIA'), null, 'id');
+        if (empty($media[$id]['extend'])) {
+            return ! empty($field) ? ($media[$id][$field] ?? '') : ($media[$id] ?? '');
+        } else {
+            return ! empty($field) ? ($media[$media[$id]['extend']][$field] ?? '') : ($media[$media[$id]['extend']] ?? '');
+        }
+    }
+}
+
+
+if ( ! function_exists('get_media_class')) {
+    /**
+     * 根据标识实例化媒体类
+     * @param string|number $media 媒体代号或ID
+     * @param bool $throw 是否抛异常
+     * @return \App\Common\Market\Base|null
+     */
+    function get_media_class($media, bool $throw = true)
+    {
+        if (is_numeric($media)) {
+            $media = get_media_byid($media, 'code');
+        }
+        $class = '\\App\\Common\\Market\\' . ucfirst($media);
+        if ( ! class_exists($class)) {
+            if ($throw) {
+                throw new \Exception("未知的媒体应用类型：$media");
+            } else {
+                trace("未知的媒体应用类型：$media", 'error');
+            }
+            return null;
+        }
+        return new $class();
+    }
+}
+
+
+if ( ! function_exists('get_channel_byauth')) {
+    /**
+     * 根据权限值获取渠道ids
+     * @param int $auth 权限值
+     * @return array
+     */
+    function get_channel_byauth(int $auth = 0)
+    {
+        $channels = array_filter(config('CHANNEL'), function ($arr) use ($auth) {
+            return in_array($auth, $arr['auth'] ?? []);
+        });
+        return array_column($channels ?: [], 'id');
+    }
+}
+
+
+if ( ! function_exists('get_channel_byid')) {
+    /**
+     * 根据渠道id获取渠道信息
+     * @param int $id 渠道id
+     * @param string $field 仅返回指定字段
+     * @return array|string
+     */
+    function get_channel_byid(int $id = 0, string $field = '')
+    {
+        foreach (config('CHANNEL') as $k => $v) {
+            if ($v['id'] == $id) {
+                return $field ? ($v[$field] ?? '') : $v;
+            }
+        }
+        return '';
+    }
+}
+
+
+if ( ! function_exists('get_channel_class')) {
+    /**
+     * 根据标识实例化渠道类
+     * @param string|number $channel 渠道代号或ID
+     * @param array $construct 实例化构造参数
+     * @param bool $throw 是否抛异常
+     */
+    function get_channel_class($channel, array $construct = [], bool $throw = true)
+    {
+        if (is_numeric($channel)) {
+            $channel = get_channel_byid($channel, 'code');
+        }
+        $class = '\\App\\Common\\Channel\\' . ucfirst($channel) . '\\' . ucfirst($channel);
+        if ( ! class_exists($class)) {
+            if ($throw) {
+                throw new \Exception("未知的渠道类型：$channel");
+            } else {
+                trace("未知的渠道类型：$channel", 'error');
+            }
+            return null;
+        }
+        /** @var \App\Common\Channel\Base $class */
+        return new $class($construct);
     }
 }

@@ -92,7 +92,13 @@ trait BaseControllerTrait
     protected function _isRsaDecode($input = null)
     {
         $input = is_null($input) ? $this->input : $input;
-        return ! empty($input[config('RSA.key')]) || is_env('dev');
+        $mode = 'model_' . get_mode('mode');
+        $Package = $mode('Package');
+        $package = $Package->cacheGet($input['pkgid']);
+        return ! empty($input[config('RSA.key')])
+            || is_env('dev')
+            // 某些媒体或渠道包，无法加密通讯
+            || ! empty(get_channel_byid($package['chid'] ?? 0, 'no_encrypt'));
     }
 
     /**
