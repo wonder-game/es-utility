@@ -47,7 +47,7 @@ trait BaseTrait
         // 合计行antdv的rowKey
         $name = config('fetchSetting.footerField');
         // 合计行为二维数组
-        if (isset($result[$name]) && is_array($result[$name])) {
+        if (is_array($result) && isset($result[$name]) && is_array($result[$name])) {
             $date = date(DateUtils::YmdHis);
             $result[$name] = array_map(function ($value) use ($date) {
                 $value['key'] = strval($value['key'] ?? ($date . uniqid(true)));
