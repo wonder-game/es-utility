@@ -4,6 +4,10 @@ namespace WonderGame\EsUtility\Task;
 
 use EasySwoole\Task\AbstractInterface\TaskInterface;
 use EasySwoole\Utility\File;
+use WonderGame\EsUtility\Common\Classes\DateUtils;
+use WonderGame\EsUtility\Notify\DingTalk\Message\Markdown;
+use WonderGame\EsUtility\Notify\EsNotify;
+use WonderGame\EsUtility\Notify\Feishu\Message\CardError;
 
 /**
  * 程序异常
@@ -29,21 +33,51 @@ class Error implements TaskInterface
             $servname = config('SERVNAME');
             $servername = config('SERVER_NAME');
 
-            $data = [
-                '### **' . $title . '**',
-                '- 服务器: ' . $servname,
-                '- 项 目：' . $servername,
-                "- 文 件：{$this->data['file']} 第 {$this->data['line']} 行",
-                "- 详 情：" . $this->data['message'] ?? '',
-                '- 触发方式： ' . $this->data['trigger'] ?? '',
-            ];
+            $driver = config('ES_NOTIFY.driver') ?: 'dingTalk';
 
-            foreach ($this->merge as $key => $value) {
-                $data[] = "- " . (is_int($key) ? $value : "$key => $value");
+            switch ($driver) {
+                case 'feishu': // 飞书 card
+
+                    $message = $this->data['message'] ?? '';
+                    foreach ($this->merge as $key => $value) {
+                        $message = "\n" . (is_int($key) ? $value : "$key: $value");
+                    }
+
+                    $Message = new CardError([
+                        'servername' => $servname,
+                        'project' => $servername,
+                        'datetime' => date(DateUtils::FULL),
+                        'trigger' => $this->data['trigger'] ?? '',
+                        'filename' => "{$this->data['file']} 第 {$this->data['line']} 行",
+                        'content' => $message,
+                        'isAtAll' => true
+                    ]);
+
+                    break;
+                default: // 钉钉 markdown
+                    $data = [
+                        '### **' . $title . '**',
+                        '- 服务器: ' . $servname,
+                        '- 项 目：' . $servername,
+                        "- 文 件：{$this->data['file']} 第 {$this->data['line']} 行",
+                        "- 详 情：" . $this->data['message'] ?? '',
+                        '- 触发方式： ' . $this->data['trigger'] ?? '',
+                    ];
+
+                    foreach ($this->merge as $key => $value) {
+                        $data[] = "- " . (is_int($key) ? $value : "$key: $value");
+                    }
+
+                    $message = implode($this->warp, $data);
+                    $Message = new Markdown([
+                        'title' => $title,
+                        'text' => $message,
+                        'isAtAll' => true
+                    ]);
+                    break;
             }
 
-            $message = implode($this->warp, $data);
-            notice($message, $title);
+            EsNotify::getInstance()->doesOne($driver, $Message);
 
             $message = "$title: {$this->data['message']}, 文件 {$this->data['file']} 第 {$this->data['line']} 行";
             wechat_warning($message);
