@@ -16,12 +16,6 @@ class CardError extends Base
     protected $titleColor = 'red';
 
     /**
-     * 主标题
-     * @var string
-     */
-    protected $title = '程序异常';
-
-    /**
      * 副标题，可不设置
      * @var string
      */

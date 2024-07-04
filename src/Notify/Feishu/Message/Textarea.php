@@ -4,8 +4,6 @@ namespace WonderGame\EsUtility\Notify\Feishu\Message;
 
 class Textarea extends Base
 {
-    protected $content = '';
-
     public function fullData()
     {
         $data = [
@@ -13,12 +11,12 @@ class Textarea extends Base
             'content' => [
                 'post' => [
                     'zh_cn' => [
-                        'title' => '程序异常',
+                        'title' => $this->title,
                         'content' => [
                             [
                                 [
                                     'tag' => 'text',
-                                    'text' => $this->getServerText($this->content),
+                                    'text' => $this->inner ? $this->getServerText($this->content) : $this->content,
                                 ],
                             ],
                         ],
