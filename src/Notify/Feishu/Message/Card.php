@@ -4,8 +4,6 @@ namespace WonderGame\EsUtility\Notify\Feishu\Message;
 
 class Card extends Base
 {
-    protected $content = '';
-
     public function fullData()
     {
         $data = [
@@ -16,7 +14,7 @@ class Card extends Base
                         'tag' => 'div',
                         'text' => [
                             'tag' => 'lark_md',
-                            'content' => $this->getServerText($this->content),
+                            'content' => $this->inner ? $this->getServerText($this->content) : $this->content,
                         ],
                     ],
                     [
@@ -26,7 +24,7 @@ class Card extends Base
                                 'tag' => 'button',
                                 'text' => [
                                     'tag' => 'lark_md',
-                                    'content' => $this->getServerText($this->content),
+                                    'content' => $this->inner ? $this->getServerText($this->content) : $this->content,
                                 ],
                                 'url' => 'https://www.baidu.com',
                                 'type' => 'default',
@@ -45,7 +43,7 @@ class Card extends Base
                 'header' => [
                     'title' => [
                         'tag' => 'plain_text',
-                        'content' => '程序异常',
+                        'content' => $this->title,
                     ],
                 ],
             ],

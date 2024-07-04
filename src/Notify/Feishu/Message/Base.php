@@ -20,6 +20,24 @@ abstract class Base extends SplBean implements MessageInterface
      */
     protected $atUserID = [];
 
+    /**
+     * 是否使用内部消息格式
+     * @var boolean
+     */
+    protected $inner = true;
+
+    /**
+     * 主标题
+     * @var string
+     */
+    protected $title = '程序异常';
+
+    /**
+     * 内容
+     * @var string
+     */
+    protected $content = '';
+
     protected $isAtAll = false;
 
     public function getAtText($text = '')
