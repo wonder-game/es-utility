@@ -87,7 +87,19 @@ class Tencent extends Base
 
     public function uploadPart($file, $key, $partSize = 10 * 1024 * 1024, $options = [])
     {
-
+        try {
+            $body = fopen($file, 'rb');
+            $this->client->upload($this->bucket, $key, $body, ['PartSize' => $partSize] + $options);
+        } catch (ServiceResponseException $e) {
+            trace(sprintf('%s, %s', $e, $e->getCosErrorType()), 'error');
+        } catch (\Exception $e) {
+            trace($e->getMessage(), 'error');
+        } finally {
+            is_resource($body) && fclose($body);
+        }
+        if ( ! empty($e)) {
+            throw  $e;
+        }
     }
 
     function doesObjectExist($key, $options = [])
