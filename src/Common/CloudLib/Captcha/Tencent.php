@@ -65,16 +65,27 @@ class Tencent extends Base
                 'Ticket' => $verifyParam['ticket'],
                 'Randstr' => $verifyParam['randstr'],
             ];
+
+            $endFn = http_tracker('SDK:captcha', [
+                'url' => '__TENCENT_CAPTCHA__',
+                'params' => repeat_array_keys($params, ['AppSecretKey']),
+                'method' => 'POST',
+            ]);
+
             $req->fromJsonString(json_encode($params));
 
             // 返回的resp是一个DescribeCaptchaResultResponse的实例，与请求对象对应
             /** @var DescribeCaptchaResultResponse $resp */
             $resp = $client->DescribeCaptchaResult($req);
 
+            $endFn(json_decode($resp->toJsonString(), true));
+
             return $resp->getCaptchaCode() === 1;
 
         } catch (TencentCloudSDKException $e) {
-            $errmsg = '腾讯云captcha验证码发送失败：异常Code为:' . $e->getErrorCode() . '，原因为：' . $e->__toString()();
+            $errmsg = '腾讯云captcha验证码发送失败：异常Code为:' . $e->getErrorCode() . '，原因为：' . $e->__toString();
+
+            is_callable($endFn) && $endFn($errmsg, $e->getErrorCode());
             trace($errmsg, 'error');
             dingtalk_text("$errmsg, 请及时处理异常");
 

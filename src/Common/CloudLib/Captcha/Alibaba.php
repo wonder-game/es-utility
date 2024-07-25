@@ -4,6 +4,7 @@ namespace WonderGame\EsUtility\Common\CloudLib\Captcha;
 
 use AlibabaCloud\SDK\Captcha\V20230305\Captcha;
 use AlibabaCloud\SDK\Captcha\V20230305\Models\VerifyIntelligentCaptchaRequest;
+use AlibabaCloud\SDK\Captcha\V20230305\Models\VerifyIntelligentCaptchaResponse;
 use AlibabaCloud\Tea\Exception\TeaError;
 use Darabonba\OpenApi\Models\Config;
 use Exception;
@@ -59,7 +60,18 @@ class Alibaba extends Base
                 'sceneId' => $this->sceneId
             ]);
 
+            $endFn = http_tracker('SDK:captcha', [
+                'url' => '__ALI_captcha__',
+                'config' => repeat_array_keys($cfgarr, ['accessKeySecret']),
+                'params' => $request,
+                'method' => 'POST',
+            ]);
+
+            /** @var VerifyIntelligentCaptchaResponse $resp */
             $resp = $client->verifyIntelligentCaptcha($request);
+
+            $endFn($resp->toMap());
+
             return $resp->body->result->verifyResult;
         } catch (Exception $error) {
             if (!($error instanceof TeaError)) {
@@ -67,6 +79,7 @@ class Alibaba extends Base
             }
 
             $errmsg = '阿里云captcha验证码发送失败：异常Code为:' . $error->getCode() . '，原因为：' . $error->getMessage();
+            is_callable($endFn) && $endFn($errmsg, $error->getCode());
             trace($errmsg, 'error');
             dingtalk_text("$errmsg, 请及时处理异常");
 
