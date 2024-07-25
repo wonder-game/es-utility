@@ -24,13 +24,13 @@ class Tencent extends Base
 
     protected $subject = '';
 
-    protected $templateID = '';
+    protected $templateId = '';
 
     /**
      * 收件人
      * @var string
      */
-    protected $destination = '';
+    protected $destination = [];
 
     /**
      * 模板变量
@@ -42,25 +42,29 @@ class Tencent extends Base
      * 地域：
      * @document https://cloud.tencent.com/document/api/213/15692#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8
      * 要顺便检查下该地域的推送域名是否存在,格式为 ses.[region].tencentcloudapi.com
-     * @document https://cloud.tencent.com/document/api/1288/51055
+     * @document https://cloud.tencent.com/document/api/1288/51034
      * @var string
      */
     protected $region = '';
 
     public function send($to = [], array $params = [], bool $ingo = false)
     {
+        $type = $params['type'];
         $parentId = $ingo ? ($params['parentId'] ?: '') : null;
-        unset($params['parentId']);
+        unset($params['type'], $params['parentId']);
+
+        settype($to, 'array');
 
         try {
             $Request = new SendEmailRequest();
             $Request->fromJsonString(json_encode([
                 'FromEmailAddress' => $this->fromEmailAddress,
-                'Destination' => $this->destination,
+                'Destination' => $to ?: $this->destination,
                 'Subject' => $this->subject,
                 'Template' => [
-                    'TemplateID' => intval($this->templateID),
-                    'TemplateData' => $this->templateData,
+                    // 腾讯云的此参数要求为int
+                    'TemplateID' => (int)is_array($this->templateId) ? ($this->templateId[$type] ?? $this->templateId['-1']) : $this->templateId,
+                    'TemplateData' => json_encode($params),
                 ],
             ]));
 
