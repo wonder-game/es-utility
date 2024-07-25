@@ -24,7 +24,7 @@ class Tencent extends Base
 
     protected $subject = '';
 
-    protected $templateID = '';
+    protected $templateId = '';
 
     /**
      * 收件人
@@ -49,8 +49,9 @@ class Tencent extends Base
 
     public function send($to = [], array $params = [], bool $ingo = false)
     {
+        $type = $params['type'];
         $parentId = $ingo ? ($params['parentId'] ?: '') : null;
-        unset($params['parentId']);
+        unset($params['type'], $params['parentId']);
 
         settype($to, 'array');
 
@@ -61,8 +62,9 @@ class Tencent extends Base
                 'Destination' => $to ?: $this->destination,
                 'Subject' => $this->subject,
                 'Template' => [
-                    'TemplateID' => intval($this->templateID),
-                    'TemplateData' => $this->templateData,
+                    // 腾讯云的此参数要求为int
+                    'TemplateID' => (int)is_array($this->templateId) ? ($this->templateId[$type] ?? $this->templateId['-1']) : $this->templateId,
+                    'TemplateData' => json_encode($params),
                 ],
             ]));
 
