@@ -113,6 +113,22 @@ abstract class Base extends SplBean implements MessageInterface
         }
     }
 
+    public function sendUserToken($pool = 'admin')
+    {
+        return $this->tenantAccessToken($pool);
+    }
+
+    public function setInner($inner)
+    {
+        $this->inner = $inner;
+    }
+
+    /**
+     * 自建应用获取 tenant_access_token
+     * @document https://open.feishu.cn/document/server-docs/authentication-management/access-token/tenant_access_token_internal
+     * @return mixed|string
+     * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
+     */
     public function tenantAccessToken($pool = 'admin')
     {
         $appId = config('ES_NOTIFY.feishu.appId');

@@ -51,4 +51,9 @@ class Notify implements NotifyInterface
             // todo 异常处理
         }
     }
+
+    public function sendUser(MessageInterface $message, $union_id)
+    {
+
+    }
 }
