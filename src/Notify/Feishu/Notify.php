@@ -51,4 +51,53 @@ class Notify implements NotifyInterface
             // todo 异常处理
         }
     }
+
+    /**
+     * @document https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a6d2f4aa8ef2500b
+     * 接口频率限制 1000 次/分钟、50 次/秒
+     * @param MessageInterface $message
+     * @return void
+     */
+    public function sendUser(MessageInterface $message, $union_id)
+    {
+        $message->setInner(false);
+        $sendParams = $message->fullData();
+        $url = 'https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=union_id';
+        $headers = [
+            'Content-Type' => HttpClient::CONTENT_TYPE_APPLICATION_JSON,
+            'Authorization' => 'Bearer ' . $message->sendUserToken(),
+        ];
+        $sendParams['receive_id'] = $union_id;
+        $sendParams['content'] = json_encode($sendParams['content']); // 实际上要二次encode,下面还有一次
+
+        $response = $this->postRequest($url, $headers, json_encode($sendParams));
+        $result = json_decode($response, true);
+
+        if ($result['code'] !== 0)
+        {
+            // todo 异常处理
+        }
+    }
+
+    // TODO 待集成优化
+    protected function postRequest($urlString, $customerHeader, $body)
+    {
+        $url = $urlString;
+        $con = curl_init($url);
+        // 设置连接超时时间为5秒
+        curl_setopt($con, CURLOPT_CONNECTTIMEOUT, 5);
+        // 设置读取超时时间为10秒
+        curl_setopt($con, CURLOPT_TIMEOUT, 10);
+        curl_setopt($con, CURLOPT_POST, true);
+        curl_setopt($con, CURLOPT_POSTFIELDS, $body);
+        $headerArray = [];
+        foreach ($customerHeader as $key => $value) {
+            $headerArray[] = "$key: $value";
+        }
+        curl_setopt($con, CURLOPT_HTTPHEADER, $headerArray);
+        curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
+        $response = curl_exec($con);
+        curl_close($con);
+        return $response;
+    }
 }

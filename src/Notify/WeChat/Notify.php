@@ -72,4 +72,9 @@ class Notify implements NotifyInterface
             }
         }
     }
+
+    public function sendUser(MessageInterface $message, $union_id)
+    {
+
+    }
 }
