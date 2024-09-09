@@ -55,20 +55,40 @@ trait BaseControllerTrait
 
     protected function requestParams()
     {
+        $request = $this->request();
         /* @var Controller $this */
-        $this->get = $this->request()->getQueryParams();
-
-        $post = $this->request()->getParsedBody();
+        $this->get = $request->getQueryParams();
+        
+        $post = $request->getParsedBody();
         if (empty($post)) {
             $post = $this->json();
         }
         $this->post = is_array($post) ? $post : [];
+
+        /**
+         * 处理部分通用参数数组
+         *
+         * !!!!!! 注意，此处往get和post和input加了些特殊参数，意味着它们不再等同于request对象的数据了 !!!!!!
+         * 在一些情景下（如加解密码、验签……），如需原数据，可以通过$this->>request()对象的以下方法获取
+         * getQueryParams()、getParsedBody()、getRequestParam()
+         * getSwooleRequest()->rawContent()、getBody()->__toString()
+         * 或者去 raw属性拿（见下文代码）
+         */
+        $utility = $request->getMethod() == 'GET' ? $this->get : $this->post;
+        // 包序号（版本序号）
+        empty($utility['versioncode']) && $utility['versioncode'] = 1;
+        // 有些包的参数名写错成android了
+        isset($utility['android']) && ! isset($utility['androidid']) && $utility['androidid'] = $utility['android'];
+        // 不要信任客户端传的IP！！！有需要用可以去原生数据拿
+        $utility['ip'] = ip($request);
+        $request->getMethod() == 'GET' ? $this->get = $utility : $this->post = $utility;
+
         $this->input = array_merge($this->get, $this->post);
 
-        //  $this->request()->getSwooleRequest()->rawContent()也可以
-        $this->raw = $this->request()->getBody()->__toString();
+        //  $request->getSwooleRequest()->rawContent()也可以
+        $this->raw = $request->getBody()->__toString();
     }
-
+    
     protected function setLanguageConstants()
     {
         $dictionary = config('CLASS_DICTIONARY');

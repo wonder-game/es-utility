@@ -37,24 +37,6 @@ class LamUnit
         }
     }
 
-    // 处理部分通用参数数组
-    static public function utilityParam(Request $request)
-    {
-        $utility = [];
-
-        // 包序号（版本序号）
-        if ( ! $request->getRequestParam('versioncode')) {
-            $utility['versioncode'] = 1;
-        }
-
-        // 修复旧包的android
-        if ($request->getRequestParam('android') && ! $request->getRequestParam('androidid')) {
-            $utility['androidid'] = $request->getRequestParam('android');
-        }
-
-        self::withParams($request, $utility, false, [], ['ip' => ip($request)]);
-    }
-
     /**
      * @param Request $request
      * @param array $array 要合并的数据
@@ -90,6 +72,11 @@ class LamUnit
     static public function decrypt(Request $request, $field = 'envkeydata')
     {
         $cipher = $request->getRequestParam($field);
+        // 参数里没有$field这个量
+        if(is_null($cipher))
+        {
+            return null;
+        }
         $envkeydata = LamOpenssl::getInstance()->decrypt($cipher);
         $array = json_decode($envkeydata, true);
         ($array && $envkeydata = $array) or parse_str($envkeydata, $envkeydata);
