@@ -380,8 +380,8 @@ trait AuthTrait
      */
     protected function __order()
     {
-        $sortField = $this->get['_sortField'] ?? ''; // 排序字段
-        $sortValue = $this->get['_sortValue'] ?? ''; // 'ascend' | 'descend'
+        $sortField = $this->input['_sortField'] ?? ''; // 排序字段
+        $sortValue = $this->input['_sortValue'] ?? ''; // 'ascend' | 'descend'
 
         $order = [];
         if ($sortField && $sortValue) {
@@ -426,7 +426,7 @@ trait AuthTrait
     {
         // 处理表头，客户端应统一处理表头
         $th = [];
-        if ($thStr = $this->get[config('fetchSetting.exportThField')]) {
+        if ($thStr = $this->input[config('fetchSetting.exportThField')]) {
             // _th=ymd=日期|reg=注册|login=登录
 
             $thArray = explode('|', urldecode($thStr));
@@ -472,7 +472,7 @@ trait AuthTrait
         $excel = new XlsWriter();
 
         // 客户端response响应头获取不到Content-Disposition，用参数传文件名
-        $fileName = $this->get[config('fetchSetting.exprotFilename')] ?? '';
+        $fileName = $this->input[config('fetchSetting.exprotFilename')] ?? '';
         if (empty($fileName)) {
             $fileName = sprintf('export-%d-%s.xlsx', date(DateUtils::YmdHis), substr(uniqid(), -5));
         }
