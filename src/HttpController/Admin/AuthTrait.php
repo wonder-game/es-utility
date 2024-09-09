@@ -338,8 +338,8 @@ trait AuthTrait
             throw new HttpParamException(lang(Dictionary::PARAMS_ERROR));
         }
 
-        $page = $this->get[config('fetchSetting.pageField')] ?? 1;          // 当前页码
-        $limit = $this->get[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
+        $page = $this->input[config('fetchSetting.pageField')] ?? 1;          // 当前页码
+        $limit = $this->input[config('fetchSetting.sizeField')] ?? 20;    // 每页多少条数据
 
         $this->__with();
         $where = $this->__search();
