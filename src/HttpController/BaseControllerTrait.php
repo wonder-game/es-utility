@@ -71,7 +71,7 @@ trait BaseControllerTrait
          * !!!!!! 注意，此处往get和post和input加了些特殊参数，意味着它们不再等同于request对象的数据了 !!!!!!
          * 在一些情景下（如加解密码、验签……），如需原数据，可以通过$this->>request()对象的以下方法获取
          * getQueryParams()、getParsedBody()、getRequestParam()
-         * getSwooleRequest()->rawContent()、getBody()->__toString()
+         * getSwooleRequest()->rawContent()、getSwooleRequest()->post、getBody()->__toString()
          * 或者去 raw属性拿（见下文代码）
          */
         $utility = $request->getMethod() == 'GET' ? $this->get : $this->post;
