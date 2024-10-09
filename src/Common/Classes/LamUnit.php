@@ -68,13 +68,15 @@ class LamUnit
         $method == 'GET' ? $request->withQueryParams($params) : $request->withParsedBody($params);
     }
 
-    // 解密
+    /**
+     * 解密
+     * 注意当请求参数中有envkeydata时本方法会改写$request()对象的数据
+     */
     static public function decrypt(Request $request, $field = 'envkeydata')
     {
         $cipher = $request->getRequestParam($field);
         // 参数里没有$field这个量
-        if(is_null($cipher))
-        {
+        if (is_null($cipher)) {
             return null;
         }
         $envkeydata = LamOpenssl::getInstance()->decrypt($cipher);
