@@ -111,4 +111,45 @@ class Tencent extends Base
             throw $e;
         }
     }
+
+    /**
+     * 复制OSS对象
+     * @param $formKey
+     * @param $toKey
+     * @param $options
+     * @return void
+     * @throws \Exception
+     * @document https://cloud.tencent.com/document/product/436/64284
+     */
+    public function copy($formKey, $toKey, $options = [])
+    {
+        try {
+            $copySource = [$this->bucket, 'cos', $this->region, 'myqcloud.com/' . ltrim($formKey, '/')];
+            $this->client->copyObject([
+                'Bucket' => $this->bucket,
+                'Key' => $toKey,
+                'CopySource' => implode('.', $copySource)
+            ]);
+        } catch (\Exception $e) {
+            trace($e->__toString(), 'error');
+            throw $e;
+        }
+    }
+
+    /**
+     * 重命名OSS对象
+     * @param $formKey
+     * @param $toKey
+     * @param $options
+     * @return void
+     * @throws \Exception
+     * @document https://cloud.tencent.com/document/product/436/64284
+     */
+    public function rename($formKey, $toKey, $options = [])
+    {
+        $this->copy($formKey, $toKey, $options);
+        $this->delete($formKey, $options);
+    }
+
+
 }

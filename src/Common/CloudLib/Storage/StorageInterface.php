@@ -37,4 +37,22 @@ interface StorageInterface
      * @param array $options
      */
     function delete($key, $options = []);
+
+    /**
+     * 拷贝云端文件
+     * @param $formKey
+     * @param $toKey
+     * @param array $options
+     * @return mixed
+     */
+    function copy($formKey, $toKey, $options = []);
+
+    /**
+     * 重命名云端文件
+     * @param $formKey
+     * @param $toKey
+     * @param array $options
+     * @return mixed
+     */
+    function rename($formKey, $toKey, $options = []);
 }
