@@ -6,6 +6,29 @@ class Textarea extends Base
 {
     public function fullData()
     {
+        if (is_array($this->content))
+        {
+            $content = [];
+            foreach ($this->content as $item)
+            {
+                $content[] = [
+                    'tag' => 'text',
+                    'text' => $item,
+                ];
+            }
+            $content[] = [
+                'tag' => 'text',
+                'text' => $this->getServerText(''),
+            ];
+        }else{
+            $content = [
+                [
+                    'tag' => 'text',
+                    'text' => $this->inner ? $this->getServerText($this->content) : $this->content,
+                ],
+            ];
+        }
+        
         $data = [
             'msg_type' => 'post',
             'content' => [
@@ -13,12 +36,7 @@ class Textarea extends Base
                     'zh_cn' => [
                         'title' => $this->title,
                         'content' => [
-                            [
-                                [
-                                    'tag' => 'text',
-                                    'text' => $this->inner ? $this->getServerText($this->content) : $this->content,
-                                ],
-                            ],
+                           $content,
                         ],
                     ],
                 ],

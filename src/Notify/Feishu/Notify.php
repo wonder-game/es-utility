@@ -44,12 +44,9 @@ class Notify implements NotifyInterface
         // 支持文本(text)、富文本(textarea)、群名片(share_chat)、图片(image)、消息卡片(interactive)消息类型
 
         $response = $client->postJson(json_encode($data));
-        $json = json_decode($response->getBody(), true);
+        $result = json_decode($response->getBody(), true);
 
-        if ($json['code'] !== 0)
-        {
-            // todo 异常处理
-        }
+        return $result;
     }
 
     /**
@@ -73,10 +70,7 @@ class Notify implements NotifyInterface
         $response = $this->postRequest($url, $headers, json_encode($sendParams));
         $result = json_decode($response, true);
 
-        if ($result['code'] !== 0)
-        {
-            // todo 异常处理
-        }
+        return $result;
     }
 
     // TODO 待集成优化

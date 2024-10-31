@@ -141,4 +141,42 @@ class Alibaba extends Base
             throw $e;
         }
     }
+
+    /**
+     * 复制OSS对象
+     * @param $formKey
+     * @param $toKey
+     * @param $options
+     * @return void
+     * @throws OssException
+     * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
+     * @document https://help.aliyun.com/zh/oss/user-guide/copy-objects-16
+     */
+    public function copy($formKey, $toKey, $options = [])
+    {
+        try {
+            $this->client->copyObject($this->bucket, $formKey, $this->bucket, $toKey, $options);
+        }
+        catch (\Exception $e) {
+            trace($e->__toString(), 'error');
+            throw $e;
+        }
+    }
+
+    /**
+     * 重命名OSS对象
+     * @param $formKey
+     * @param $toKey
+     * @param $options
+     * @return void
+     * @throws OssException
+     * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
+     * @document https://help.aliyun.com/zh/oss/user-guide/rename-objects
+     */
+    public function rename($formKey, $toKey, $options = [])
+    {
+        $this->copy($formKey, $toKey, $options);
+        $this->delete($formKey, $options);
+    }
+
 }
