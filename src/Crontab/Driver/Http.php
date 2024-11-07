@@ -58,11 +58,10 @@ class Http implements Interfaces
     {
         switch (strtolower($data['encry'] = config('CRONTAB.encry'))) {
             case 'rsa':
-                $rsaConfig = config('RSA');
-                $openssl = LamOpenssl::getInstance($rsaConfig['private'], $rsaConfig['public']);
+                $openssl = LamOpenssl::getInstance();
                 return [
                     'encry' => $data['encry'],
-                    $rsaConfig['key'] => $openssl->encrypt(json_encode($data))
+                    config('RSA.key') => $openssl->encrypt(json_encode($data))
                 ];
 
             case 'md5':

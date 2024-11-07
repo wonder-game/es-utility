@@ -102,9 +102,8 @@ trait HttpTrackerTrait
         if (in_array($method, ['get', 'head', 'trace', 'delete'])) {
             $response = $HttpClient->$method();
         } elseif (in_array($method, ['post', 'patch', 'put', 'download'])) {
-            $rsa = config('RSA');
-            $openssl = LamOpenssl::getInstance($rsa['private'], $rsa['public']);
-            $post = [$rsa['key'] => $openssl->encrypt(json_encode($request['POST']))]; // 可能不一定为POST
+            $openssl = LamOpenssl::getInstance();
+            $post = [config('RSA.key') => $openssl->encrypt(json_encode($request['POST']))]; // 可能不一定为POST
             $response = $HttpClient->$method($post);
         }
 
