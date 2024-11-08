@@ -1127,9 +1127,10 @@ if ( ! function_exists('request_lan_api')) {
      * @param array $data 参数
      * @param string $method 请求方式
      * @param string $encry 加密方式
+     * @param array $headers 头信息
      * @return array|bool
      */
-    function request_lan_api($lan_key = '', $uri, $data = [], $method = 'GET', $encry = 'md5')
+    function request_lan_api($lan_key = '', $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [])
     {
         $method = strtoupper($method);
         $lan = sysinfo($lan_key . '_lan');
@@ -1166,10 +1167,10 @@ if ( ! function_exists('request_lan_api')) {
 
         $url = 'http://' . $lan['ip'][array_rand($lan['ip'])] . $uri;
         $client = new HttpClient($url);
-        $client->setHeaders([
+        $client->setHeaders($headers += [
             // 'Content-Type' => HttpClient::CONTENT_TYPE_X_WWW_FORM_URLENCODED,
             'Host' => $lan['domain']
-        ]);
+        ], false, false);
         //如果失败重试3次
         for ($i = 1; $i <= 3; $i++) {
             if ($method === 'GET') {
@@ -1186,7 +1187,7 @@ if ( ! function_exists('request_lan_api')) {
                 return $result['result'];
             }
             //失败日志
-            trace("request_{$lan_key}_api ERROR: {$url} " . json_encode($params) . ' ' . json_encode($data) . ' ' . $body . ' ' . $response->getStatusCode(), 'error');
+            trace("request_{$lan_key}_api ERROR: {$url} params为：" . json_encode($params) . ' data为：' . json_encode($data) . ' 头信息为： ' . json_encode($headers) . "  返回为：$body 状态码：" . $response->getStatusCode(), 'error');
             Coroutine::sleep(0.3);
         }
         //失败返回false

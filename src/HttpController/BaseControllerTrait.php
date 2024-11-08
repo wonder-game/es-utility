@@ -59,7 +59,7 @@ trait BaseControllerTrait
         $request = $this->request();
         /* @var Controller $this */
         $this->get = $request->getQueryParams();
-        
+
         $post = $request->getParsedBody();
         if (empty($post)) {
             $post = $this->json();
@@ -70,7 +70,7 @@ trait BaseControllerTrait
          * 处理部分通用参数数组
          *
          * !!!!!! 注意，此处往get和post和input加了些特殊参数，意味着它们不再等同于request对象的数据了 !!!!!!
-         * 在一些情景下（如加解密码、验签……），如需原数据，可以通过$this->>request()对象的以下方法获取
+         * 在一些情景下（如加解密码、验签……），如需原数据，可以通过$this->request()对象的以下方法获取(依不同场景而定)
          * getQueryParams()、getParsedBody()、getRequestParam()
          * getSwooleRequest()->rawContent()、getSwooleRequest()->post、getBody()->__toString()
          * 或者去 raw属性拿（见下文代码）
@@ -89,7 +89,7 @@ trait BaseControllerTrait
         //  $request->getSwooleRequest()->rawContent()也可以
         $this->raw = $request->getBody()->__toString();
     }
-    
+
     protected function setLanguageConstants()
     {
         $dictionary = config('CLASS_DICTIONARY');
@@ -319,13 +319,13 @@ trait BaseControllerTrait
         $config = config("REQUEST_LIMIT.$cfgKey");
         if ($config) {
             foreach ($config as $lk => $lv) {
-                if (!isset($input[$lk])) {
+                if ( ! isset($input[$lk])) {
                     continue;
                 }
                 $lkey = "request_limit_{$cfgKey}_{$lk}_$input[$lk]";
                 if ($redis->exists($lkey)) {
                     // 请求开始时还未自增
-                    if (!$isWhite && $redis->get($lkey) >= $lv['times']) {
+                    if ( ! $isWhite && $redis->get($lkey) >= $lv['times']) {
                         throw new HttpParamException($lv['limit_msg'], $lv['limit_code']);
                     }
                 } else {
@@ -379,7 +379,7 @@ trait BaseControllerTrait
 
         $time = time();
         foreach ($config as $lk => $lv) {
-            if (!isset($input[$lk]) || $input[$lk] === '') {
+            if ( ! isset($input[$lk]) || $input[$lk] === '') {
                 if ($lv['required']) {
                     // 必传
                     throw new HttpParamException(lang(Dictionary::PARAMS_ERROR), $lv['limit_code']);
@@ -397,7 +397,7 @@ trait BaseControllerTrait
             }
 
             $isLock = $redis->setNx($lkey, $time);
-            if (!$isLock) {
+            if ( ! $isLock) {
                 throw new HttpParamException($lv['limit_msg'], $lv['limit_code']);
             }
             // 设置有效期
