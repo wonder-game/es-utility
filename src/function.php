@@ -819,6 +819,67 @@ if ( ! function_exists('area')) {
     }
 }
 
+if ( ! function_exists('geo')) {
+    /**
+     * 将IP解析为地区数据
+     * @install composer require czdb/searcher
+     * @github https://github.com/tagphi/czdb_searcher_php
+     * @website https://cz88.net/
+     * @param string $ip
+     * @param int|string $num 为数字时返回地区数组中的一个成员；否则返回整个数组
+     * @return string|array
+     */
+    function geo($ip = '', $num = 'all')
+    {
+        /**
+         * db_file_ipv4: ipv4文件路径
+         * db_file_ipv6: ipv6文件路径
+         * key：密钥
+         * query_type（可选）: BTREE(默认) | MEMORY,查询模式，见DbSearcher类常量
+         *
+         */
+        if ( ! $config = config('CZ88')) {
+            trace('area_ip函数 config empty', 'error');
+            return is_numeric($num) ? '' : [];
+        }
+
+        try {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                // ipv6
+                $dbFile = $config['db_file_ipv6'];
+            } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                // ipv4
+                $dbFile = $config['db_file_ipv4'];
+            } else {
+                trace("ip invalid: $ip", 'error');
+                return is_numeric($num) ? '' : [];
+            }
+
+            $queryType = $config['query_type'] ?? \Czdb\DbSearcher::QUERY_TYPE_BTREE;
+            $dbSearcher = new \Czdb\DbSearcher($dbFile, $queryType, $config['key']);
+            $region = $dbSearcher->search($ip);
+            $dbSearcher->close();
+
+            // ip解析示例：
+            // ["美国–新泽西州–伯灵顿", "Comcast有线通信股份有限公司"]
+            // ["中国–广东–深圳", "电信"]
+            // ["中国–台湾", "中华电信]
+            // ["中国–香港", "城市电讯有限公司"]
+            // ["中国–澳门", "澳门电讯"]
+
+            $arr = explode("\t", $region);
+            // 业务需求，港澳台跟大陆一样保持在第一级
+            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门'], ['中国台湾', '中国香港', '中国澳门'], $arr[0]);
+            $arr = explode('–', $str);
+
+            return is_numeric($num) ? $arr[$num] : $arr;
+        } catch (\Exception|\Throwable $e) {
+            $dbSearcher->close();
+            trace("area_ip: $ip error:" . $e->getMessage(), 'error');
+            return is_numeric($num) ? '' : [];
+        }
+    }
+}
 
 if ( ! function_exists('sysinfo')) {
     /**
