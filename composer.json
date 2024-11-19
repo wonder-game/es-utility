@@ -39,7 +39,8 @@
     "easyswoole/oss": "^1.1",
     "alibabacloud/dysmsapi-20170525": "^2.0",
     "tencentcloud/sms": "^3.0",
-    "tencentcloud/captcha": "^3.0"
+    "tencentcloud/captcha": "^3.0",
+    "czdb/searcher": "^1.0"
   },
   "autoload": {
     "psr-4": {
