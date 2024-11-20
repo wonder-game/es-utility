@@ -839,7 +839,7 @@ if ( ! function_exists('geo')) {
          *
          */
         if ( ! $config = config('CZ88')) {
-            trace('area_ip函数 config empty', 'error');
+            trace('geo函数 config empty', 'error');
             return is_numeric($num) ? '' : [];
         }
 
@@ -875,7 +875,7 @@ if ( ! function_exists('geo')) {
             return is_numeric($num) ? $arr[$num] : $arr;
         } catch (\Exception|\Throwable $e) {
             $dbSearcher->close();
-            trace("area_ip: $ip error:" . $e->getMessage(), 'error');
+            trace("geo: $ip error:" . $e->getMessage(), 'error');
             return is_numeric($num) ? '' : [];
         }
     }
