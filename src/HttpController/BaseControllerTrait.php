@@ -282,7 +282,7 @@ trait BaseControllerTrait
      * 接口限流，redis计数
      * @param Redis $redis
      * @param string $cfgKey
-     * @param $input
+     * @param array $input
      * @param bool $isWhite 是否白名单，白名单不受限制
      * @return \Closure
      * @throws HttpParamException
