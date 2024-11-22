@@ -68,6 +68,17 @@ trait BaseControllerTrait
 
         //  $this->request()->getSwooleRequest()->rawContent()也可以
         $this->raw = $this->request()->getBody()->__toString();
+        // 可以在这个方法里进行项目级别的个性处理
+        $this->_after_requestParams();
+    }
+
+    /**
+     * 可以在这个方法里进行项目级别的个性处理
+     * 例如对请求数据的解混淆、……
+     */
+    protected function _after_requestParams()
+    {
+
     }
 
     protected function setLanguageConstants()
@@ -271,8 +282,8 @@ trait BaseControllerTrait
      * 接口限流，redis计数
      * @param Redis $redis
      * @param string $cfgKey
-     * @param $input
-     * @param $isWhite 是否白名单，白名单不受限制
+     * @param array $input
+     * @param bool $isWhite 是否白名单，白名单不受限制
      * @return \Closure
      * @throws HttpParamException
      */
