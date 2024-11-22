@@ -283,7 +283,7 @@ trait BaseControllerTrait
      * @param Redis $redis
      * @param string $cfgKey
      * @param $input
-     * @param $isWhite 是否白名单，白名单不受限制
+     * @param bool $isWhite 是否白名单，白名单不受限制
      * @return \Closure
      * @throws HttpParamException
      */
