@@ -857,6 +857,8 @@ if ( ! function_exists('geo')) {
             $region = $dbSearcher->search($ip);
             $dbSearcher->close();
 
+            // 注意分隔符一定要用–，最好是复制粘贴，以防写错！！！
+
             // ip解析示例：
             // ["美国–新泽西州–伯灵顿", "Comcast有线通信股份有限公司"]
             // ["中国–广东–深圳", "电信"]
@@ -866,7 +868,7 @@ if ( ! function_exists('geo')) {
 
             $arr = explode("\t", $region);
             // 业务需求，港澳台跟大陆一样保持在第一级
-            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国-'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国'.config('INLAND').'-'], $arr[0]);
+            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国–'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国' . config('INLAND') . '–'], $arr[0]);
             $arr = explode('–', $str);
 
             return is_numeric($num) ? $arr[$num] : $arr;
