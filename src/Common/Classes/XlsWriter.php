@@ -214,7 +214,7 @@ class XlsWriter
                 $row = [];
                 // 因为data只能是索引数组，所以这里按顺序十分重要
                 foreach ($thKeys as $col) {
-                    $row[] = $value[$col] ?? '';
+                    $row[] = isset($value[$col]) ? (is_numeric($value[$col]) ? floatval($value[$col]) : $value[$col]) : '';
                 }
 
                 $row && $newarr[] = $row;
