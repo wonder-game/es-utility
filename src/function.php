@@ -869,7 +869,7 @@ if ( ! function_exists('geo')) {
 
             $arr = explode("\t", $region);
             // 业务需求，港澳台跟大陆一样保持在第一级
-            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国-'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国'.config('INLAND').'-'], $arr[0]);
+            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国–'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国'.config('INLAND').'–'], $arr[0]);
             $arr = explode('–', $str);
 
             return is_numeric($num) ? $arr[$num] : $arr;
