@@ -11,6 +11,36 @@ use Swoole\Coroutine;
 class HttpRequest
 {
     /**
+     * 基于HttpClient封装的公共函数
+     * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
+     * @param array|string $data 请求参数，xml提交为string
+     * @param string $method 提交方式：get|post|xml|json|put|delete|head|options|trace|patch
+     * @param array $header 请求头
+     * @param array $cfg 配置  resultType,retryCallback,retryTimes
+     * @param array $option HttpClient的其它属性
+     * @throws Exception|Error
+     */
+    public function hCurl($url = '', $data = [], $method = 'post', $header = [], $cfg = [], $option = [])
+    {
+        return $this->request('hCurl', $url, $data, $method, $header, $cfg, $option);
+    }
+
+    /**
+     * 基于curl封装的公共函数
+     * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
+     * @param array|string $data 请求参数，xml提交为string
+     * @param string $method 提交方式：get|post|xml|json|put|delete|head|options|trace|patch
+     * @param array $header 请求头
+     * @param array $cfg 配置  resultType,retryCallback,retryTimes
+     * @param array $option curl的其它属性
+     * @throws Exception|Error
+     */
+    public function curl($url = '', $data = [], $method = 'post', $header = [], $cfg = [], $option = [])
+    {
+        return $this->request('curl', $url, $data, $method, $header, $cfg, $option);
+    }
+
+    /**
      * 统一处理请求
      * @param string $type 请求类型：hCurl 或 curl
      * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
@@ -37,6 +67,7 @@ class HttpRequest
                 return in_array($code, [200, 302, 303, 307]);
             },
             'retryTimes' => 3,
+            'curt' => 0,
         ];
         $cfg = array_merge($defaults, $cfg);
 
@@ -78,6 +109,10 @@ class HttpRequest
             throw new Exception($err);
         }
 
+        if (empty($cfg['resultType'])) {
+            return $response;
+        }
+
         switch ($cfg['resultType']) {
             case 'xml':
                 return $this->xml($responseBody);
@@ -102,11 +137,18 @@ class HttpRequest
     protected function _hCurl($url, $data, $method, $header, $option)
     {
         $client = new HttpClient($url);
-        if (stripos($url, 'https://') === 0) {
+        $client->setClientSettings(($option['client_set'] ?? []) + ['keepAlive' => true], false);
+        $client->setHeaders($header, false, false);
+
+        // 防止某些请求的SSL不是默认的443端口
+        if (stripos($url, 'https://') !== false) {
             $client->setEnableSSL();
         }
-        $client->setClientSettings($option + ['keepAlive' => true], false);
-        $client->setHeaders($header, false, false);
+
+        // $v 外层要数组包裹 形如：['setProxyHttp' => [string] , 'addCookies' => [array]]
+        foreach (($option['method'] ?? []) as $k => $v) {
+            call_user_func_array([$client, $k], $v);
+        }
 
         $calls = [
             'get' => function ($data) use ($client) {
