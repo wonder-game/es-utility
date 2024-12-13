@@ -102,10 +102,7 @@ abstract class Base extends SplBean implements MessageInterface
             'image_type' => 'message',
             'image' => curl_file_create($img),
         ];
-
-        $response = $this->postRequest('https://open.feishu.cn/open-apis/im/v1/images', $headers, $sendParams);
-        $result = json_decode($response, true);
-
+        $result = curl('https://open.feishu.cn/open-apis/im/v1/images', $sendParams, 'post', $headers);
         if (isset($result['code']) && $result['code'] == 0) {
             return $result['data']['image_key'];
         } else {
@@ -151,26 +148,5 @@ abstract class Base extends SplBean implements MessageInterface
             return $result['tenant_access_token'];
         }
         return '';
-    }
-
-    protected function postRequest($urlString, $customerHeader, $body)
-    {
-        $url = $urlString;
-        $con = curl_init($url);
-        // 设置连接超时时间为5秒
-        curl_setopt($con, CURLOPT_CONNECTTIMEOUT, 5);
-        // 设置读取超时时间为10秒
-        curl_setopt($con, CURLOPT_TIMEOUT, 10);
-        curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, $body);
-        $headerArray = [];
-        foreach ($customerHeader as $key => $value) {
-            $headerArray[] = "$key: $value";
-        }
-        curl_setopt($con, CURLOPT_HTTPHEADER, $headerArray);
-        curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($con);
-        curl_close($con);
-        return $response;
     }
 }

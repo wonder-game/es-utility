@@ -61,31 +61,6 @@ class Notify implements NotifyInterface
         $sendParams['receive_id'] = $union_id;
         $sendParams['content'] = json_encode($sendParams['content']); // 实际上要二次encode,下面还有一次
 
-        $response = $this->postRequest($url, $headers, json_encode($sendParams));
-        $result = json_decode($response, true);
-
-        return $result;
-    }
-
-    // TODO 待集成优化
-    protected function postRequest($urlString, $customerHeader, $body)
-    {
-        $url = $urlString;
-        $con = curl_init($url);
-        // 设置连接超时时间为5秒
-        curl_setopt($con, CURLOPT_CONNECTTIMEOUT, 5);
-        // 设置读取超时时间为10秒
-        curl_setopt($con, CURLOPT_TIMEOUT, 10);
-        curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, $body);
-        $headerArray = [];
-        foreach ($customerHeader as $key => $value) {
-            $headerArray[] = "$key: $value";
-        }
-        curl_setopt($con, CURLOPT_HTTPHEADER, $headerArray);
-        curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($con);
-        curl_close($con);
-        return $response;
+        return curl($url, $sendParams,'post',$headers);
     }
 }

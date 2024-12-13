@@ -79,10 +79,6 @@ class HttpRequest
             throw new Exception($err);
         }
 
-        if (empty($cfg['resultType'])) {
-            return $response;
-        }
-
         switch ($cfg['resultType']) {
             case 'xml':
                 return $this->xml($responseBody);
