@@ -11,36 +11,6 @@ use Swoole\Coroutine;
 class HttpRequest
 {
     /**
-     * 基于HttpClient封装的公共函数
-     * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
-     * @param array|string $data 请求参数，xml提交为string
-     * @param string $method 提交方式：get|post|xml|json|put|delete|head|options|trace|patch
-     * @param array $header 请求头
-     * @param array $cfg 配置  resultType,retryCallback,retryTimes
-     * @param array $option HttpClient的其它属性
-     * @throws Exception|Error
-     */
-    public function hCurl($url = '', $data = [], $method = 'post', $header = [], $cfg = [], $option = [])
-    {
-        return $this->request('hCurl', $url, $data, $method, $header, $cfg, $option);
-    }
-
-    /**
-     * 基于curl封装的公共函数
-     * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
-     * @param array|string $data 请求参数，xml提交为string
-     * @param string $method 提交方式：get|post|xml|json|put|delete|head|options|trace|patch
-     * @param array $header 请求头
-     * @param array $cfg 配置  resultType,retryCallback,retryTimes
-     * @param array $option curl的其它属性
-     * @throws Exception|Error
-     */
-    public function curl($url = '', $data = [], $method = 'post', $header = [], $cfg = [], $option = [])
-    {
-        return $this->request('curl', $url, $data, $method, $header, $cfg, $option);
-    }
-
-    /**
      * 统一处理请求
      * @param string $type 请求类型：hCurl 或 curl
      * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
