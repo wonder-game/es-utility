@@ -144,11 +144,8 @@ abstract class Base extends SplBean implements MessageInterface
             'app_id' => $appId,
             'app_secret' => $appSecret,
         ];
-        $HttpClient = new HttpClient('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal');
-        $HttpClient->setClientSetting('keep_alive', true);
-        $response = $HttpClient->postJson(json_encode($sendParams));
-        $body = $response->getBody();
-        $result = json_decode($body, true);
+
+        $result = hcurl('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', $sendParams);
         if (isset($result['code']) && $result['code'] == 0) {
             $Redis->setEx($key, $result['expire'] - 60, $result['tenant_access_token']);
             return $result['tenant_access_token'];

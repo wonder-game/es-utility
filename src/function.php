@@ -1446,7 +1446,7 @@ if ( ! function_exists('is_tester')) {
     }
 }
 
-if ( ! function_exists(' forward_testserv')) {
+if ( ! function_exists('forward_testserv')) {
     /**
      * 将请求转到test服
      * @return void

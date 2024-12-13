@@ -70,13 +70,6 @@ trait HttpTrackerTrait
         $url = $data['url'];
         $request = json_decode($data['request'], true);
 
-        $HttpClient = new HttpClient($url);
-        if (stripos($url, 'https://') === 0) {
-            $HttpClient->setEnableSSL();
-        }
-        // 禁止重定向
-        $HttpClient->setFollowLocation(0);
-
         // 没有header或者method说明是以前的结构，暂不处理
         if ( ! isset($request['header']) || ! isset($request['method'])) {
             return null;
@@ -92,30 +85,20 @@ trait HttpTrackerTrait
         // UserAgent区分复发请求
         $headers['user-agent'] = ($headers['user-agent'] ?? '') . ';HttpTracker';
 
-        $HttpClient->setHeaders($headers, true, false);
-
-        $method = strtolower($request['method']);
-
-        /** @var Response $response */
-        $response = null;
-        // 不需要body的方法
-        if (in_array($method, ['get', 'head', 'trace', 'delete'])) {
-            $response = $HttpClient->$method();
-        } elseif (in_array($method, ['post', 'patch', 'put', 'download'])) {
-            $rsa = config('RSA');
-            $openssl = LamOpenssl::getInstance($rsa['private'], $rsa['public']);
-            $post = [$rsa['key'] => $openssl->encrypt(json_encode($request['POST']))]; // 可能不一定为POST
-            $response = $HttpClient->$method($post);
-        }
-
-        if ($response) {
-            $body = $response->getBody();
-            $json = json_decode($body, true);
-            if ($response->getStatusCode() !== 200 || $json['code'] !== 200) {
-                trace("复发请求失败，返回BODY: {$body}，参数为：" . json_encode($data, JSON_UNESCAPED_UNICODE));
-            }
-        }
-
-        return $response;
+        return hcurl(
+            $url,
+            [
+                // 可能不一定为POST
+                config('RSA.key') => LamOpenssl::getInstance()->encrypt(json_encode($request['POST']))
+            ],
+            strtolower($request['method']),
+            $headers,
+            ['resultType' => null],
+            [
+                'client_set' => [
+                    'followLocation' => 0 // 禁止重定向
+                ]
+            ]
+        );
     }
 }
