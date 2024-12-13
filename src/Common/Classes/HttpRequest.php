@@ -54,6 +54,11 @@ class HttpRequest
             throw new Exception($err, $e->getCode());
         }
 
+        // 直接返回响应对象(只针对协程有效)
+        if ( ! $cfg['resultType']) {
+            return $response;
+        }
+
         if ($response instanceof Response) {
             $responseBody = $response->getBody();
             $code = $response->getStatusCode();
