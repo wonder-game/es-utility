@@ -163,7 +163,7 @@ class HttpRequest
             case 'patch':
             case 'options':
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
-                curl_setopt($ch, CURLOPT_POSTFIELDS, is_array($data) ? http_build_query($data) : $data);
+                curl_setopt($ch, CURLOPT_POSTFIELDS,  $data);
                 break;
             case 'head':
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
