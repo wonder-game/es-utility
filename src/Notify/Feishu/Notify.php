@@ -23,7 +23,7 @@ class Notify implements NotifyInterface
      * @document https://open.feishu.cn/document/client-docs/bot-v3/add-custom-bot#%E6%94%AF%E6%8C%81%E5%8F%91%E9%80%81%E7%9A%84%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9E%8B%E8%AF%B4%E6%98%8E
      * 自定义机器人的频率控制和普通应用不同，为 100 次/分钟，5 次/秒
      * @param MessageInterface $message
-     * @return void
+     * @return void|array
      */
     public function does(MessageInterface $message)
     {
@@ -39,14 +39,8 @@ class Notify implements NotifyInterface
         $data['timestamp'] = $timestamp;
         $data['sign'] = $sign;
 
-        $client = new HttpClient($url);
-
         // 支持文本(text)、富文本(textarea)、群名片(share_chat)、图片(image)、消息卡片(interactive)消息类型
-
-        $response = $client->postJson(json_encode($data));
-        $result = json_decode($response->getBody(), true);
-
-        return $result;
+        return hcurl($url, $data, 'json');
     }
 
     /**
@@ -67,31 +61,6 @@ class Notify implements NotifyInterface
         $sendParams['receive_id'] = $union_id;
         $sendParams['content'] = json_encode($sendParams['content']); // 实际上要二次encode,下面还有一次
 
-        $response = $this->postRequest($url, $headers, json_encode($sendParams));
-        $result = json_decode($response, true);
-
-        return $result;
-    }
-
-    // TODO 待集成优化
-    protected function postRequest($urlString, $customerHeader, $body)
-    {
-        $url = $urlString;
-        $con = curl_init($url);
-        // 设置连接超时时间为5秒
-        curl_setopt($con, CURLOPT_CONNECTTIMEOUT, 5);
-        // 设置读取超时时间为10秒
-        curl_setopt($con, CURLOPT_TIMEOUT, 10);
-        curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, $body);
-        $headerArray = [];
-        foreach ($customerHeader as $key => $value) {
-            $headerArray[] = "$key: $value";
-        }
-        curl_setopt($con, CURLOPT_HTTPHEADER, $headerArray);
-        curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($con);
-        curl_close($con);
-        return $response;
+        return curl($url, $sendParams,'post',$headers);
     }
 }

@@ -23,7 +23,7 @@ class Notify implements NotifyInterface
      * @document https://open.dingtalk.com/document/group/custom-robot-access
      * 每个机器人每分钟最多发送20条消息到群里，如果超过20条，会限流10分钟
      * @param MessageInterface $message
-     * @return void
+     * @return void|array
      */
     public function does(MessageInterface $message)
     {
@@ -39,17 +39,13 @@ class Notify implements NotifyInterface
 
         $url .= "&timestamp={$timestamp}&sign={$sign}";
 
-        $client = new HttpClient($url);
-
         // 支持文本 (text)、链接 (link)、markdown(markdown)、ActionCard、FeedCard消息类型
 
-        $response = $client->postJson(json_encode($data));
-        $json = json_decode($response->getBody(), true);
-
-        if ($json['errcode'] !== 0)
-        {
+        $json = hcurl($url, $data, 'json');
+        if ($json['errcode'] !== 0) {
             // todo 异常处理
         }
+        return $json;
     }
 
     public function sendUser(MessageInterface $message, $union_id)

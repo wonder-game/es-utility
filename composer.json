@@ -30,9 +30,6 @@
     "easyswoole/swoole-ide-helper": "^1.3",
     "easyswoole/words-match": "^1.1",
     "easyswoole/wechat": "^2.0",
-    "ext-json": "*",
-    "ext-iconv": "*",
-    "ext-mbstring": "*",
     "easyswoole/http-client": "^1.5",
     "alibabacloud/dm-20151123": "^1.1",
     "tencentcloud/ses": "^3.0",
@@ -40,7 +37,13 @@
     "alibabacloud/dysmsapi-20170525": "^2.0",
     "tencentcloud/sms": "^3.0",
     "tencentcloud/captcha": "^3.0",
-    "czdb/searcher": "^1.0"
+    "czdb/searcher": "^1.0",
+    "ext-json": "*",
+    "ext-iconv": "*",
+    "ext-mbstring": "*",
+    "ext-simplexml": "*",
+    "ext-libxml": "*",
+    "ext-curl": "*"
   },
   "autoload": {
     "psr-4": {
