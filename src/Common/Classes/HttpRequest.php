@@ -116,6 +116,28 @@ class HttpRequest
             call_user_func_array([$client, $k], $v);
         }
 
+        if (!empty($option['addData'])) {
+            $cli = $client->getClient();
+            foreach ($option['addData'] as $key => $value) {
+                if ($value instanceof \CURLFile) {
+                    continue;
+                }
+                if (is_array($value)) {
+                    foreach ($value as $v) {
+                        if ($v instanceof \CURLFile) {
+                            continue 2;
+                        }
+                    }
+                }
+                $cli->addData($key, $value);
+            }
+        }
+
+        if ( ! empty($option['setData'])) {
+            $cli = $client->getClient();
+            $cli->setData($option['setData']);
+        }
+
         $calls = [
             'get' => function ($data) use ($client) {
                 $client->setQuery($data);
@@ -163,7 +185,7 @@ class HttpRequest
             case 'patch':
             case 'options':
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
-                curl_setopt($ch, CURLOPT_POSTFIELDS,  $data);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
                 break;
             case 'head':
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
