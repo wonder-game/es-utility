@@ -33,7 +33,7 @@ class HttpRequest
         // 默认配置
         $defaults = [
             'resultType' => 'json',
-            'retryCallback' => function ($code) {
+            'retryCallback' => function ($code = 200, $result = '') {
                 return in_array($code, [200, 302, 303, 307]);
             },
             'retryTimes' => 3,
@@ -61,15 +61,22 @@ class HttpRequest
         }
 
         if ($response instanceof Response) {
-            $responseBody = $response->getBody();
+            $res = $response->getBody();
             $code = $response->getStatusCode();
         } else {
-            $responseBody = $response['response'];
+            $res = $response['response'];
             $code = $response['code'];
         }
 
+        switch ($cfg['resultType']) {
+            case 'xml':
+                $res = $this->xml($res);
+            case 'json':
+                $res = json_decode($res, true);
+        }
+
         // 自动重试
-        if (is_callable($cfg['retryCallback']) && ! $cfg['retryCallback']($code)) {
+        if (is_callable($cfg['retryCallback']) && ! $cfg['retryCallback']($code, $res)) {
             if ($cfg['curt'] < $cfg['retryTimes']) {
                 Coroutine::sleep(0.5);
                 return $this->request($type, $url, $data, $method, $header, ['curt' => ++$cfg['curt']] + $cfg, $option);
@@ -79,15 +86,7 @@ class HttpRequest
             throw new Exception($err);
         }
 
-        switch ($cfg['resultType']) {
-            case 'xml':
-                return $this->xml($responseBody);
-            case 'json':
-                return json_decode($responseBody, true);
-            case 'body':
-            default:
-                return $responseBody;
-        }
+        return $res;
     }
 
     /**
@@ -116,7 +115,7 @@ class HttpRequest
             call_user_func_array([$client, $k], $v);
         }
 
-        if (!empty($option['addData'])) {
+        if ( ! empty($option['addData'])) {
             $cli = $client->getClient();
             foreach ($option['addData'] as $key => $value) {
                 if ($value instanceof \CURLFile) {
