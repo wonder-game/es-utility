@@ -81,7 +81,7 @@ class HttpRequest
                 Coroutine::sleep(0.5);
                 return $this->request($type, $url, $data, $method, $header, ['curt' => ++$cfg['curt']] + $cfg, $option);
             }
-            $err = "{$url}响应失败！状态码为：{$code} 传参为：" . json_encode(func_get_args());
+            $err = "{$url}响应失败！状态码为：{$code},响应内容为：" . (is_array($res) ? json_encode($res) : $res) . ', 传参为：' . json_encode(func_get_args());
             trace($err, 'error');
             throw new Exception($err);
         }
