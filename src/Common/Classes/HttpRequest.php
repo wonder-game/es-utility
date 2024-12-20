@@ -38,6 +38,8 @@ class HttpRequest
             },
             'retryTimes' => 3,
             'curt' => 0,
+            'keyword' => '', // 日志的特征关键字，方便查错
+            'trace' => ['level' => 'error', 'category' => 'debug'],  // 日志参数
         ];
         $cfg = array_merge($defaults, $cfg);
 
@@ -50,8 +52,8 @@ class HttpRequest
             }
             $response = $this->$sendType($url, $data, $method, $header, $option);
         } catch (Exception $e) {
-            $err = "{$url}请求失败！信息为：{$e->getMessage()} 传参为：" . json_encode(func_get_args());
-            trace($err, 'error');
+            $err = "{$cfg['keyword']}  {$url}请求失败！信息为：{$e->getMessage()} 传参为：" . json_encode(func_get_args());
+            trace($err, $cfg['trace']['level'], $cfg['trace']['category']);
             throw new Exception($err, $e->getCode());
         }
 
@@ -89,8 +91,8 @@ class HttpRequest
                 Coroutine::sleep(0.5);
                 return $this->request($type, $url, $data, $method, $header, ['curt' => ++$cfg['curt']] + $cfg, $option);
             }
-            $err = "{$url}响应失败！状态码为：$code,响应内容为：$org, 传参为：" . json_encode(func_get_args());
-            trace($err, 'error');
+            $err = "{$cfg['keyword']} {$url}响应失败！状态码为：$code,响应内容为：$org, 传参为：" . json_encode(func_get_args());
+            trace($err, $cfg['trace']['level'], $cfg['trace']['category']);
             throw new Exception($err);
         }
 
