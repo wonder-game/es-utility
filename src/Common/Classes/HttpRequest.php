@@ -33,7 +33,7 @@ class HttpRequest
         // 默认配置
         $defaults = [
             'resultType' => 'json',
-            'retryCallback' => function ($code = 200, $result = '') {
+            'retryCallback' => function ($code = 200, $result = [], $org = '') {
                 return in_array($code, [200, 302, 303, 307]);
             },
             'retryTimes' => 3,
@@ -61,27 +61,35 @@ class HttpRequest
         }
 
         if ($response instanceof Response) {
-            $res = $response->getBody();
+            $org = $response->getBody();
             $code = $response->getStatusCode();
         } else {
-            $res = $response['response'];
+            $org = $response['response'];
             $code = $response['code'];
         }
 
         switch ($cfg['resultType']) {
             case 'xml':
-                $res = $this->xml($res);
+                $res = $this->xml($org);
+                break;
+
             case 'json':
-                $res = json_decode($res, true);
+                $res = json_decode($org, true);
+                break;
+
+            case 'body':
+            default:
+                $res = $org;
+                break;
         }
 
         // 自动重试
-        if (is_callable($cfg['retryCallback']) && ! $cfg['retryCallback']($code, $res)) {
+        if (is_callable($cfg['retryCallback']) && ! $cfg['retryCallback']($code, $res, $org)) {
             if ($cfg['curt'] < $cfg['retryTimes']) {
                 Coroutine::sleep(0.5);
                 return $this->request($type, $url, $data, $method, $header, ['curt' => ++$cfg['curt']] + $cfg, $option);
             }
-            $err = "{$url}响应失败！状态码为：{$code} 传参为：" . json_encode(func_get_args());
+            $err = "{$url}响应失败！状态码为：$code,响应内容为：$org, 传参为：" . json_encode(func_get_args());
             trace($err, 'error');
             throw new Exception($err);
         }
