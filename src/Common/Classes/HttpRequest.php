@@ -40,6 +40,8 @@ class HttpRequest
             'curt' => 0,
             'keyword' => '', // 日志的特征关键字，方便查错
             'trace' => ['level' => 'error', 'category' => 'debug'],  // 日志参数
+            'seconds' => 0.5, // 重试间隔时间
+            'throw' => true, // 是否抛出异常
         ];
         $cfg = array_merge($defaults, $cfg);
 
@@ -54,7 +56,7 @@ class HttpRequest
         } catch (Exception $e) {
             $err = "{$cfg['keyword']}  {$url}请求失败！信息为：{$e->getMessage()} 传参为：" . json_encode(func_get_args());
             trace($err, $cfg['trace']['level'], $cfg['trace']['category']);
-            throw new Exception($err, $e->getCode());
+            if ( ! empty($cfg['throw'])) throw new Exception($err, $e->getCode());
         }
 
         // 直接返回响应对象(只针对协程有效)
@@ -88,12 +90,12 @@ class HttpRequest
         // 自动重试
         if (is_callable($cfg['retryCallback']) && ! $cfg['retryCallback']($code, $res, $org)) {
             if ($cfg['curt'] < $cfg['retryTimes']) {
-                Coroutine::sleep(0.5);
+                Coroutine::sleep($cfg['seconds']);
                 return $this->request($type, $url, $data, $method, $header, ['curt' => ++$cfg['curt']] + $cfg, $option);
             }
             $err = "{$cfg['keyword']} {$url}响应失败！状态码为：$code,响应内容为：$org, 传参为：" . json_encode(func_get_args());
             trace($err, $cfg['trace']['level'], $cfg['trace']['category']);
-            throw new Exception($err);
+            if ( ! empty($cfg['throw'])) throw new Exception($err);
         }
 
         return $res;
@@ -185,7 +187,7 @@ class HttpRequest
 
         switch ($method) {
             case 'get':
-                $url .= '?' . http_build_query($data);
+                $data && $url .= '?' . http_build_query($data);
                 curl_setopt($ch, CURLOPT_URL, $url);
                 break;
             case 'post':
