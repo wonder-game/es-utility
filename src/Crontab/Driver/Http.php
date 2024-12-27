@@ -10,47 +10,17 @@ class Http implements Interfaces
     public function list(): array
     {
         $url = rtrim(config('CRONTAB.url'), '/') . '/api/crontab/list';
-        $HttpClient = new HttpClient($url);
-        //echo $url;
-        $body = $this->body(config('CRONTAB.post') ?: []);
-        //print_r($body);
-        $Resp = $HttpClient->post($body);
-
-        $json = $Resp->getBody();
-
-        if ($Resp->getStatusCode() !== 200) {
-            throw new \Exception("Network Error: $json");
-        }
-
-        $array = json_decode($json, true);
-        if ( ! is_array($array) || $array['code'] !== 200) {
-            throw new \Exception("Response Error: $json");
-        }
+        $array = hcurl($url, $this->body(config('CRONTAB.post') ?: []));
         return $array['result'] ?? [];
     }
 
     public function update(int $id, int $status)
     {
         $url = rtrim(config('CRONTAB.url'), '/') . '/update';
-        $HttpClient = new HttpClient($url);
-        $body = $this->body([
+        hcurl($url, $this->body([
             'id' => $id,
             'status' => $status
-        ]);
-        $Resp = $HttpClient->post($body);
-
-        $json = $Resp->getBody();
-
-        if ($Resp->getStatusCode() !== 200) {
-            trace("$url: Network Error: $json", 'error');
-            return false;
-        }
-
-        $array = json_decode($json, true);
-        if ( ! is_array($array) || $array['code'] !== 200) {
-            trace("$url Response Error: $json", 'error');
-            return false;
-        }
+        ]));
         return true;
     }
 

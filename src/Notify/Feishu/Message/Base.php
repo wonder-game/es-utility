@@ -102,10 +102,7 @@ abstract class Base extends SplBean implements MessageInterface
             'image_type' => 'message',
             'image' => curl_file_create($img),
         ];
-
-        $response = $this->postRequest('https://open.feishu.cn/open-apis/im/v1/images', $headers, $sendParams);
-        $result = json_decode($response, true);
-
+        $result = curl('https://open.feishu.cn/open-apis/im/v1/images', $sendParams, 'post', $headers);
         if (isset($result['code']) && $result['code'] == 0) {
             return $result['data']['image_key'];
         } else {
@@ -144,36 +141,12 @@ abstract class Base extends SplBean implements MessageInterface
             'app_id' => $appId,
             'app_secret' => $appSecret,
         ];
-        $HttpClient = new HttpClient('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal');
-        $HttpClient->setClientSetting('keep_alive', true);
-        $response = $HttpClient->postJson(json_encode($sendParams));
-        $body = $response->getBody();
-        $result = json_decode($body, true);
+
+        $result = hcurl('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', $sendParams);
         if (isset($result['code']) && $result['code'] == 0) {
             $Redis->setEx($key, $result['expire'] - 60, $result['tenant_access_token']);
             return $result['tenant_access_token'];
         }
         return '';
-    }
-
-    protected function postRequest($urlString, $customerHeader, $body)
-    {
-        $url = $urlString;
-        $con = curl_init($url);
-        // 设置连接超时时间为5秒
-        curl_setopt($con, CURLOPT_CONNECTTIMEOUT, 5);
-        // 设置读取超时时间为10秒
-        curl_setopt($con, CURLOPT_TIMEOUT, 10);
-        curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, $body);
-        $headerArray = [];
-        foreach ($customerHeader as $key => $value) {
-            $headerArray[] = "$key: $value";
-        }
-        curl_setopt($con, CURLOPT_HTTPHEADER, $headerArray);
-        curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($con);
-        curl_close($con);
-        return $response;
     }
 }

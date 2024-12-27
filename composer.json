@@ -41,7 +41,10 @@
     "ext-json": "*",
     "ext-iconv": "*",
     "ext-mbstring": "*",
-    "ext-xlswriter": "*"
+    "ext-xlswriter": "*",
+    "ext-simplexml": "*",
+    "ext-libxml": "*",
+    "ext-curl": "*"
   },
   "autoload": {
     "psr-4": {

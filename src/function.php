@@ -10,8 +10,10 @@ use EasySwoole\ORM\DbManager;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
+use EasySwoole\Http\Request;
 use Swoole\Coroutine;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
+use WonderGame\EsUtility\Common\Classes\HttpRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\LamOpenssl;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
@@ -860,6 +862,8 @@ if ( ! function_exists('geo')) {
             $region = $dbSearcher->search($ip);
             $dbSearcher->close();
 
+            // 注意分隔符一定要用–，最好是复制粘贴，以防写错！！！
+
             // ip解析示例：
             // ["美国–新泽西州–伯灵顿", "Comcast有线通信股份有限公司"]
             // ["中国–广东–深圳", "电信"]
@@ -869,7 +873,7 @@ if ( ! function_exists('geo')) {
 
             $arr = explode("\t", $region);
             // 业务需求，港澳台跟大陆一样保持在第一级
-            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国–'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国'.config('INLAND').'–'], $arr[0]);
+            $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国–'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国' . config('INLAND') . '–'], $arr[0]);
             $arr = explode('–', $str);
 
             return is_numeric($num) ? $arr[$num] : $arr;
@@ -880,6 +884,7 @@ if ( ! function_exists('geo')) {
         }
     }
 }
+
 
 if ( ! function_exists('sysinfo')) {
     /**
@@ -1227,33 +1232,13 @@ if ( ! function_exists('request_lan_api')) {
         }
 
         $url = 'http://' . $lan['ip'][array_rand($lan['ip'])] . $uri;
-        $client = new HttpClient($url);
-        $client->setHeaders($headers += [
-            // 'Content-Type' => HttpClient::CONTENT_TYPE_X_WWW_FORM_URLENCODED,
-            'Host' => $lan['domain']
-        ], false, false);
-        //如果失败重试3次
-        for ($i = 1; $i <= 3; $i++) {
-            if ($method === 'GET') {
-                $client->setQuery($params);
-                $response = $client->get();
-            } else if ($method === 'POST') {
-                $response = $client->post($params);
-            }
-            $body = $response->getBody();
-            $result = json_decode($body, true);
-
-            if ($result && $result['code'] == 200) {
-                //成功返回结果
-                return $result['result'];
-            }
+        try {
+            return hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']]);
+        } catch (\Exception $e) {
             //失败日志
-            trace("request_{$lan_key}_api ERROR: {$url} params为：" . json_encode($params) . ' data为：' . json_encode($data) . ' 头信息为： ' . json_encode($headers) . "  返回为：$body 状态码：" . $response->getStatusCode(), 'error');
-            Coroutine::sleep(0.3);
+            trace("request_{$lan_key}_api ERROR: {$url}  头信息为： " . json_encode($headers) . '  错误信息：' . $e->getMessage(), 'error');
+            return false;
         }
-        //失败返回false
-        notice("{$lan_key} API调用失败 {$url} 返回为$body");
-        return false;
     }
 }
 
@@ -1490,3 +1475,109 @@ if ( ! function_exists('get_channel_class')) {
         return new $class($construct);
     }
 }
+
+
+if ( ! function_exists('is_tester')) {
+    /**
+     * 是否为测试员(uid,devid,ip……)
+     * @param array|string $input 数据源
+     * @param string $type 类型。如没有指定则默认会取uid,devid,ip这三个成员
+     * @return bool
+     */
+    function is_tester(Request $request, $input = [], $type = '')
+    {
+        // 防止无限转发
+        if (stripos($request->getUri()->getHost(), 'test-') !== false) {
+            return false;
+        }
+
+        if ( ! $type) {
+            $type = ['uid', 'devid', 'ip'];
+            foreach ($type as $v) {
+                if (call_user_func(__FUNCTION__, $request, $input[$v], $v)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return RedisPool::invoke(function (Redis $redis) use ($input, $type) {
+            $key = "Tester:$type:$input";
+            return $redis->get($key);
+        }, strtolower(APP_MODULE));
+    }
+}
+
+if ( ! function_exists('forward_testserv')) {
+    /**
+     * 将请求转到test服
+     * @return void
+     */
+    function forward_testserv(Request $request, $config = [])
+    {
+        $uri = $request->getUri();
+        $swoole = $request->getSwooleRequest();
+        $query = $uri->getQuery();
+        $method = $request->getMethod();
+        $host = 'test-' . $uri->getHost();
+
+        $_body = $request->getBody()->__toString() ?: $swoole->rawContent();
+        $params = array_merge($swoole->post ?: [], json_decode($_body, true) ?: [], json_decode(json_encode(simplexml_load_string($_body, 'SimpleXMLElement', LIBXML_NOCDATA)), true) ?: []);
+
+        $url = $uri->getScheme() . '://' . (config('TESTER_BOX') ?: $host) . $uri->getPath() . ($query ? "?$query" : '');
+
+        $result = hcurl(
+            $url,
+            $params,
+            json_decode($_body, true) ? 'JSON' : $method,
+            ['host' => $host] + $swoole->header,
+            array_merge(['retryCallback' => false], $config)
+        );
+        if (empty($result) && (empty($config['resultType']) || $config['resultType'] === 'json')) {
+            $result = [
+                'code' => 555,
+                'msg' => 'Test request error',
+                'result' => []
+            ];
+        }
+        return $result;
+    }
+}
+
+
+if ( ! function_exists('hcurl')) {
+    /**
+     * 基于HttpClient封装的公共函数
+     * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
+     * @param array|string $data 请求参数，xml提交为string
+     * @param string $method 提交方式：get|post|xml|json|put|delete|head|options|trace|patch
+     * @param array $header 请求头
+     * @param array $cfg 配置  resultType,retryCallback,retryTimes
+     * @param array $option HttpClient的其它属性
+     * @throws Exception|Error
+     */
+    function hcurl($url = '', $data = [], $method = 'post', $header = [], $cfg = [], $option = [])
+    {
+        $HttpRequest = new HttpRequest();
+        return $HttpRequest->request('hCurl', $url, $data, $method, $header, $cfg, $option);
+    }
+}
+
+if ( ! function_exists('curl')) {
+    /**
+     * 基于curl封装的公共函数
+     * @param string|array $url string时为要请求的完整网址和路径；数组时为便捷传参方式
+     * @param array|string $data 请求参数，xml提交为string
+     * @param string $method 提交方式：get|post|xml|json|put|delete|head|options|trace|patch
+     * @param array $header 请求头
+     * @param array $cfg 配置  resultType,retryCallback,retryTimes
+     * @param array $option curl的其它属性
+     * @throws Exception|Error
+     */
+    function curl($url = '', $data = [], $method = 'post', $header = [], $cfg = [], $option = [])
+    {
+        $HttpRequest = new HttpRequest();
+        return $HttpRequest->request('curl', $url, $data, $method, $header, $cfg, $option);
+    }
+}
+
