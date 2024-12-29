@@ -10,11 +10,23 @@ use EasySwoole\Component\Singleton;
 
 class LamOpenssl
 {
-    use Singleton;
-
+    private static $instance = [];
     private $_privateKey = ''; // 私钥
     private $_publicKey = ''; // 公钥
 
+    /**
+     * @param mixed ...$args
+     * @return static
+     */
+    static function getInstance(...$args)
+    {
+        $key = $args[2] ?? 'default';
+
+        if ( ! isset(static::$instance[$key])) {
+            static::$instance[$key] = new static(...$args);
+        }
+        return static::$instance[$key];
+    }
 
     /**
      * LamRsa constructor.
