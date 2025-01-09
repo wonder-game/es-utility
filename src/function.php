@@ -1305,7 +1305,8 @@ if ( ! function_exists('request_lan_api')) {
 
         $url = 'http://' . $lan['ip'][array_rand($lan['ip'])] . $uri;
         try {
-            return hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']]);
+            $res = hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']]);
+            return $res['result'];
         } catch (\Exception $e) {
             return false;
         }
