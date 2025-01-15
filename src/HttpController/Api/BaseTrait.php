@@ -16,12 +16,11 @@ trait BaseTrait
 
     protected function _checkRsaSign()
     {
-        $rsaConfig = config('RSA');
-        $secret = $this->input[$rsaConfig['key']];
+        $secret = $this->input[config('RSA.key')];
         if ( ! $secret) {
             return false;
         }
-        $data = LamOpenssl::getInstance($rsaConfig['private'], $rsaConfig['public'])->decrypt($secret);
+        $data = LamOpenssl::getInstance()->decrypt($secret);
         $this->rsa = json_decode($data, true);
         return is_array($this->rsa);
     }

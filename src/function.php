@@ -13,6 +13,7 @@ use EasySwoole\Http\Request;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\HttpRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
+use WonderGame\EsUtility\Common\Classes\LamOpenssl;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
 use WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface;
 use WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface;
@@ -1180,6 +1181,138 @@ if ( ! function_exists('repeat_array_keys')) {
         return $data;
     }
 }
+
+/******************** 一些请求内网api的封装 *********************/
+
+if ( ! function_exists('request_admin_api')) {
+    /**
+     * 请求后台API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_admin_api($uri, $data = [], $method = 'GET', $encry = 'rsa')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('admin', $uri, $data, $method, $encry);
+    }
+}
+
+if ( ! function_exists('request_sdk_api')) {
+    /**
+     * 请求SDK API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_sdk_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('sdk', $uri, $data, $method, $encry);
+    }
+}
+
+if ( ! function_exists('request_log_api')) {
+    /**
+     * 请求LOG API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_log_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('log', $uri, $data, $method, $encry);
+    }
+}
+
+if ( ! function_exists('request_pay_api')) {
+    /**
+     * 请求PAY API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_pay_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('pay', $uri, $data, $method, $encry);
+    }
+}
+
+
+if ( ! function_exists('request_lan_api')) {
+    /**
+     * 请求内网api
+     * @param string $lan_key admin|sdk|pay|log
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @param array $headers 头信息
+     * @return array|bool
+     */
+    function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [])
+    {
+        $method = strtoupper($method);
+        $lan = sysinfo($lan_key . '_lan');
+        $lan = $lan[get_mode()] ?? config(strtoupper($lan_key . '_lan'));
+        if ( ! $lan) {
+            notice("{$lan_key} API请求失败，config或sysinfo未配置{$lan_key}_lan");
+            return false;
+        }
+
+        // 参数加密
+        switch (strtolower($encry)) {
+            case 'rsa':
+                // es-utility里默认有验证rsa的（仅验签，没做阻拦）
+                $openssl = LamOpenssl::getInstance();
+                $params = [
+                    'encry' => 'rsa',
+                    config('RSA.key') => $openssl->encrypt(json_encode($data))
+                ];
+                break;
+
+            // 注意这种方式为了安全，记得在服务提供方的代码里写验签
+            case 'md5':
+                $params = $data + [
+                        'encry' => 'md5',
+                        'time' => time(),
+                    ];
+                $params['sign'] = md5($params['encry'] . $params['time'] . config('ENCRYPT.apikey'));
+                break;
+
+            default:
+                notice("{$lan_key} API请求失败，未知的加密协议$encry");
+                return false;
+        }
+
+        $url = 'http://' . $lan['ip'][array_rand($lan['ip'])] . $uri;
+        try {
+            $res = hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']]);
+            return $res['result'];
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}
+
 
 /******************** 云组件助手函数的封装 *********************/
 

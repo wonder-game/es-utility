@@ -61,6 +61,6 @@ class Notify implements NotifyInterface
         $sendParams['receive_id'] = $union_id;
         $sendParams['content'] = json_encode($sendParams['content']); // 实际上要二次encode,下面还有一次
 
-        return curl($url, $sendParams,'post',$headers);
+        return curl($url, $sendParams,'json',$headers);
     }
 }
