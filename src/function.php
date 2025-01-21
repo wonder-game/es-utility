@@ -2,7 +2,6 @@
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
-use EasySwoole\HttpClient\HttpClient;
 use EasySwoole\I18N\I18N;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\ORM\Db\MysqliClient;
@@ -11,7 +10,6 @@ use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
 use EasySwoole\Http\Request;
-use Swoole\Coroutine;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\HttpRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
@@ -1184,6 +1182,80 @@ if ( ! function_exists('repeat_array_keys')) {
     }
 }
 
+/******************** 一些请求内网api的封装 *********************/
+
+if ( ! function_exists('request_admin_api')) {
+    /**
+     * 请求后台API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_admin_api($uri, $data = [], $method = 'GET', $encry = 'rsa')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('admin', $uri, $data, $method, $encry);
+    }
+}
+
+if ( ! function_exists('request_sdk_api')) {
+    /**
+     * 请求SDK API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_sdk_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('sdk', $uri, $data, $method, $encry);
+    }
+}
+
+if ( ! function_exists('request_log_api')) {
+    /**
+     * 请求LOG API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_log_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('log', $uri, $data, $method, $encry);
+    }
+}
+
+if ( ! function_exists('request_pay_api')) {
+    /**
+     * 请求PAY API
+     * @param string $uri 地址
+     * @param array $data 参数
+     * @param string $method 请求方式
+     * @param string $encry 加密方式
+     * @return array|bool
+     */
+    function request_pay_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    {
+        // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
+        // .....
+
+        return request_lan_api('pay', $uri, $data, $method, $encry);
+    }
+}
+
 
 if ( ! function_exists('request_lan_api')) {
     /**
@@ -1196,7 +1268,7 @@ if ( ! function_exists('request_lan_api')) {
      * @param array $headers 头信息
      * @return array|bool
      */
-    function request_lan_api($lan_key = '', $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [])
+    function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [])
     {
         $method = strtoupper($method);
         $lan = sysinfo($lan_key . '_lan');
@@ -1217,7 +1289,7 @@ if ( ! function_exists('request_lan_api')) {
                 ];
                 break;
 
-            // 注意这种方式得在服务提供方的代码里写验签
+            // 注意这种方式为了安全，记得在服务提供方的代码里写验签
             case 'md5':
                 $params = $data + [
                         'encry' => 'md5',
@@ -1233,10 +1305,14 @@ if ( ! function_exists('request_lan_api')) {
 
         $url = 'http://' . $lan['ip'][array_rand($lan['ip'])] . $uri;
         try {
-            return hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']]);
+            $res = hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']], [
+                'keyword' => $lan_key,
+                'retryCallback' => function ($code, $res, $org) {
+                    return ($res['code'] ?? 0) == 200;
+                }]);
+            return $res['result'];
         } catch (\Exception $e) {
-            //失败日志
-            trace("request_{$lan_key}_api ERROR: {$url}  头信息为： " . json_encode($headers) . '  错误信息：' . $e->getMessage(), 'error');
+            notice($e->getMessage());
             return false;
         }
     }

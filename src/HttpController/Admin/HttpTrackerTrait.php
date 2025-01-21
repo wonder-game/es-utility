@@ -228,7 +228,7 @@ trait HttpTrackerTrait
             if ($return) {
                 throw $e;
             } else {
-               return $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
+                return $this->error(Code::ERROR_OTHER, $e->getMessage(), ['sql' => $sql]);
             }
         }
     }

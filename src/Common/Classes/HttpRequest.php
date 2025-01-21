@@ -54,7 +54,7 @@ class HttpRequest
             }
             $response = $this->$sendType($url, $data, $method, $header, $option);
         } catch (Exception $e) {
-            $err = "{$cfg['keyword']}  {$url}请求失败！信息为：{$e->getMessage()} 传参为：" . json_encode(func_get_args());
+            $err = "{$cfg['keyword']}  请求失败！信息为：{$e->getMessage()} 传参为：" . json_encode(func_get_args());
             trace($err, $cfg['trace']['level'], $cfg['trace']['category']);
             if ( ! empty($cfg['throw'])) throw new Exception($err, $e->getCode());
         }
@@ -93,7 +93,7 @@ class HttpRequest
                 Coroutine::sleep($cfg['seconds']);
                 return $this->request($type, $url, $data, $method, $header, ['curt' => ++$cfg['curt']] + $cfg, $option);
             }
-            $err = "{$cfg['keyword']} {$url}响应失败！状态码为：$code,响应内容为：$org, 传参为：" . json_encode(func_get_args());
+            $err = "{$cfg['keyword']} 响应失败！状态码为：$code,响应内容为：$org, 传参为：" . json_encode(func_get_args());
             trace($err, $cfg['trace']['level'], $cfg['trace']['category']);
             if ( ! empty($cfg['throw'])) throw new Exception($err);
         }
