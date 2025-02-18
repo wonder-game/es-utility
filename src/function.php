@@ -456,7 +456,8 @@ if ( ! function_exists('verify_token')) {
      */
     function verify_token($header = [], $key = 'uid', $orgs = [])
     {
-        $header or $header = CtxRequest::getInstance()->request->getHeaders();
+        $header or $header = ($Request = CtxRequest::getInstance()->request)->getHeaders();
+        $input = $Request->getRequestParam();
 
         if ( ! $token = $header[config('ENCRYPT.jwtkey')][0] ?? '') {
             throw new HttpParamException('缺少token', Code::CODE_BAD_REQUEST);
@@ -473,6 +474,11 @@ if ( ! function_exists('verify_token')) {
         // 二次校验
         if ($orgs && (empty($orgs[$key]) || $jwt['data'][$key] != $orgs[$key])) {
             throw new HttpParamException("jwt的 $key 不符:" . ($jwt['data'][$key] ?? ''), Code::CODE_PRECONDITION_FAILED);
+        }
+
+        //检查pkgid
+        if ( ! empty($jwt['data']['pkgid']) && ! empty($input['pkgid']) && $jwt['data']['pkgid'] != $input['pkgid']) {
+            throw new HttpParamException("jwt的 pkgid 不符", Code::CODE_PRECONDITION_FAILED);
         }
 
         $jwt['data']['token'] = $token;
