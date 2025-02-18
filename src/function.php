@@ -456,8 +456,8 @@ if ( ! function_exists('verify_token')) {
      */
     function verify_token($header = [], $key = 'uid', $orgs = [])
     {
-        $header or $header = ($Request = CtxRequest::getInstance()->request)->getHeaders();
-        $input = $Request->getRequestParam();
+        $header or $header = CtxRequest::getInstance()->request->getHeaders();
+        $input = CtxRequest::getInstance()->request->getRequestParam();
 
         if ( ! $token = $header[config('ENCRYPT.jwtkey')][0] ?? '') {
             throw new HttpParamException('缺少token', Code::CODE_BAD_REQUEST);
