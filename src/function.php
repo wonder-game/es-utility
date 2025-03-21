@@ -1266,9 +1266,10 @@ if ( ! function_exists('request_lan_api')) {
      * @param string $method 请求方式
      * @param string $encry 加密方式
      * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
      * @return array|bool
      */
-    function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [])
+    function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default')
     {
         $method = strtoupper($method);
         $lan = sysinfo($lan_key . '_lan');
@@ -1312,7 +1313,7 @@ if ( ! function_exists('request_lan_api')) {
                 }]);
             return $res['result'];
         } catch (\Exception $e) {
-            notice($e->getMessage());
+            notice($e->getMessage(), null, $notice);
             return false;
         }
     }
