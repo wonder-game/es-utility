@@ -2,6 +2,7 @@
 
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\Logger;
+use EasySwoole\Http\Request;
 use EasySwoole\I18N\I18N;
 use EasySwoole\ORM\AbstractModel;
 use EasySwoole\ORM\Db\MysqliClient;
@@ -9,7 +10,6 @@ use EasySwoole\ORM\DbManager;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
-use EasySwoole\Http\Request;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\HttpRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
@@ -535,7 +535,7 @@ if ( ! function_exists('notice')) {
     {
         // 富文本
         if ($title) {
-            config('ES_NOTIFY.driver') == 'feishu' ? feishu_textarea($content, true, $name) : dingtalk_markdown($title, $content, true, $name);
+            config('ES_NOTIFY.driver') == 'feishu' ? feishu_textarea($title, $content, true, $name) : dingtalk_markdown($title, $content, true, $name);
         } else {
             config('ES_NOTIFY.driver') == 'feishu' ? feishu_text($content, true, $name) : dingtalk_text($content, true, $name);
         }
@@ -607,23 +607,23 @@ if ( ! function_exists('feishu_text')) {
 
 
 if ( ! function_exists('feishu_textarea')) {
-    function feishu_textarea($content = '', $at = true, $name = 'default')
+    function feishu_textarea($title = '', $content = '', $at = true, $name = 'default')
     {
-        EsNotify::getInstance()->doesOne('feishu', new Textarea([
+        EsNotify::getInstance()->doesOne('feishu', new Textarea(array_merge([
             'content' => $content,
             'isAtAll' => $at
-        ]), $name);
+        ], $title && is_string($title) ? ['title' => $title] : [])), $name);
     }
 }
 
 
 if ( ! function_exists('feishu_card')) {
-    function feishu_card($content = '', $at = true, $name = 'default')
+    function feishu_card($title = '', $content = '', $at = true, $name = 'default')
     {
-        EsNotify::getInstance()->doesOne('feishu', new Card([
+        EsNotify::getInstance()->doesOne('feishu', new Card(array_merge([
             'content' => $content,
             'isAtAll' => $at
-        ]), $name);
+        ], $title && is_string($title) ? ['title' => $title] : [])), $name);
     }
 }
 
