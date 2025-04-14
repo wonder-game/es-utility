@@ -456,9 +456,11 @@ if ( ! function_exists('verify_token')) {
      */
     function verify_token($header = [], $key = 'uid', $orgs = [])
     {
-        $header or $header = CtxRequest::getInstance()->request->getHeaders();
-
-        if ( ! $token = $header[config('ENCRYPT.jwtkey')][0] ?? '') {
+        $request = CtxRequest::getInstance()->request;
+        $header or $header = $request->getHeaders();
+        // jwt所在的key
+        $jk = config('ENCRYPT.jwtkey');
+        if ( ! $token = $header[$jk][0] ?? $request->getQueryParam($jk)) {
             throw new HttpParamException('缺少token', Code::CODE_BAD_REQUEST);
         }
         if ( ! $key) {
