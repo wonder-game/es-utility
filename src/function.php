@@ -460,6 +460,7 @@ if ( ! function_exists('verify_token')) {
         $header or $header = $request->getHeaders();
         // jwt所在的key
         $jk = config('ENCRYPT.jwtkey');
+        // 有些功能需求要靠url带上所有用户信息。 所以这里改成如果从header拿不到则会尝试取get参数的
         if ( ! $token = $header[$jk][0] ?? $request->getQueryParam($jk)) {
             throw new HttpParamException('缺少token', Code::CODE_BAD_REQUEST);
         }
