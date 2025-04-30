@@ -1661,3 +1661,64 @@ if ( ! function_exists('curl')) {
     }
 }
 
+
+if ( ! function_exists('call_phone')) {
+    /**
+     * 拨打指定用户组电话
+     * @document https://www.ccloudalarm.com/alert
+     * @param string $content 接听后播报的内容
+     * @param array $config 配置数组
+     * @return void
+     * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
+     */
+    function call_phone($content = '', $config = [])
+    {
+        if (empty($config)) {
+            return;
+        }
+        $url = "https://www.ccloudalarm.com/api/v1/system/send_phone_alarm/";
+
+        $params = [
+            'receiver' => $config['receiver'], // 号码或者用户组
+            'type' => 'phone',
+            'title' => $config['title'] ?? '告警电话',
+            'token' => $config['token'],
+            'content' => $content,
+        ];
+        $resp = hcurl($url, $params, 'json', ['token' => $config['token']], ['resultType' => '', 'retryTimes' => 0, 'throw' => false]);
+        $level = $resp->getStatusCode() === 200 ? 'info' : 'error';
+        trace("[call_phone]params=" . var_export($params, true) . ',resp=' . var_export($resp->getBody(), true), $level);
+    }
+}
+
+
+if ( ! function_exists('call_sms')) {
+    /**
+     * 短信通知
+     * @document https://www.ccloudalarm.com/alert
+     * @param string $title 短信标题(文档有但是收到短信没看到)
+     * @param string $content 短信通知内容
+     * @param array $config 配置数组
+     * @return void
+     * @throws \EasySwoole\HttpClient\Exception\InvalidUrl
+     */
+    function call_sms($title = '', $content = '', $config = [])
+    {
+        if (empty($config)) {
+            return;
+        }
+        $url = "https://www.ccloudalarm.com/api/v1/system/send_sms_alarm/?token=$config[token]";
+
+        $params = [
+            'receiver' => $config['receiver'], // 号码或者用户组
+            'type' => 'sms',
+            'title' => $title,
+            'content' => $content,
+        ];
+
+        $resp = hcurl($url, $params, 'json', ['token' => $config['token']], ['resultType' => '', 'retryTimes' => 0, 'throw' => false]);
+        $level = $resp->getStatusCode() === 200 ? 'info' : 'error';
+        trace("[call_sms]params=" . var_export($params, true) . ',resp=' . var_export($resp->getBody(), true), $level);
+    }
+}
+
