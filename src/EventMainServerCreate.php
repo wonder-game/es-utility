@@ -142,6 +142,18 @@ class EventMainServerCreate extends SplBean
         $group = config('SERVER_NAME') . '.my.';
 
         foreach ($jobs as $value) {
+            // 要执行的服务器 []代表不限制
+            $server = $value['server'] ?? [];
+            if (
+                $server
+                &&
+                defined('SERVNUM')
+                && ! in_array(SERVNUM, (array)$server)
+            ) {
+                continue;
+            }
+
+            unset($server);
 
             $class = $value['class'];
             if (empty($class) || ! class_exists($class)) {
