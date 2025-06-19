@@ -43,7 +43,8 @@
     "ext-mbstring": "*",
     "ext-simplexml": "*",
     "ext-libxml": "*",
-    "ext-curl": "*"
+    "ext-curl": "*",
+    "tencentcloud/cdn": "^3.0"
   },
   "autoload": {
     "psr-4": {
