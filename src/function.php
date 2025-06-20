@@ -294,21 +294,56 @@ if ( ! function_exists('array_sort_multi')) {
     /**
      * 二维数组按某字段排序
      */
-    function array_sort_multi($data = [], $field = '', $direction = SORT_DESC, $fmt = true, $filterCols = [])
+    function array_sort_multi($data = [], $fields = '', $directions = SORT_DESC, $fmt = true, $filterCols = [])
     {
-        if ( ! $data) return [];
-        $arrsort = [];
+        if (empty($data)) {
+            return [];
+        }
+
+        // 处理单字段情况（兼容旧版）
+        if ( ! is_array($fields)) {
+            $fields = [$fields];
+            $directions = [$directions];
+        } elseif ( ! is_array($directions)) {
+            // 如果方向不是数组，所有字段使用相同方向
+            $directions = array_fill(0, count($fields), $directions);
+        }
+
+        $sortColumns = [];
+        foreach ($fields as $index => $field) {
+            $sortColumns[$field] = [
+                'direction' => $directions[$index] ?? SORT_DESC,
+                'values' => []
+            ];
+        }
+
         foreach ($data as $uniqid => &$row) {
             foreach ($row as $key => &$value) {
-                $fmt && ! in_array($key, $filterCols) && $value = format_number($value, 2, true);
-                $arrsort[$key][$uniqid] = str_replace('%', '', $value);
+                // 格式化数字（保留原逻辑）
+                if ($fmt && ! in_array($key, $filterCols)) {
+                    $value = format_number($value, 2, true);
+                }
+
+                // 为排序字段准备数据（去掉%符号）
+                if (isset($sortColumns[$key])) {
+                    $sortColumns[$key]['values'][$uniqid] = str_replace('%', '', $value);
+                }
             }
             unset($value);
         }
         unset($row);
-        if ($direction) {
-            array_multisort($arrsort[$field], $direction, $data);
+
+        // 准备 array_multisort 参数
+        $args = [];
+        foreach ($fields as $field) {
+            $args[] = $sortColumns[$field]['values'];
+            $args[] = $sortColumns[$field]['direction'];
         }
+        $args[] = &$data;
+
+        // 执行多字段排序
+        array_multisort(...$args);
+
         return $data;
     }
 }
