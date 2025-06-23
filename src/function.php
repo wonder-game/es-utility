@@ -317,6 +317,13 @@ if ( ! function_exists('array_sort_multi')) {
             ];
         }
 
+        // 确保所有字段的 values 数组包含所有行
+        $uniqids = array_keys($data);
+        foreach ($sortColumns as &$column) {
+            $column['values'] = array_fill_keys($uniqids, null);
+        }
+        unset($column);
+
         foreach ($data as $uniqid => &$row) {
             foreach ($row as $key => &$value) {
                 // 格式化数字（保留原逻辑）
@@ -324,7 +331,7 @@ if ( ! function_exists('array_sort_multi')) {
                     $value = format_number($value, 2, true);
                 }
 
-                // 为排序字段准备数据（去掉%符号）
+                // 为存在的字段赋值（跳过缺失字段）
                 if (isset($sortColumns[$key])) {
                     $sortColumns[$key]['values'][$uniqid] = str_replace('%', '', $value);
                 }
