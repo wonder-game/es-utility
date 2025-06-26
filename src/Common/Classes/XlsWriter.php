@@ -214,7 +214,12 @@ class XlsWriter
                 $row = [];
                 // 因为data只能是索引数组，所以这里按顺序十分重要
                 foreach ($thKeys as $col) {
-                    $row[] = isset($value[$col]) ? (is_numeric($value[$col]) ? floatval($value[$col]) : $value[$col]) : '';
+                    $colval = $value[$col] ?? '';
+                    // excel最多处理15位数字，超过此长度时，第16位及之后会被自动补0（例如输入911717296328700928会显示为911717296328700000）
+                    if (is_numeric($value[$col]) && strlen(strval($value[$col])) <= 15) {
+                        $colval = floatval($value[$col]);
+                    }
+                    $row[] = $colval;
                 }
 
                 $row && $newarr[] = $row;
