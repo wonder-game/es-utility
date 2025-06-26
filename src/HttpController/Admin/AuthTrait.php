@@ -427,14 +427,15 @@ trait AuthTrait
         // 处理表头，客户端应统一处理表头
         $th = [];
         if ($thStr = $this->input[config('fetchSetting.exportThField')]) {
-            // _th=ymd=日期|reg=注册|login=登录
+            // _th=ymd&s=日期&d|reg=注册&n|login=登录&n
 
             $thArray = explode('|', urldecode($thStr));
             foreach ($thArray as $value) {
                 list ($thKey, $thValue) = explode('=', $value);
                 // 以表头key表准
                 if ($thKey) {
-                    $th[$thKey] = $thValue ?? '';
+                    list($thval, $thtype) = explode('&', $thValue);
+                    $th[$thKey] = [$thval ?? '', $thtype ?? ''];
                 }
             }
         }
