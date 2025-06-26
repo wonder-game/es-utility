@@ -182,7 +182,12 @@ class XlsWriter
     /**
      * 导出，固定内存模式
      * @param string $file
-     * @param array $header
+     * @param array $header [
+     *          // 普通key=val
+     *          'reg' => '注册',
+     *          // 设置类型,第二个参数为数据类型，暂时只对数字和字符串进行区分处理，客户端传值同Xlsx插件的ExcelDataType类型：b=Boolean, n=Number, e=error, s=String, d=Date, z=Stub
+     *          'reg' => ['注册', 's']
+     * ]
      * @param array | \Generator $data
      * @param callable | array | null $rowCall 多行处理回调，兼容__after_index
      */
@@ -193,8 +198,15 @@ class XlsWriter
             $file .= $suffix;
         }
 
-        $thKeys = array_keys($header);
-        $thValue = array_values($header);
+        $thKeys = $thValue = $thType = [];
+        foreach ($header as $k => $v) {
+            $thKeys[] = $k;
+            if (is_string($v)) {
+                $v = [$v];
+            }
+            $thValue[] = $v[0];
+            $thType[$k] = $v[1] ?? '';
+        }
 
         // 新版本的constMemory增加了第三个参数用来兼容WPS，在这之前，如果传递3个参数会报错
         $Ref = new \ReflectionClass(get_class($this->excel));
@@ -204,7 +216,7 @@ class XlsWriter
 
         $excel = $this->setThStyle($fileObject)->header($thValue);
 
-        $doInsert = function (array $outputs) use ($rowCall, $excel, $thKeys) {
+        $doInsert = function (array $outputs) use ($rowCall, $excel, $thKeys, $thType) {
             if ( ! is_null($rowCall)) {
                 $outputs = call_user_func($rowCall, $outputs);
             }
@@ -216,10 +228,7 @@ class XlsWriter
                 foreach ($thKeys as $col) {
                     $colval = $value[$col] ?? '';
                     // excel最多处理15位数字，超过此长度时，第16位及之后会被自动补0（例如输入911717296328700928会显示为911717296328700000）
-                    if (is_numeric($value[$col]) && strlen(strval($value[$col])) <= 15) {
-                        $colval = floatval($value[$col]);
-                    }
-                    $row[] = $colval;
+                    $row[] = (isset($thType[$col]) && $thType[$col] === 'n' && strlen(strval($colval)) <= 15) ? floatval($colval) : $colval;
                 }
 
                 $row && $newarr[] = $row;
