@@ -208,7 +208,7 @@ class Crontab extends AbstractCronTask
         // 如果超过指定次数，则重置计数器并生成 lock 文件
         // linux的crontab检测到这个文件就把admin重启，并删除文件
         $times = $ato->get();
-        if ($times > 10) {
+        if ($times > config('crontab_delivery')) {
             $lockfile = config('LOG.dir') . '/crontab.lock';
             file_put_contents($lockfile, 'locked' . $times);
             
