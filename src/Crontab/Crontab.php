@@ -4,6 +4,7 @@
 namespace WonderGame\EsUtility\Crontab;
 
 use Cron\CronExpression;
+use EasySwoole\Component\AtomicManager;
 use EasySwoole\EasySwoole\Crontab\AbstractCronTask;
 use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\EasySwoole\Trigger;
@@ -15,6 +16,7 @@ use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 
 class Crontab extends AbstractCronTask
 {
+    const KEY_CRONTAB_DELIVERY_TIMEOUT = 'crontab_delivery_timeout';
     protected $tableName = 'crontab';
 
     public static function getRule(): string
@@ -119,6 +121,8 @@ class Crontab extends AbstractCronTask
             }
 
             if ($finish <= 0) {
+                // 返回值 -7 需要处理
+                $finish === -7 && $this->handleDeliveryTimeout();
                 $this->throwable($value, "投递失败: 返回值={$finish}, id={$value['id']}, name={$value['name']}");
             }
         }
@@ -182,6 +186,33 @@ class Crontab extends AbstractCronTask
         } else {
             trace("$className 异步任务模板未实现TaskInterface接口, 已使用默认模板", 'error');
             return new $dftTpl($row, $params);
+        }
+    }
+
+    /**
+     * 处理任务投递超时(投递异步任务返回-7)
+     * 累积到N个-7，就生成文件，并清零计数器，靠linux的crontab检测到这个文件就把admin重启，并删除文件
+     */
+    protected function handleDeliveryTimeout()
+    {
+        // 采用 ES 自带的原子计数器计数
+
+        // 请在registerCrontab注册一下该key的计数器，不注册则不处理
+        $ato = AtomicManager::getInstance()->get(self::KEY_CRONTAB_DELIVERY_TIMEOUT);
+        if (!$ato) {
+            return;
+        }
+
+        $ato->add(1);
+
+        // 如果超过指定次数，则重置计数器并生成 lock 文件
+        // linux的crontab检测到这个文件就把admin重启，并删除文件
+        $times = $ato->get();
+        if ($times > 10) {
+            $lockfile = config('LOG.dir') . '/crontab.lock';
+            file_put_contents($lockfile, 'locked' . $times);
+            
+            $ato->set(0);
         }
     }
 }
