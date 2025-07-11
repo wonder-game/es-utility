@@ -211,8 +211,14 @@ return [
         'exprotFilename' => '_fname',
     ],
 
-    // IP数据库文件所在的路径（qqwry.dat）
-    'IPDAT_PATH' => '',
+
+    // 纯真 (CZ88.net)
+    'CZ88' => [
+        'db_file_ipv4' => '',
+        'db_file_ipv6' => '',
+        'key' => '',
+        //'query_type' => 'MEMORY'
+    ],
 
     // websocket相关配置
     'ws' => [
