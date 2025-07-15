@@ -2,13 +2,13 @@
 
 namespace WonderGame\EsUtility\Common\CloudLib\Captcha;
 
-use TencentCloud\Captcha\V20190722\Models\DescribeCaptchaResultResponse;
 use TencentCloud\Common\Credential;
 use TencentCloud\Common\Profile\ClientProfile;
 use TencentCloud\Common\Profile\HttpProfile;
 use TencentCloud\Common\Exception\TencentCloudSDKException;
 use TencentCloud\Captcha\V20190722\CaptchaClient;
 use TencentCloud\Captcha\V20190722\Models\DescribeCaptchaResultRequest;
+use TencentCloud\Captcha\V20190722\Models\DescribeCaptchaMiniResultRequest;
 
 /**
  * @document https://cloud.tencent.com/document/product/1110/36841
@@ -24,6 +24,12 @@ class Tencent extends Base
 
     protected $appid = '';
     protected $appSecretKey = '';
+
+    /**
+     * 是否微信小程序
+     * @var bool
+     */
+    protected $mini = false;
 
     /**
      * @param array $verifyParam
@@ -54,17 +60,23 @@ class Tencent extends Base
             // 实例化要请求产品的client对象,clientProfile是可选的
             $client = new CaptchaClient($cred, "", $clientProfile);
 
-            // 实例化一个请求对象,每个接口都会对应一个request对象
-            $req = new DescribeCaptchaResultRequest();
-
             $params = [
                 'UserIp' => ip(),
                 'CaptchaAppId' => intval($this->appid),
                 'AppSecretKey' => $this->appSecretKey,
                 'CaptchaType' => $this->captchaType,
                 'Ticket' => $verifyParam['ticket'],
-                'Randstr' => $verifyParam['randstr'],
             ];
+
+            // 微信小程序
+            if ($this->mini) {
+                $req = new DescribeCaptchaMiniResultRequest();
+
+            } else {
+                // 实例化一个请求对象,每个接口都会对应一个request对象
+                $req = new DescribeCaptchaResultRequest();
+                $params['Randstr'] = $verifyParam['randstr'];
+            }
 
             $endFn = http_tracker('SDK:captcha', [
                 'url' => '__TENCENT_CAPTCHA__',
@@ -74,12 +86,17 @@ class Tencent extends Base
 
             $req->fromJsonString(json_encode($params));
 
-            // 返回的resp是一个DescribeCaptchaResultResponse的实例，与请求对象对应
-            /** @var DescribeCaptchaResultResponse $resp */
-            $resp = $client->DescribeCaptchaResult($req);
+            if ($this->mini) {
+                // 返回的resp是一个DescribeCaptchaMiniResultResponse的实例，与请求对象对应
+                $resp = $client->DescribeCaptchaMiniResult($req);
+            } else {
+                // 返回的resp是一个DescribeCaptchaResultResponse的实例，与请求对象对应
+                $resp = $client->DescribeCaptchaResult($req);
+            }
 
             $endFn(json_decode($resp->toJsonString(), true));
 
+            // https://cloud.tencent.com/document/product/1110/48499
             return $resp->getCaptchaCode() === 1;
 
         } catch (TencentCloudSDKException $e) {
