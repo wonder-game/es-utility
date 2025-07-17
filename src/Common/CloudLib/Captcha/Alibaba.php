@@ -81,7 +81,7 @@ class Alibaba extends Base
             $errmsg = '阿里云captcha验证码发送失败：异常Code为:' . $error->getCode() . '，原因为：' . $error->getMessage();
             is_callable($endFn) && $endFn($errmsg, $error->getCode());
             trace($errmsg, 'error');
-            dingtalk_text("$errmsg, 请及时处理异常");
+            notice($errmsg);
 
             // 出现异常建议认为验证通过，优先保证业务可用，然后尽快排查异常原因。
             return true;

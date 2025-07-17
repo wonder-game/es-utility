@@ -92,8 +92,9 @@ class Tencent extends Base
             return true;
         } catch (TencentCloudSDKException $e) {
             $msg = "腾讯云邮件发送失败2: " . $e->__toString();
+            is_callable($endFn) && $endFn($msg, $e->getCode());
             trace($msg, 'error');
-            is_callable($endFn) && $endFn($msg, 431);
+            notice($msg);
             return false;
         }
     }
