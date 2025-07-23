@@ -80,8 +80,9 @@ class Alibaba extends Base
             if ( ! ($error instanceof TeaError)) {
                 $error = new TeaError([], $error->getMessage(), $error->getCode(), $error);
             }
-            $endFn($error->toString(), $error->getCode());
-            trace("阿里云邮件发送失败: " . $error->toString(), 'error');
+            is_callable($endFn) && $endFn($error->__toString(), $error->getCode());
+            trace($msg = "阿里云邮件发送失败: " . $error->__toString(), 'error');
+            notice($msg);
             return false;
         }
     }

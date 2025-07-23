@@ -79,7 +79,8 @@ class Alibaba extends Base
             if ( ! ($error instanceof TeaError)) {
                 $error = new TeaError([], $error->getMessage(), $error->getCode(), $error);
             }
-            $endFn($error->__toString(), $error->getCode());
+
+            is_callable($endFn) && $endFn($error->__toString(), $error->getCode());
             notice('阿里云短信发送失败: ' . $error->__toString());
             return false;
         }
