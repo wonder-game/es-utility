@@ -121,6 +121,19 @@ trait BaseModelTrait
         return $this->subid;
     }
 
+    /**
+     * 克隆携带分表标识符
+     * @return AbstractModel
+     */
+    public function _clone(): AbstractModel
+    {
+        $model = parent::_clone();
+        // 本为受保护属性，原理：同一个类的不同实例间可互相访问受保护或私有成员
+        $model->gameid = $this->gameid;
+        $model->subid = $this->subid;
+        return $model;
+    }
+
     public function scopeIndex()
     {
         return $this;
