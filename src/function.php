@@ -694,7 +694,10 @@ if ( ! function_exists('geo')) {
      * @github https://github.com/tagphi/czdb_searcher_php
      * @website https://cz88.net/
      * @param string $ip
-     * @param int|string $num 为数字时返回地区数组中的一个成员；否则返回整个数组
+     * @param int|string $num
+     *                      all：返回整个ip解析地址，数组格式
+     *                      isp：返回包含网络供应商的数组
+     *                      数字：返回ip解析地址中的指定索引成员
      * @return string|array
      */
     function geo($ip = '', $num = 'all')
@@ -740,6 +743,13 @@ if ( ! function_exists('geo')) {
             $arr = explode("\t", $region);
             // 业务需求，港澳台跟大陆一样保持在第一级
             $str = str_replace(['中国–台湾', '中国–香港', '中国–澳门', '中国–'], ['中国台湾–台湾', '中国香港–香港', '中国澳门–澳门', '中国' . config('INLAND') . '–'], $arr[0]);
+
+            // 支持返回isp网络供应商,注意必须全等，0 == 'isp' 结果为true
+            if ($num === 'isp') {
+                $arr[0] = $str;
+                return $arr;
+            }
+
             $arr = explode('–', $str);
 
             return is_numeric($num) ? $arr[$num] : $arr;
