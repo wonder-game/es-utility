@@ -1150,6 +1150,24 @@ if ( ! function_exists('request_lan_api')) {
     function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default')
     {
         $method = strtoupper($method);
+        /**
+         * 配置的结构可参考如下： ip为服务器的内网IP（建议填固定的服务器，不受减服影响的那种），多组可实现类似负载的效果
+         {
+            "produce": {
+                 "ip": [
+                     "172.16.32.16",
+                     "172.16.32.17"
+                 ],
+                "domain": "inland-pay.xxx.xxx"
+             },
+             "test": {
+                 "ip": [
+                       "127.0.0.1"
+                 ],
+                "domain": "test-inland-pay.xxx.xxx"
+             }
+         }
+         */
         $lan = sysinfo($lan_key . '_lan');
         $lan = $lan[get_mode()] ?? config(strtoupper($lan_key . '_lan'));
         if ( ! $lan) {
