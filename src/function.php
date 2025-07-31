@@ -1068,15 +1068,18 @@ if ( ! function_exists('request_admin_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
-    function request_admin_api($uri, $data = [], $method = 'GET', $encry = 'rsa')
+    function request_admin_api($uri, $data = [], $method = 'GET', $encry = 'rsa', $headers = [], $notice = 'default', $cfg = [])
     {
         // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
         // .....
 
-        return request_lan_api('admin', $uri, $data, $method, $encry);
+        return request_lan_api('admin', $uri, $data, $method, $encry, $headers, $notice, $cfg);
     }
 }
 
@@ -1086,15 +1089,18 @@ if ( ! function_exists('request_sdk_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
-    function request_sdk_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    function request_sdk_api($uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
     {
         // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
         // .....
 
-        return request_lan_api('sdk', $uri, $data, $method, $encry);
+        return request_lan_api('sdk', $uri, $data, $method, $encry, $headers, $notice, $cfg);
     }
 }
 
@@ -1104,15 +1110,18 @@ if ( ! function_exists('request_log_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
-    function request_log_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    function request_log_api($uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
     {
         // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
         // .....
 
-        return request_lan_api('log', $uri, $data, $method, $encry);
+        return request_lan_api('log', $uri, $data, $method, $encry, $headers, $notice, $cfg);
     }
 }
 
@@ -1122,15 +1131,18 @@ if ( ! function_exists('request_pay_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
-    function request_pay_api($uri, $data = [], $method = 'GET', $encry = 'md5')
+    function request_pay_api($uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
     {
         // 如果有其它逻辑处理，可在此单独写。甚至可在APP级别重写本函数
         // .....
 
-        return request_lan_api('pay', $uri, $data, $method, $encry);
+        return request_lan_api('pay', $uri, $data, $method, $encry, $headers, $notice, $cfg);
     }
 }
 
@@ -1142,14 +1154,34 @@ if ( ! function_exists('request_lan_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
      * @param array $headers 头信息
      * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
-    function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default')
+    function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
     {
         $method = strtoupper($method);
+        /**
+         * 配置的结构可参考如下： ip为服务器的内网IP（建议填固定的服务器，不受减服影响的那种），多组可实现类似负载的效果
+         {
+            "produce": {
+                 // 1. array：多个ip或域名，随机抽一个请求
+                 // 2. string: 直接请求
+                 // 3. 协议可带可不带，不带则默认http
+                 "ip": [
+                     "172.16.32.16",
+                     "172.16.32.17"
+                 ],
+                "domain": "inland-pay.xxx.xxx"
+             },
+             "test": {
+                 "ip": 'https://xxxx.xxx',
+                "domain": "test-inland-pay.xxx.xxx"
+             }
+         }
+         */
         $lan = sysinfo($lan_key . '_lan');
         $lan = $lan[get_mode()] ?? config(strtoupper($lan_key . '_lan'));
         if ( ! $lan) {
@@ -1182,17 +1214,28 @@ if ( ! function_exists('request_lan_api')) {
                 return false;
         }
 
-        $url = 'http://' . $lan['ip'][array_rand($lan['ip'])] . $uri;
+        // 支持字符串和数组配置
+        $lanIp = is_array($lan['ip']) ? ($lan['ip'][array_rand($lan['ip'])]) : $lan['ip'];
+        // 支持带协议
+        $url = is_http_protocol($lanIp) ? $lanIp : "http://{$lanIp}{$uri}";
+
+        $cfg = array_merge($cfg, [
+            'keyword' => $lan_key,
+            'retryCallback' => function ($code, $res, $org) {
+                return ($res['code'] ?? 0) == 200;
+            }
+        ]);
+
         try {
-            $res = hcurl($url, $params, $method, $headers += ['Host' => $lan['domain']], [
-                'keyword' => $lan_key,
-                'retryCallback' => function ($code, $res, $org) {
-                    return ($res['code'] ?? 0) == 200;
-                }]);
+            $res = hcurl($url, $params, $method, ['Host' => $lan['domain']] + $headers, $cfg);
             return $res['result'];
         } catch (\Exception $e) {
             notice($e->getMessage(), null, $notice);
-            return false;
+            if ($cfg['throw'] ?? true) {
+                throw $e;
+            } else {
+                return false;
+            }
         }
     }
 }
@@ -1594,6 +1637,18 @@ if ( ! function_exists('call_sms')) {
         $resp = hcurl($url, $params, 'json', ['token' => $config['token']], ['resultType' => '', 'retryTimes' => 0, 'throw' => false]);
         $level = $resp->getStatusCode() === 200 ? 'info' : 'error';
         trace("[call_sms]params=" . var_export($params, true) . ',resp=' . var_export($resp->getBody(), true), $level);
+    }
+}
+
+if ( ! function_exists('is_http_protocol')) {
+    /**
+     * 判断url是否http协议
+     * @param string $url
+     * @return bool
+     */
+    function is_http_protocol($url): bool
+    {
+        return strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0;
     }
 }
 
