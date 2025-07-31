@@ -1068,7 +1068,10 @@ if ( ! function_exists('request_admin_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
     function request_admin_api($uri, $data = [], $method = 'GET', $encry = 'rsa', $headers = [], $notice = 'default', $cfg = [])
@@ -1086,7 +1089,10 @@ if ( ! function_exists('request_sdk_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
     function request_sdk_api($uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
@@ -1104,7 +1110,10 @@ if ( ! function_exists('request_log_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
     function request_log_api($uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
@@ -1122,7 +1131,10 @@ if ( ! function_exists('request_pay_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
+     * @param array $headers 头信息
+     * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
     function request_pay_api($uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
@@ -1142,9 +1154,10 @@ if ( ! function_exists('request_lan_api')) {
      * @param string $uri 地址
      * @param array $data 参数
      * @param string $method 请求方式
-     * @param string $encry 加密方式
+     * @param string $encry 加密方式  rsa或md5之类的
      * @param array $headers 头信息
      * @param string $notice 通知的主体（飞书|钉钉|……）标识
+     * @param array $cfg 其它配置值，最终会传给 HttpRequest::request内使用
      * @return array|bool
      */
     function request_lan_api($lan_key, $uri, $data = [], $method = 'GET', $encry = 'md5', $headers = [], $notice = 'default', $cfg = [])
