@@ -166,7 +166,7 @@ class Mysqli extends MysqliClient
     {
         if (strpos($tzn, ':') === false) {
             $tznInt = intval($tzn);
-            $tzn = ($tznInt > 0 ? "+$tznInt" : $tznInt) . ':00';
+            $tzn = ($tznInt >= 0 ? "+$tznInt" : $tznInt) . ':00';
         }
 
         $this->rawQuery("set time_zone = '{$tzn}'");
