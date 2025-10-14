@@ -294,7 +294,7 @@ if ( ! function_exists('array_sort_multi')) {
     /**
      * 二维数组按某字段排序
      */
-    function array_sort_multi($data = [], $fields = '', $directions = SORT_DESC, $fmt = true, $filterCols = [])
+    function array_sort_multi($data = [], $fields = '', $directions = SORT_DESC, $fmt = true, $filterCols = [], $customFn = null)
     {
         if (empty($data)) {
             return [];
@@ -331,12 +331,17 @@ if ( ! function_exists('array_sort_multi')) {
                     $value = format_number($value, 2, true);
                 }
 
-                // 为存在的字段赋值（跳过缺失字段）
+                // 为排序字段准备数据（去掉%符号）
                 if (isset($sortColumns[$key])) {
-                    $sortColumns[$key]['values'][$uniqid] = str_replace('%', '', $value);
+                    $val = $value;
+                    // 自定义排序
+                    if ($customFn && is_callable($customFn)) {
+                        $val = $customFn($key, $val);
+                    }
+                    $sortColumns[$key]['values'][$uniqid] = str_replace('%', '', $val);
                 }
             }
-            unset($value);
+            unset($value, $val);
         }
         unset($row);
 
