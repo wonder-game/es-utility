@@ -5,7 +5,7 @@
  * 对表进行分区需要先建立好对应的分区表
  * 主要按照时间和range 类型进行分表和分区
  * @author lamson
- *
+ * 已弃用！！在后面的版本中可能会移除此类，请使用新版 TablePart 类  -- 20251022 Joyboo
  */
 
 namespace WonderGame\EsUtility\Common\Classes;

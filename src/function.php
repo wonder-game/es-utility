@@ -400,7 +400,7 @@ if ( ! function_exists('listdate')) {
     function listdate($beginday, $endday, $type = 2, $format = 'Ymd', $keyfmt = 'ymd')
     {
         $type = is_numeric($type) ? (int)$type : $type;
-        $dif = difdate($beginday, $endday, ! ($type === 2 || $type === '%m' || $type === false));
+
         $arr = [];
         // 季
         if ($type === 3) {
@@ -432,12 +432,14 @@ if ( ! function_exists('listdate')) {
             } while ($by <= $arry[1]);
         } // 年
         elseif ($type === 4 || $type === '%y') {
+            $dif = difdate($beginday, $endday, '%y');
             $begintime = substr($beginday, 0, 4);
             for ($i = 0; $i <= $dif; ++$i) {
                 $arr[$begintime - 1] = $begintime . '0101'; // p2018=>strtotime(20190101)
                 ++$begintime;
             }
         } else {
+            $dif = difdate($beginday, $endday, ! ($type === 2 || $type === '%m' || $type === false));
             // 日期 p180302=>strtotime(20180303)
             if ($type === true || $type === 1 || $type === '%d') {
                 $unit = 'day';
