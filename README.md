@@ -26,7 +26,7 @@
      │      │     ├── LamOpenssl RSA数据加密和解密
      │      │     ├── LamUnit 辅助工具类
      │      │     ├── Mysqli 对MysqlClient的二次封装
-     │      │     ├── ShardTable 定时建分区、续分区
+     │      │     ├── TablePart 定时建分区、续分区
      │      │     ├── Tree 数行结构处理
      │      │     └── XlsWriter 数据导入和导出
      │      ├── Exception 各种自定义异常
@@ -116,7 +116,8 @@ trait有哪些坑
 
 - [x] 创建定时任务Crontab和消费任务Consumer，src/Common/Classes/Crontab移动至src/Crontab目录
 - [ ] 自定义Log处理器改为onLog + Event方式
-- [ ] 重写Tree、ShardTable类
+- [ ] 重写Tree
+- [x] 重写ShardTable类，已重写为TablePart类
 - [x] WebSocket相关类，事件、解析、Caller、连接符管理等
 - [x] Crontab支持database、file、http等方式获取
 - [x] es-orm-cache 组件封装，替换原有的cacheinfo系列方法
