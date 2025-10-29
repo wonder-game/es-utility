@@ -38,7 +38,7 @@ class Crontab extends AbstractCronTask
 
     public function throwable($row, string $message)
     {
-        trace($message, 'error');
+        trace($message . ', task status=' . json_encode(TaskManager::getInstance()->status()), 'error');
         $text = implode(" \n\n ", [
             '### **Crontab异常**',
             '- 服务器: ' . config('SERVNAME'),
@@ -211,7 +211,7 @@ class Crontab extends AbstractCronTask
         if ($times > config('crontab_delivery')) {
             $lockfile = config('LOG.dir') . '/crontab.lock';
             file_put_contents($lockfile, 'locked' . $times);
-            
+
             $ato->set(0);
         }
     }

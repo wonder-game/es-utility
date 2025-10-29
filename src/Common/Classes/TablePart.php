@@ -127,8 +127,8 @@ class TablePart extends SplBean
         }
         if ($psql) {
             $sql = "ALTER TABLE $tableName ADD PARTITION (" . implode(',', $psql) . ")";
-            trace("{$this->dbName}.{$tableName} 表分区新增完成, SQL=$sql");
             $this->queryRaw($sql);
+            trace("{$this->dbName}.{$tableName} 表分区新增完成, SQL=$sql");
         }
     }
 
@@ -322,7 +322,7 @@ class TablePart extends SplBean
             $servname = config('SERVNAME');
             $driver = config('ES_NOTIFY.driver') ?: 'dingTalk';
 
-            $title = "MySQL数据表分区不足${days}天";
+            $title = "MySQL数据表分区不足{$days}天";
             switch ($driver) {
                 case 'feishu': // 飞书 card
                     $Message = new TablePartWarn([
