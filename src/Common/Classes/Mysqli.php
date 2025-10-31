@@ -119,6 +119,11 @@ class Mysqli extends MysqliClient
         return $this->query($Builder, true);
     }
 
+    public function optimizeTable($tableName)
+    {
+        return $this->rawQuery("optimize table $tableName");
+    }
+
     /**
      * @param QueryBuilder $Builder
      * @param string | AbstractModel $modelName AbstractModel子类，否则为数组
