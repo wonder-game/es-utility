@@ -274,14 +274,17 @@ class EventMainServerCreate extends SplBean
             if ( ! is_array($val)) {
                 continue;
             }
-            /* @var \WonderGame\EsUtility\Notify\DingTalk\Config|\WonderGame\EsUtility\Notify\WeChat\Config|\WonderGame\EsUtility\Notify\Feishu\Config $cls */
-            $cls = '\\WonderGame\\EsUtility\\Notify\\' . ucfirst($key) . '\\Config';
+            $className = '\\WonderGame\\EsUtility\\Notify\\' . ucfirst($key) . '\\Config';
 
             foreach ($val as $k => $v) {
                 if ( ! is_array($v)) {
                     continue;
                 }
-                EsNotify::getInstance()->register(new $cls($v, true), $key, $k);
+                // 类不存在，则在进程启动时就提示。要么不传，传了就要传对
+                if (!class_exists($className)) {
+                    throw new \Exception("Class Not found: $className");
+                }
+                EsNotify::getInstance()->register(new $className($v, true), $key, $k);
             }
         }
     }
