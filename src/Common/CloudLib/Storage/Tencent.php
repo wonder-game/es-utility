@@ -151,5 +151,61 @@ class Tencent extends Base
         $this->delete($formKey, $options);
     }
 
+    /**
+     * 客户端直传对象存储,一般用于超超大文件
+     * 1. 对象存储需要开放允许跨域 ：  安全管理 -> 允许跨域设置 *
+     * 2. 对象存储需要设置Policy权限： 给cos子账号允许对象存储操作
+     * @param $expire
+     * @return array
+     * @throws \TencentCloud\Common\Exception\TencentCloudSDKException
+     */
+    public function stsUpload($expire = 3600)
+    {
+        $Sts = new \WonderGame\EsUtility\Common\CloudLib\Sts\Tencent($this->toArray());
 
+        $policy = [
+            'version' => '2.0',
+            'statement' => [
+                [
+                    'effect' => 'allow',
+                    // 那些资源权限
+                    'resource' => '*',
+                    // https://cloud.tencent.com/document/product/436/65935
+                    'action' => [
+                        // 最小粒度原则，不给所有权限
+                        //'name/cos:*'
+
+                        // 基础上传（小文件）
+                        'name/cos:PutObject',
+
+                        // 分片上传（大文件必选）
+                        'name/cos:InitiateMultipartUpload',  // 初始化分片
+                        'name/cos:UploadPart',               // 上传分片
+                        'name/cos:CompleteMultipartUpload',  // 完成分片
+                        'name/cos:AbortMultipartUpload',     // 取消分片（可选，建议保留）
+
+                        // 断点续传
+                        'name/cos:ListMultipartUploads',
+                        'name/cos:ListParts',
+
+                        // 删除权限
+                        'name/cos:DeleteObject',
+
+                        // 无需计算文件md5权限，SDK内部会校验处理
+                    ],
+                ],
+            ],
+        ];
+
+        $stsResponse = $Sts->get(json_encode($policy), $expire);
+        $data = $stsResponse->toArray();
+
+        // 除了基本的密钥信息之外，还需要给客户端返回对象存储信息
+        $data['bucket'] = $this->bucket;
+        $data['driver'] = $this->getClassName();
+
+        $data['region'] = $this->region;
+
+        return $data;
+    }
 }
