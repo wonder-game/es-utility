@@ -761,7 +761,7 @@ if ( ! function_exists('geo')) {
 
             return is_numeric($num) ? $arr[$num] : $arr;
         } catch (\Exception|\Throwable $e) {
-            $dbSearcher->close();
+            $dbSearcher && $dbSearcher->close();
             trace("geo: $ip error:" . $e->getMessage(), 'error');
             return is_numeric($num) ? '' : [];
         }
