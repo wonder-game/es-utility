@@ -272,20 +272,32 @@ if ( ! function_exists('parse_name')) {
 
 if ( ! function_exists('array_merge_multi')) {
     /**
-     * 多维数组合并（支持多数组）
-     * @return array
+     * 深度合并多个数组
+     * - 关联数组（字符串键）：递归合并，后者覆盖前者
+     * - 索引数组（数字键）：追加合并（类似 array_merge 行为）
      */
-    function array_merge_multi(...$args)
+    function array_merge_multi(array ...$arrays): array
     {
-        $array = [];
-        foreach ($args as $arg) {
-            if (is_array($arg)) {
-                foreach ($arg as $k => $v) {
-                    $array[$k] = is_array($v) ? array_merge_multi($array[$k] ?? [], $v) : $v;
+        $result = [];
+        foreach ($arrays as $array) {
+            foreach ($array as $key => $value) {
+                if (is_int($key)) {
+                    // 索引数组：直接追加，不覆盖
+                    $result[] = $value;
+                } elseif (
+                    isset($result[$key])
+                    && is_array($result[$key])
+                    && is_array($value)
+                ) {
+                    // 关联键且两者都是数组：递归合并
+                    $result[$key] = array_merge_multi($result[$key], $value);
+                } else {
+                    // 关联键：后者覆盖前者
+                    $result[$key] = $value;
                 }
             }
         }
-        return $array;
+        return $result;
     }
 }
 
