@@ -37,6 +37,8 @@
     "alibabacloud/dysmsapi-20170525": "^2.0",
     "tencentcloud/sms": "^3.0",
     "tencentcloud/captcha": "^3.0",
+    "tencentcloud/cdn": "^3.0",
+    "tencentcloud/sts": "^3.0",
     "czdb/searcher": "^1.0",
     "ext-json": "*",
     "ext-iconv": "*",
@@ -44,8 +46,7 @@
     "ext-simplexml": "*",
     "ext-libxml": "*",
     "ext-curl": "*",
-    "tencentcloud/cdn": "^3.0",
-    "tencentcloud/sts": "^3.0"
+    "ext-openssl": "*"
   },
   "autoload": {
     "psr-4": {

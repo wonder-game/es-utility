@@ -107,4 +107,26 @@ class Openssl
         }
         return base64_decode($string);
     }
+
+    /**
+     * 生成签名
+     */
+    public function sign($data, &$signature, $algorithm = OPENSSL_ALGO_SHA256)
+    {
+        return openssl_sign($data, $signature, $this->_privateKey, $algorithm);
+    }
+
+    /**
+     * 验证签名
+     */
+    public function verify($data, $signature, $algorithm = OPENSSL_ALGO_SHA256)
+    {
+        $success = openssl_verify(
+            $data,
+            $signature,
+            $this->_publicKey,
+            $algorithm
+        );
+        return $success === 1;
+    }
 }
