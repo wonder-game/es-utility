@@ -68,7 +68,10 @@ class Notify implements NotifyInterface
      * @document https://open.feishu.cn/document/server-docs/im-v1/message/create?appId=cli_a6d2f4aa8ef2500b
      * 接口频率限制 1000 次/分钟、50 次/秒
      * @param MessageInterface $message
-     * @return void
+     * @param $receive_id
+     * @param $receive_id_type
+     * @return array|mixed|object
+     * @throws \Exception
      */
     public function sendMsg(MessageInterface $message, $receive_id, $receive_id_type)
     {
@@ -80,7 +83,7 @@ class Notify implements NotifyInterface
             'Authorization' => 'Bearer ' . $message->sendUserToken(),
         ];
         $sendParams['receive_id'] = $receive_id;
-        $sendParams['content'] = json_encode($sendParams['content']); // 实际上要二次encode,下面还有一次
+        $sendParams['content'] = json_encode($sendParams['card'] ?? $sendParams['content']); // 实际上要二次encode,下面还有一次
 
         return curl($url, $sendParams,'json',$headers);
     }
