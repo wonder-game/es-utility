@@ -164,7 +164,8 @@ class Tree extends SplBean
                 'affix' => $value['affix'] == 1,
                 'icon' => $value['icon'],
                 'hideMenu' => $value['isshow'] != 1,
-                'hideBreadcrumb' => $value['breadcrumb'] != 1
+                'hideBreadcrumb' => $value['breadcrumb'] != 1,
+                'remark' => $value['remark'] ?? ''
             ];
             // 外部链接, isext=1为外链，=0为frameSrc
             $validate = new \EasySwoole\Validate\Validate();
