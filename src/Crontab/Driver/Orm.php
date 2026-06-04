@@ -22,7 +22,7 @@ class Orm implements Interfaces
             return $class->getCrontab($where);
         }
 
-        $class->where('status', [0, 2], 'IN')->where($where);
+        $class->where('status', [0, 2, 3], 'IN')->where($where);
         return $class->all();
     }
 

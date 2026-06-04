@@ -13,7 +13,7 @@ trait CrontabTrait
     {
         parent::setBaseTraitProtected();
         $this->autoTimeStamp = true;
-        $this->hashWhere = ['status' => [[0, 2], 'IN']];
+        $this->hashWhere = ['status' => [[0, 2, 3], 'IN']];
     }
 
     protected function setServerAttr($data)

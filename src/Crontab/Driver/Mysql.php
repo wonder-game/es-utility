@@ -25,7 +25,7 @@ class Mysql implements Interfaces
         $where = config('CRONTAB.where');
 
         $Builder = new QueryBuilder();
-        $Builder->where('status', [0, 2], 'IN');
+        $Builder->where('status', [0, 2, 3], 'IN');
 
         if (is_callable($where)) {
             $where($Builder);

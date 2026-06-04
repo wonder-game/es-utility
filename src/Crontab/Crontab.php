@@ -77,13 +77,21 @@ class Crontab extends AbstractCronTask
         $namespace = rtrim($namespace, '\\') . '\\';
 
         $task = TaskManager::getInstance();
+        $once = $config['status_once'] ?? 2;
+        // 禁用状态
+        $disabled = $config['status_disabled'] ?? 1;
+        // 立即执行一次（不改变原有执行规则，执行后恢复为启用）
+        $runNow = $config['status_run_now'] ?? 3;
+        $enabled = $config['status_enabled'] ?? 0;
+
         foreach ($list as $value) {
             if ( ! CronExpression::isValidExpression($value['rule'])) {
                 $this->throwable($value, "运行规则设置错误 {$value['rule']}");
                 continue;
             }
 
-            if ( ! (CronExpression::factory($value['rule'])->isDue())) {
+            $forceRun = ((int)$value['status'] === (int)$runNow);
+            if ( ! $forceRun && ! (CronExpression::factory($value['rule'])->isDue())) {
                 // 时间未到
                 continue;
             }
@@ -112,12 +120,12 @@ class Crontab extends AbstractCronTask
             $finish = $task->async($instance, function ($reply, $taskId, $workerIndex) use ($value) {
                 trace("[CRONTAB] SUCCESS id={$value['id']}, name={$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
             });
-            // 运行一次
-            $once = $config['status_once'] ?? 2;
-            // 禁用状态
-            $disabled = $config['status_disabled'] ?? 1;
-            if ($finish > 0 && $value['status'] == $once) {
-                $Drive->update($value['id'], $disabled);
+            if ($finish > 0) {
+                if ((int)$value['status'] === (int)$once) {
+                    $Drive->update($value['id'], $disabled);
+                } elseif ((int)$value['status'] === (int)$runNow) {
+                    $Drive->update($value['id'], $enabled);
+                }
             }
 
             if ($finish <= 0) {
