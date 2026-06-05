@@ -17,6 +17,15 @@ use WonderGame\EsUtility\Task\Crontab as CrontabTemplate;
 class Crontab extends AbstractCronTask
 {
     const KEY_CRONTAB_DELIVERY_TIMEOUT = 'crontab_delivery_timeout';
+    // 启用（到点，也就是时间符合才运行）
+    const STATUS_ENABLED = 0;
+    // 禁用（不运行）
+    const STATUS_DISABLED = 1;
+    // 只运行一次（到点运行后会变成禁用）
+    const STATUS_ONCE = 2;
+    // 马上运行（1分钟后就运行，完成后会变成启用）
+    const STATUS_RUNNOW = 3;
+
     protected $tableName = 'crontab';
 
     public static function getRule(): string
@@ -77,12 +86,6 @@ class Crontab extends AbstractCronTask
         $namespace = rtrim($namespace, '\\') . '\\';
 
         $task = TaskManager::getInstance();
-        $once = $config['status_once'] ?? 2;
-        // 禁用状态
-        $disabled = $config['status_disabled'] ?? 1;
-        // 立即执行一次（不改变原有执行规则，执行后恢复为启用）
-        $runNow = $config['status_run_now'] ?? 3;
-        $enabled = $config['status_enabled'] ?? 0;
 
         foreach ($list as $value) {
             if ( ! CronExpression::isValidExpression($value['rule'])) {
@@ -90,8 +93,8 @@ class Crontab extends AbstractCronTask
                 continue;
             }
 
-            $forceRun = ((int)$value['status'] === (int)$runNow);
-            if ( ! $forceRun && ! (CronExpression::factory($value['rule'])->isDue())) {
+            $runNow = $value['status'] == self::STATUS_RUNNOW;
+            if ( ! $runNow && ! (CronExpression::factory($value['rule'])->isDue())) {
                 // 时间未到
                 continue;
             }
@@ -121,18 +124,17 @@ class Crontab extends AbstractCronTask
                 trace("[CRONTAB] SUCCESS id={$value['id']}, name={$value['name']}, reply={$reply}, workerIndex={$workerIndex}, taskid={$taskId}");
             });
             if ($finish > 0) {
-                if ((int)$value['status'] === (int)$once) {
-                    $Drive->update($value['id'], $disabled);
-                } elseif ((int)$value['status'] === (int)$runNow) {
-                    $Drive->update($value['id'], $enabled);
+                if ($value['status'] == self::STATUS_ONCE) {
+                    $Drive->update($value['id'], self::STATUS_DISABLED);
+                } elseif ($value['status'] == self::STATUS_RUNNOW) {
+                    $Drive->update($value['id'], self::STATUS_ENABLED);
                 }
+                continue;
             }
 
-            if ($finish <= 0) {
-                // 返回值 -7 需要处理
-                $finish === -7 && $this->handleDeliveryTimeout();
-                $this->throwable($value, "投递失败: 返回值={$finish}, id={$value['id']}, name={$value['name']}");
-            }
+            // 返回值 -7 需要处理
+            $finish === -7 && $this->handleDeliveryTimeout();
+            $this->throwable($value, "投递失败: 返回值={$finish}, id={$value['id']}, name={$value['name']}");
         }
     }
 
@@ -207,7 +209,7 @@ class Crontab extends AbstractCronTask
 
         // 请在registerCrontab注册一下该key的计数器，不注册则不处理
         $ato = AtomicManager::getInstance()->get(self::KEY_CRONTAB_DELIVERY_TIMEOUT);
-        if (!$ato) {
+        if ( ! $ato) {
             return;
         }
 

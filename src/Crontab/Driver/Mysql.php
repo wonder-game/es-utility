@@ -4,6 +4,7 @@ namespace WonderGame\EsUtility\Crontab\Driver;
 
 use EasySwoole\Mysqli\QueryBuilder;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
+use WonderGame\EsUtility\Crontab\Crontab;
 
 /**
  * 依赖配置
@@ -25,7 +26,7 @@ class Mysql implements Interfaces
         $where = config('CRONTAB.where');
 
         $Builder = new QueryBuilder();
-        $Builder->where('status', [0, 2, 3], 'IN');
+        $Builder->where('status', [Crontab::STATUS_ENABLED, Crontab::STATUS_ONCE, Crontab::STATUS_RUNNOW], 'IN');
 
         if (is_callable($where)) {
             $where($Builder);

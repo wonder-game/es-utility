@@ -4,6 +4,7 @@
 namespace WonderGame\EsUtility\Model\Admin;
 
 use WonderGame\EsUtility\Common\OrmCache\Hash;
+use WonderGame\EsUtility\Crontab\Crontab;
 
 trait CrontabTrait
 {
@@ -13,7 +14,7 @@ trait CrontabTrait
     {
         parent::setBaseTraitProtected();
         $this->autoTimeStamp = true;
-        $this->hashWhere = ['status' => [[0, 2, 3], 'IN']];
+        $this->hashWhere = ['status' => [[Crontab::STATUS_ENABLED, Crontab::STATUS_ONCE, Crontab::STATUS_RUNNOW], 'IN']];
     }
 
     protected function setServerAttr($data)
@@ -56,7 +57,7 @@ trait CrontabTrait
                     continue;
                 }
                 // 需要将双引号替换成单引号，否则eval解析失败
-                $value['value'] = str_replace('"', '\'', $value['value']);
+                $value['value'] = str_replace('"', "'" , $value['value']);
                 $result[$value['key']] = $value['value'];
             }
         }

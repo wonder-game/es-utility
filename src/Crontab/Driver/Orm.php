@@ -3,7 +3,7 @@
 namespace WonderGame\EsUtility\Crontab\Driver;
 
 use EasySwoole\ORM\AbstractModel;
-
+use WonderGame\EsUtility\Crontab\Crontab;
 class Orm implements Interfaces
 {
     protected function getOrm(): AbstractModel
@@ -22,7 +22,7 @@ class Orm implements Interfaces
             return $class->getCrontab($where);
         }
 
-        $class->where('status', [0, 2, 3], 'IN')->where($where);
+        $class->where('status', [Crontab::STATUS_ENABLED, Crontab::STATUS_ONCE, Crontab::STATUS_RUNNOW], 'IN')->where($where);
         return $class->all();
     }
 
