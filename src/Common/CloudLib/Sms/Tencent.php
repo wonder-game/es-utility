@@ -9,6 +9,7 @@ use TencentCloud\Sms\V20210111\SmsClient;
 
 /**
  * composer require tencentcloud/sms
+ * @document https://cloud.tencent.com/document/api/382/55981
  */
 class Tencent extends Base
 {
@@ -30,7 +31,6 @@ class Tencent extends Base
      * 地域：
      * @document https://cloud.tencent.com/document/api/213/15692#.E5.9C.B0.E5.9F.9F.E5.88.97.E8.A1.A8
      * 要顺便检查下该地域的推送域名是否存在,格式为 ses.[region].tencentcloudapi.com
-     * @document https://cloud.tencent.com/document/api/1288/51055
      * @var string
      */
     protected $region = '';

@@ -10,6 +10,7 @@ use Darabonba\OpenApi\Models\Config;
 
 /**
  * composer require alibabacloud/dysmsapi-20170525
+ * @document https://api.aliyun.com/document/Dysmsapi/2017-05-25/SendSms?spm=5176.25163407.overview-index-9c3d4_4cfbe_0.20.72e42ec8C2XqTO
  */
 class Alibaba extends Base
 {
