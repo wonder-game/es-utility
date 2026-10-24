@@ -38,7 +38,7 @@ trait AuthTrait
     protected array $_authAlias = ['change' => 'edit', 'export' => 'index', 'stsUpload' => 'add'];
 
     // 无需认证
-    protected array $_authOmit = ['options'];
+    protected array $_authOmit = ['upload', 'options'];
 
     protected $isExport = false;
 
