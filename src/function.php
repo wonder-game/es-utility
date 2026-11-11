@@ -1659,3 +1659,14 @@ if ( ! function_exists('is_http_protocol')) {
     }
 }
 
+if ( ! function_exists('is_stress_test')) {
+    /**
+     * 是否为压测环境：压测环境的 env.php 里会定义 STRESS_TEST 常量
+     * 压测工具无法构造真实加密参数，压测环境下解密失败不中断请求，直接把原始参数当作业务参数使用
+     * @return bool
+     */
+    function is_stress_test(): bool
+    {
+        return defined('STRESS_TEST') && STRESS_TEST;
+    }
+}

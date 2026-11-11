@@ -65,8 +65,9 @@ class Tencent extends Base
             $Credential = new Credential($this->secretId, $this->secretKey);
             $Client = new SmsClient($Credential, $this->region);
 
-            // 注意：以下代码可在开发模式下请根据需要开启或关闭
-            if (is_env('dev')) {
+            // 注意：以下代码可在开发模式或压测场景下请根据需要开启或关闭
+            if (is_env('dev') || is_stress_test()) {
+                $endFn('env: dev|stress ok');
                 return true;
             }
 

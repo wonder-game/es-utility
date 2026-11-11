@@ -93,9 +93,9 @@ class Shlianlu extends Base
         ], $parentId);
 
         try {
-            // 注意：以下代码可在开发模式下请根据需要开启或关闭
-            if (is_env('dev')) {
-                $endFn('env: dev ok');
+            // 注意：以下代码可在开发模式或压测场景下请根据需要开启或关闭
+            if (is_env('dev') || is_stress_test()) {
+                $endFn('env: dev|stress ok');
                 return true;
             }
 
