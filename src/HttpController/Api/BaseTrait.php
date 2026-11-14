@@ -28,6 +28,6 @@ trait BaseTrait
     protected function _checkMd5Sign()
     {
         $this->rsa = $this->input;
-        return sign($this->input['encry'] . $this->input['time'], $this->input['sign']);
+        return sign($this->input, $this->input['sign']);
     }
 }

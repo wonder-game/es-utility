@@ -36,7 +36,7 @@ class Http implements Interfaces
 
             case 'md5':
                 $data['time'] = time();
-                $data['sign'] = sign($data['encry'] . $data['time']);
+                $data['sign'] = sign($data);
                 return $data;
 
             default:
