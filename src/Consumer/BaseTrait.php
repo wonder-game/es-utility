@@ -75,30 +75,52 @@ trait BaseTrait
             EventMainServerCreate::listenProcessInfo();
         }
 
-        // TODO 待优化为移入addTick并从sysinfo取?
         // 分片处理
         $queues = $this->getListenQueues();
 
-        $this->addTick($this->args['tick'] ?? 1000, function () use ($queues) {
+        // 必须有这对括号：原来的 `$i < $this->args['limit'] ?? 200` 里，?? 的优先级比 < 低，
+        // 实际比较的是 ($i < null)，没配 limit 的进程一条都取不出来。先取出来再比较
+        $limit = intval($this->args['limit'] ?? 200);
+        $json = ! empty($this->args['json']);
+        // 本进程上一轮是否还在跑
+        $running = false;
 
-            RedisPool::invoke(function (Redis $Redis) use ($queues) {
-                foreach ($queues as $queue) {
-                    for ($i = 0; $i < $this->args['limit'] ?? 200; ++$i) {
-                        $data = $Redis->lPop($queue);
-                        if ( ! $data) {
-                            break;
-                        }
-                        try {
-                            if ( ! empty($this->args['json'])) {
-                                $data = json_decode($data, true);
+        $this->addTick($this->args['tick'] ?? 1000, function () use ($queues, $limit, $json, &$running) {
+
+            // 上一轮还没跑完（consume 里同步调外部服务、积压大）就跳过这一轮：
+            // Swoole 定时器到点就再起一轮，不判断的话每轮各占一条 Redis 连接，并发会越叠越高，
+            // 进程数也就起不到「并发上限」的作用
+            if ($running) {
+                return;
+            }
+            $running = true;
+
+            try {
+                RedisPool::invoke(function (Redis $Redis) use ($queues, $limit, $json) {
+                    foreach ($queues as $queue) {
+                        for ($i = 0; $i < $limit; ++$i) {
+                            $data = $Redis->lPop($queue);
+                            if ( ! $data) {
+                                break;
                             }
-                            $this->consume($data, $Redis);
-                        } catch (\Exception|\Throwable $throwable) {
-                            Trigger::getInstance()->throwable($throwable);
+                            try {
+                                if ($json) {
+                                    $data = json_decode($data, true);
+                                }
+                                $this->consume($data, $Redis);
+                            } catch (\Throwable $throwable) {
+                                Trigger::getInstance()->throwable($throwable);
+                            }
                         }
                     }
-                }
-            }, $this->args['pool'] ?? 'default');
+                }, $this->args['pool'] ?? 'default');
+            } catch (\Throwable $throwable) {
+                // 取连接失败、Redis 超时等：交给 Trigger 记日志后结束本轮。
+                // 定时器回调里抛出的异常会让整个进程直接退出（不是只退出这一轮），原来只兜住了 consume 里的异常
+                Trigger::getInstance()->throwable($throwable);
+            } finally {
+                $running = false;
+            }
         });
     }
 }
