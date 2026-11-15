@@ -104,7 +104,7 @@ class Tencent extends Base
 
             is_callable($endFn) && $endFn($errmsg, $e->getErrorCode());
             trace($errmsg, 'error');
-            notice($errmsg);
+            notice_limit(__METHOD__ . ':' . __LINE__, $errmsg);
 
             // 出现异常建议认为验证通过，优先保证业务可用，然后尽快排查异常原因。
             return true;

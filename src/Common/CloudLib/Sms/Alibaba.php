@@ -73,7 +73,7 @@ class Alibaba extends Base
             $isSuccess = $resp->body->code === 'OK';
 
             if ( ! $isSuccess) {
-                notice('阿里云短信发送失败: ' . $resp->body->message);
+                notice_limit(__METHOD__ . ':' . __LINE__, '阿里云短信发送失败: ' . $resp->body->message);
             }
             return $isSuccess;
         } catch (\Exception $error) {
@@ -82,7 +82,7 @@ class Alibaba extends Base
             }
 
             is_callable($endFn) && $endFn($error->__toString(), $error->getCode());
-            notice('阿里云短信发送失败: ' . $error->__toString());
+            notice_limit(__METHOD__ . ':' . __LINE__, '阿里云短信发送失败: ' . $error->__toString());
             return false;
         }
     }

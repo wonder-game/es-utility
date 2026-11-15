@@ -45,21 +45,8 @@ trait BaseTrait
 
     public function getListenQueues()
     {
-        // 在集群模式中，将队列数据均匀分布在不同分片的槽位中
-        // 读一定要比写大！！！不然redis会爆！！！
-        $clusterNumber = config('QUEUE.clusterNumber');
-        $clusterNumberWrite = config('QUEUE.clusterNumberWrite');
-        $queue = $this->args['queue'];
-        // 读一定要比写大！！！不然redis会爆！！！
-        $cn = max($clusterNumber ?: 0, $clusterNumberWrite ?: 0);
-        $list[] = $queue;
-        if ($cn > 0) {
-            for ($i = 0; $i <= $cn; ++$i) {
-                $list[] = "$queue.$i";
-            }
-        }
-
-        return $list;
+        // 在集群模式中，将队列数据均匀分布在不同分片的槽位中，分片规则见 redis_list_keys
+        return redis_list_keys($this->args['queue']);
     }
 
     /**

@@ -79,14 +79,14 @@ class Tencent extends Base
             $endFn($array);
 
             if (isset($array['Error'])) {
-                notice("腾讯云发送失败1: $str");
+                notice_limit(__METHOD__ . ':' . __LINE__, "腾讯云发送失败1: $str");
                 return false;
             }
             return true;
         } catch (TencentCloudSDKException $e) {
             $msg = '腾讯云短信发送失败2: ' . $e->__toString();
             is_callable($endFn) && $endFn($msg, $e->getCode());
-            notice($msg);
+            notice_limit(__METHOD__ . ':' . __LINE__, $msg);
             return false;
         }
     }

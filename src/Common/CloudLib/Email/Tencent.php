@@ -94,7 +94,7 @@ class Tencent extends Base
             $msg = "腾讯云邮件发送失败2: " . $e->__toString();
             is_callable($endFn) && $endFn($msg, $e->getCode());
             trace($msg, 'error');
-            notice($msg);
+            notice_limit(__METHOD__ . ':' . __LINE__, $msg);
             return false;
         }
     }

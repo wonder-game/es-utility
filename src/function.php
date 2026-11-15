@@ -1,7 +1,10 @@
 <?php
 
+use Czdb\DbSearcher;
 use EasySwoole\EasySwoole\Config;
+use EasySwoole\EasySwoole\Core;
 use EasySwoole\EasySwoole\Logger;
+use EasySwoole\EasySwoole\Task\TaskManager;
 use EasySwoole\Http\Request;
 use EasySwoole\I18N\I18N;
 use EasySwoole\ORM\AbstractModel;
@@ -10,11 +13,17 @@ use EasySwoole\ORM\DbManager;
 use EasySwoole\Redis\Redis;
 use EasySwoole\RedisPool\RedisPool;
 use EasySwoole\Spl\SplArray;
+use EasySwoole\Task\Task;
+use Swoole\Coroutine;
+use Swoole\Runtime;
+use WonderGame\EsUtility\Common\Classes\Breaker;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\HttpRequest;
 use WonderGame\EsUtility\Common\Classes\LamJwt;
 use WonderGame\EsUtility\Common\Classes\LamOpenssl;
+use WonderGame\EsUtility\Common\Classes\LocalCache;
 use WonderGame\EsUtility\Common\Classes\Mysqli;
+use WonderGame\EsUtility\Common\Classes\ServerTuning;
 use WonderGame\EsUtility\Common\CloudLib\Captcha\CaptchaInterface;
 use WonderGame\EsUtility\Common\CloudLib\Cdn\CdnInterface;
 use WonderGame\EsUtility\Common\CloudLib\Dns\DnsInterface;
@@ -32,6 +41,7 @@ use WonderGame\EsUtility\Notify\Feishu\Message\Card;
 use WonderGame\EsUtility\Notify\Feishu\Message\Text as FeishuText;
 use WonderGame\EsUtility\Notify\Feishu\Message\Textarea;
 use WonderGame\EsUtility\Notify\WeChat\Message\Notice;
+use WonderGame\EsUtility\Task\Notice as NoticeTask;
 
 
 if ( ! function_exists('is_super')) {
@@ -122,7 +132,7 @@ if ( ! function_exists('model')) {
             $Client = new Mysqli($connectName);
             $Client->setTimeZone($inject);
             $model->setExecClient($Client);
-            \Swoole\Coroutine::defer(function () use ($Client) {
+            Coroutine::defer(function () use ($Client) {
                 $Client->close();
             });
         }
@@ -542,8 +552,8 @@ if ( ! function_exists('ip')) {
     function ip($Request = null)
     {
         // Request继承 \EasySwoole\Http\Message\Message 皆可
-        if ( ! $Request instanceof \EasySwoole\Http\Request) {
-            $Request = \WonderGame\EsUtility\Common\Classes\CtxRequest::getInstance()->request;
+        if ( ! $Request instanceof Request) {
+            $Request = CtxRequest::getInstance()->request;
             if (empty($Request)) {
                 return false;
             }
@@ -591,6 +601,68 @@ if ( ! function_exists('notice')) {
         } else {
             config('ES_NOTIFY.driver') == 'feishu' ? feishu_text($content, true, $name) : dingtalk_text($content, true, $name);
         }
+    }
+}
+
+if ( ! function_exists('notice_async')) {
+    /**
+     * 异步发送告警：HTTP worker 的请求协程里投递到 Task 进程发送，其余场景（CLI、定时任务、Task 进程）直接发送
+     * 原因：notice 底层 hcurl 无超时且默认重试 3 次，在请求协程里同步外呼飞书，对端一慢会把业务协程一起拖住
+     * 是否为 HTTP worker 由 ServerTuning::onWorkerStart 标记，未注册 ServerTuning 的项目始终同步发送，行为与 notice() 一致
+     * @param string $content
+     * @param string|null $title 有值则按富文本发送
+     * @param string $name
+     */
+    function notice_async($content = '', $title = null, $name = 'default')
+    {
+        if (Coroutine::getCid() < 0 || ! ServerTuning::isHttpWorker()) {
+            notice($content, $title, $name);
+            return;
+        }
+
+        try {
+            $ret = TaskManager::getInstance()->async(new NoticeTask([
+                'content' => $content,
+                'title' => $title,
+                'name' => $name,
+            ]));
+            if ($ret === Task::PUSH_IN_QUEUE) {
+                return;
+            }
+            // 投递失败（Task 进程没起来、队列满了）不能把告警丢了，退回同步发送
+            trace("notice_async 投递失败[{$ret}]，改为同步发送：$content", 'error');
+        } catch (\Throwable $e) {
+            trace("notice_async 投递异常：{$e->getMessage()}，改为同步发送：$content", 'error');
+        }
+        notice($content, $title, $name);
+    }
+}
+
+if ( ! function_exists('notice_limit')) {
+    /**
+     * 限频 + 异步告警：同一 $key 在本进程内 $interval 秒内只发一条，期间被省略的条数附在下一条里
+     * 与 trace_limit() 对应，用于依赖不可用这类会连续失败的告警（如云商驱动失败、内网接口不通），避免每个请求都推一次飞书
+     * @param string $key 限频标识
+     * @param string $content
+     * @param string|null $title 有值则按富文本发送
+     * @param string $name 告警群
+     * @param int|null $interval 秒，不传取 ES_NOTIFY.interval（未配置为 60），0 为不限频
+     */
+    function notice_limit(string $key, $content = '', $title = null, $name = 'default', ?int $interval = null)
+    {
+        static $last = [], $suppressed = [];
+        $interval = $interval ?? intval(config('ES_NOTIFY.interval') ?? 60);
+        $now = time();
+        if ($interval > 0 && isset($last[$key]) && $now - $last[$key] < $interval) {
+            $suppressed[$key] = ($suppressed[$key] ?? 0) + 1;
+            return;
+        }
+        $last[$key] = $now;
+        if ( ! empty($suppressed[$key])) {
+            $content .= "\n（上次告警后同类告警另有 {$suppressed[$key]} 条已省略）";
+            $suppressed[$key] = 0;
+        }
+        notice_async($content, $title, $name);
     }
 }
 
@@ -705,10 +777,16 @@ if ( ! function_exists('geo')) {
      *                      all：返回整个ip解析地址，数组格式
      *                      isp：返回包含网络供应商的数组
      *                      数字：返回ip解析地址中的指定索引成员
+     * DbSearcher 按库文件做进程级单例，不再每次都打开文件、解密文件头（实测 1.33ms → 0.02ms）
+     *  - 查询过程是 fseek + fread，未开启文件 Hook 时不会切换协程，单例在协程间共享是安全的；开启了文件 Hook 则退回每次新建
+     *  - 构造失败（文件缺失、授权过期）时 60 秒内不再重试，错误日志限频
+     *  - 每 5 分钟检查一次库文件修改时间，更新库文件后自动重新打开
      * @return string|array
      */
     function geo($ip = '', $num = 'all')
     {
+        static $searchers = [], $failAt = [], $checkAt = [], $mtimes = [];
+
         /**
          * db_file_ipv4: ipv4文件路径
          * db_file_ipv6: ipv6文件路径
@@ -717,26 +795,55 @@ if ( ! function_exists('geo')) {
          *
          */
         if ( ! $config = config('CZ88')) {
-            trace('geo函数 config empty', 'error');
+            trace_limit('geo_config_empty', 'geo函数 config empty', 'error');
             return is_numeric($num) ? '' : [];
         }
 
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $dbFile = $config['db_file_ipv6'];
+        } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $dbFile = $config['db_file_ipv4'];
+        } else {
+            trace_limit('geo_ip_invalid', "ip invalid: $ip", 'error');
+            return is_numeric($num) ? '' : [];
+        }
+
+        $queryType = $config['query_type'] ?? DbSearcher::QUERY_TYPE_BTREE;
+        $now = time();
+        $shared = ! (class_exists(Runtime::class) && (Runtime::getHookFlags() & SWOOLE_HOOK_FILE));
+        $dbSearcher = null;
         try {
-            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                // ipv6
-                $dbFile = $config['db_file_ipv6'];
-            } elseif (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-                // ipv4
-                $dbFile = $config['db_file_ipv4'];
+            if ( ! $shared) {
+                $dbSearcher = new DbSearcher($dbFile, $queryType, $config['key']);
             } else {
-                trace("ip invalid: $ip", 'error');
-                return is_numeric($num) ? '' : [];
+                // 库文件更新后重新打开
+                if (isset($searchers[$dbFile]) && $now - ($checkAt[$dbFile] ?? 0) >= 300) {
+                    $checkAt[$dbFile] = $now;
+                    clearstatcache(true, $dbFile);
+                    if (@filemtime($dbFile) !== $mtimes[$dbFile]) {
+                        $searchers[$dbFile]->close();
+                        unset($searchers[$dbFile]);
+                    }
+                }
+                if ( ! isset($searchers[$dbFile])) {
+                    if (isset($failAt[$dbFile]) && $now - $failAt[$dbFile] < 60) {
+                        return is_numeric($num) ? '' : [];
+                    }
+                    try {
+                        $mtimes[$dbFile] = @filemtime($dbFile);
+                        $searchers[$dbFile] = new DbSearcher($dbFile, $queryType, $config['key']);
+                        $checkAt[$dbFile] = $now;
+                        unset($failAt[$dbFile]);
+                    } catch (\Throwable $e) {
+                        $failAt[$dbFile] = $now;
+                        throw $e;
+                    }
+                }
+                $dbSearcher = $searchers[$dbFile];
             }
 
-            $queryType = $config['query_type'] ?? \Czdb\DbSearcher::QUERY_TYPE_BTREE;
-            $dbSearcher = new \Czdb\DbSearcher($dbFile, $queryType, $config['key']);
             $region = $dbSearcher->search($ip);
-            $dbSearcher->close();
+            $shared or $dbSearcher->close();
 
             // 注意分隔符一定要用–，最好是复制粘贴，以防写错！！！
 
@@ -760,9 +867,9 @@ if ( ! function_exists('geo')) {
             $arr = explode('–', $str);
 
             return is_numeric($num) ? $arr[$num] : $arr;
-        } catch (\Exception|\Throwable $e) {
-            $dbSearcher && $dbSearcher->close();
-            trace("geo: $ip error:" . $e->getMessage(), 'error');
+        } catch (\Throwable $e) {
+            $shared or ($dbSearcher && $dbSearcher->close());
+            trace_limit("geo_error_$dbFile", "geo: $ip error:" . $e->getMessage(), 'error');
             return is_numeric($num) ? '' : [];
         }
     }
@@ -772,6 +879,9 @@ if ( ! function_exists('geo')) {
 if ( ! function_exists('sysinfo')) {
     /**
      * 获取系统设置的动态配置
+     * 优先读当前模块的 Sysinfo 模型（如 Sdk\Sysinfo），没有则读 Admin\Sysinfo
+     * 进程内缓存 5 秒（见 LocalCache）：同一 worker 的协程共享，避免每次调用都走 Redis GET + unserialize；
+     * 代价是后台改变量后最多 5 秒生效，回源失败时继续用旧值
      * @document http://www.easyswoole.com/Components/Spl/splArray.html
      * @param string|true|null $key true-直接返回SplArray对象，非true取值与 SplArray->get 相同
      * @param string|null $default 默认值
@@ -779,9 +889,14 @@ if ( ! function_exists('sysinfo')) {
      */
     function sysinfo($key = null, $default = null)
     {
-        /** @var \App\Model\Admin\Sysinfo $model */
-        $model = model_admin('sysinfo');
-        return $model->cacheSpl($key, $default);
+        $spl = LocalCache::remember('sysinfo', 5, function () {
+            $name = ucfirst(APP_MODULE) . '\\Sysinfo';
+            find_model($name, false) or $name = 'Admin\\Sysinfo';
+            /** @var \App\Model\Admin\Sysinfo $model */
+            $model = model($name);
+            return $model->cacheSpl(true);
+        });
+        return $key === true ? $spl : $spl->get($key, $default);
     }
 }
 
@@ -814,7 +929,7 @@ if ( ! function_exists('get_mode')) {
     function get_mode($type = 'env')
     {
         // dev|test|produce|user.test|sdk.dev|...
-        $runMode = \EasySwoole\EasySwoole\Core::getInstance()->runMode();
+        $runMode = Core::getInstance()->runMode();
         if ($type === 'all') {
             return $runMode;
         }
@@ -1039,6 +1154,27 @@ if ( ! function_exists('redis_list_push')) {
 }
 
 
+if ( ! function_exists('redis_list_keys')) {
+    /**
+     * redis队列的全部分片key，与 redis_list_push 配对：push 随机写入其中一个，读取时要遍历全部
+     * @param string $key
+     * @return array [$key, "$key.0", ..., "$key.N"]
+     */
+    function redis_list_keys(string $key): array
+    {
+        // 读一定要比写大！！！不然redis会爆！！！
+        $cn = max(config('QUEUE.clusterNumber') ?: 0, config('QUEUE.clusterNumberWrite') ?: 0);
+        $list = [$key];
+        if ($cn > 0) {
+            for ($i = 0; $i <= $cn; ++$i) {
+                $list[] = "$key.$i";
+            }
+        }
+        return $list;
+    }
+}
+
+
 if ( ! function_exists('repeat_array_keys')) {
     /**
      * 数组中指定的几个key脱敏处理
@@ -1157,6 +1293,11 @@ if ( ! function_exists('request_pay_api')) {
 if ( ! function_exists('request_lan_api')) {
     /**
      * 请求内网api
+     * $cfg 除透传给 HttpRequest 外，还支持：
+     *  - timeout：超时秒数，不传取 LAN_API.timeout，都没有则不设超时（hcurl 默认不设超时，对端不响应时请求协程会一直挂住）
+     *  - breaker：熔断标识。同一标识连续失败后一段时间内直接返回 false（不发请求），用于可降级的热路径，见 Breaker
+     * 热路径建议：['timeout' => 1, 'retryTimes' => 0, 'throw' => false, 'breaker' => 'xxx']，失败时调用方自行降级
+     * 失败告警走 notice_limit（限频 + 异步）
      * @param string $lan_key admin|sdk|pay|log
      * @param string $uri 地址
      * @param array $data 参数
@@ -1192,7 +1333,12 @@ if ( ! function_exists('request_lan_api')) {
         $lan = sysinfo($lan_key . '_lan');
         $lan = $lan[get_mode()] ?? config(strtoupper($lan_key . '_lan'));
         if ( ! $lan) {
-            notice("{$lan_key} API请求失败，config或sysinfo未配置{$lan_key}_lan");
+            notice_limit("lan_api_cfg_$lan_key", "{$lan_key} API请求失败，config或sysinfo未配置{$lan_key}_lan");
+            return false;
+        }
+
+        $breaker = $cfg['breaker'] ?? '';
+        if ($breaker && ! Breaker::allow($breaker)) {
             return false;
         }
 
@@ -1217,7 +1363,7 @@ if ( ! function_exists('request_lan_api')) {
                 break;
 
             default:
-                notice("{$lan_key} API请求失败，未知的加密协议$encry");
+                notice_limit("lan_api_encry_$lan_key", "{$lan_key} API请求失败，未知的加密协议$encry");
                 return false;
         }
 
@@ -1225,6 +1371,10 @@ if ( ! function_exists('request_lan_api')) {
         $lanIp = is_array($lan['ip']) ? ($lan['ip'][array_rand($lan['ip'])]) : $lan['ip'];
         // 支持带协议
         $url = is_http_protocol($lanIp) ? $lanIp : "http://{$lanIp}{$uri}";
+
+        $timeout = $cfg['timeout'] ?? config('LAN_API.timeout') ?? 0;
+        unset($cfg['timeout'], $cfg['breaker']);
+        $option = $timeout > 0 ? ['client_set' => ['timeout' => floatval($timeout)]] : [];
 
         $cfg = array_merge($cfg, [
             'keyword' => $lan_key,
@@ -1234,10 +1384,18 @@ if ( ! function_exists('request_lan_api')) {
         ]);
 
         try {
-            $res = hcurl($url, $params, $method, ['Host' => $lan['domain']] + $headers, $cfg);
+            $res = hcurl($url, $params, $method, ['Host' => $lan['domain']] + $headers, $cfg, $option);
+            if ( ! is_array($res) || ($res['code'] ?? 0) != 200) {
+                // throw=false 时 HttpRequest 不抛异常，直接返回解析结果
+                // 对端有正常的业务响应（只是业务码不是 200）说明服务是通的，不计入熔断；只有超时、断线、非 JSON 才算失败
+                $breaker && (is_array($res) ? Breaker::success($breaker) : Breaker::fail($breaker));
+                return is_array($res) ? ($res['result'] ?? null) : null;
+            }
+            $breaker && Breaker::success($breaker);
             return $res['result'];
         } catch (\Exception $e) {
-            notice($e->getMessage(), null, $notice);
+            $breaker && Breaker::fail($breaker);
+            notice_limit("lan_api_$lan_key$uri", $e->getMessage(), null, $notice);
             if ($cfg['throw'] ?? true) {
                 throw $e;
             } else {
@@ -1668,5 +1826,54 @@ if ( ! function_exists('is_stress_test')) {
     function is_stress_test(): bool
     {
         return defined('STRESS_TEST') && STRESS_TEST;
+    }
+}
+
+if ( ! function_exists('trace_limit')) {
+    /**
+     * 限频日志：同一 $key 在本进程内 $interval 秒内只写一次，期间被省略的条数附在下一条日志里
+     * 用于高频失败场景（依赖不可用、非法参数刷量），避免每个请求都加锁写盘
+     * @param string $key 限频标识
+     * @param string|array $log
+     * @param string $level
+     * @param string $category
+     * @param int $interval 秒
+     * @return void
+     */
+    function trace_limit(string $key, $log = '', $level = 'error', $category = 'debug', int $interval = 60)
+    {
+        static $last = [], $suppressed = [];
+        $now = time();
+        if (isset($last[$key]) && $now - $last[$key] < $interval) {
+            $suppressed[$key] = ($suppressed[$key] ?? 0) + 1;
+            return;
+        }
+        $last[$key] = $now;
+        if ( ! empty($suppressed[$key])) {
+            is_scalar($log) or $log = json_encode($log, JSON_UNESCAPED_UNICODE);
+            $log .= "（上次记录后同类日志另有 {$suppressed[$key]} 条已省略）";
+            $suppressed[$key] = 0;
+        }
+        trace($log, $level, $category);
+    }
+}
+
+if ( ! function_exists('go_safe')) {
+    /**
+     * 等同 go()，但兜住闭包里的所有异常
+     * Swoole 4.8 下协程里未捕获的异常会让整个 worker 退出（容器实测），同进程正在处理的请求一起丢失
+     * 同一位置的异常 10 秒内只记一次日志
+     * @param callable $fn
+     * @return int|false 协程 ID
+     */
+    function go_safe(callable $fn)
+    {
+        return go(function () use ($fn) {
+            try {
+                $fn();
+            } catch (\Throwable $e) {
+                trace_limit('go_safe_' . md5($e->getFile() . $e->getLine()), "协程异常：{$e->getMessage()} at {$e->getFile()}:{$e->getLine()}", 'error', 'debug', 10);
+            }
+        });
     }
 }

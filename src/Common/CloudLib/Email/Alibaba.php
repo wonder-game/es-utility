@@ -5,7 +5,7 @@ namespace WonderGame\EsUtility\Common\CloudLib\Email;
 use AlibabaCloud\SDK\Dm\V20151123\Dm;
 use AlibabaCloud\SDK\Dm\V20151123\Models\SingleSendMailRequest;
 use AlibabaCloud\Tea\Exception\TeaError;
-use AlibabaCloud\Tea\Utils\Utils\RuntimeOptions;
+use AlibabaCloud\Dara\Models\RuntimeOptions;
 use Darabonba\OpenApi\Models\Config;
 
 /**
@@ -70,10 +70,12 @@ class Alibaba extends Base
             $arr = $resp->toMap();
             $endFn($arr, 200);
 
-            $isSuccess = $resp->body->code === 'OK';
+            // SingleSendMail 的响应体只有 EnvId/RequestId，没有 Code/Message；
+            // 请求失败时 SDK 会直接抛异常（由下方 catch 处理），能返回 RequestId 即视为发送成功
+            $isSuccess = ! empty($resp->body->requestId);
 
             if ( ! $isSuccess) {
-                notice('阿里云邮件发送失败1: ' . $resp->body->message);
+                notice_limit(__METHOD__ . ':' . __LINE__, '阿里云邮件发送失败1: ' . json_encode($arr, JSON_UNESCAPED_UNICODE));
             }
             return $isSuccess;
         } catch (\Exception $error) {
@@ -82,7 +84,7 @@ class Alibaba extends Base
             }
             is_callable($endFn) && $endFn($error->__toString(), $error->getCode());
             trace($msg = "阿里云邮件发送失败: " . $error->__toString(), 'error');
-            notice($msg);
+            notice_limit(__METHOD__ . ':' . __LINE__, $msg);
             return false;
         }
     }

@@ -108,13 +108,13 @@ class Shlianlu extends Base
 
             $isSuccess = isset($result['status']) && $result['status'] === '00';
             if ( ! $isSuccess) {
-                notice('联麓短信发送失败: ' . $str);
+                notice_limit(__METHOD__ . ':' . __LINE__, '联麓短信发送失败: ' . $str);
             }
             return $isSuccess;
         } catch (\Exception $error) {
             $msg = '联麓短信发送失败: ' . $error->__toString();
             is_callable($endFn) && $endFn($msg, $error->getCode());
-            notice($msg);
+            notice_limit(__METHOD__ . ':' . __LINE__, $msg);
             return false;
         }
     }
