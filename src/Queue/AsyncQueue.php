@@ -399,7 +399,11 @@ abstract class AsyncQueue
         }
         $stat = static::stat($Redis, $minute);
         $snap = static::snapshot($Redis);
-        trace(['minute' => $minute] + $snap + $stat, 'info', static::logCategory());
+        // 空闲的分钟不写汇总，避免每天 1440 行无意义日志；有计数或队列有积压时才记
+        // 消费进程是否存活由 snapshot() 的 senders、全失联告警和监控看，不靠这行日志
+        if ($stat || $snap['len'] > 0) {
+            trace(['minute' => $minute] + $snap + $stat, 'info', static::logCategory());
+        }
 
         $sent = $stat['sent'] ?? 0;
         $fail = $stat['fail'] ?? 0;
