@@ -41,6 +41,14 @@ trait BaseControllerTrait
 
     protected $actionNotFoundPrefix = '_';
 
+    /**
+     * 生产环境下，是否把非敏感的普通异常（如 \Exception 中的提示文案）原样返回给客户端
+     * 面向玩家的模块保持 false；后台等以 \Exception 传递提示文案的模块可在子类设为 true
+     * 敏感判断见 exception_is_sensitive()
+     * @var bool
+     */
+    protected $exposePlainException = false;
+
     public function __construct()
     {
         parent::__construct();
@@ -145,9 +153,11 @@ trait BaseControllerTrait
                     ], $throwable->getData())
             );
         } else {
-            $message = ! is_env('produce') ? $throwable->getMessage() : lang(Dictionary::BASECONTROLLERTRAIT_1);
-            // 交给异常处理器
-            \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+            $message = exception_message($throwable, $this->exposePlainException);
+            // 允许展示的普通提示文案属于业务逻辑，无需告警；其余交给异常处理器
+            if ( ! $this->exposePlainException || exception_is_sensitive($throwable)) {
+                \EasySwoole\EasySwoole\Trigger::getInstance()->throwable($throwable);
+            }
         }
         $this->error($throwable->getCode() ?: Code::CODE_INTERNAL_SERVER_ERROR, $message);
     }

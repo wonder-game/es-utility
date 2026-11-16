@@ -5,6 +5,8 @@ namespace WonderGame\EsUtility;
 use EasySwoole\Component\Di;
 use EasySwoole\EasySwoole\Config;
 use EasySwoole\EasySwoole\SysConst;
+use EasySwoole\EasySwoole\Trigger;
+use EasySwoole\Http\Message\Stream;
 use EasySwoole\Http\Request;
 use EasySwoole\Http\Response;
 use EasySwoole\I18N\I18N;
@@ -14,6 +16,7 @@ use EasySwoole\Trigger\TriggerInterface;
 use WonderGame\EsUtility\Common\Classes\CtxRequest;
 use WonderGame\EsUtility\Common\Classes\ExceptionTrigger;
 use WonderGame\EsUtility\Common\Classes\LamUnit;
+use WonderGame\EsUtility\Common\Http\Code;
 use WonderGame\EsUtility\HttpTracker\Index as HttpTracker;
 
 class EventInitialize extends SplBean
@@ -65,6 +68,14 @@ class EventInitialize extends SplBean
     protected $httpTrackerConfig = [];
 
     /**
+     * Http全局异常处理器（控制器之外抛出的异常，如全局 onRequest/afterRequest 回调出错、控制器 onException 自身出错）
+     * null-使用组件内置处理器；callable-自定义处理器，签名同 SysConst::HTTP_EXCEPTION_HANDLER；false-不注册，沿用框架默认
+     * 注意：框架默认处理器会把异常信息与堆栈直接输出给客户端，不建议设为 false
+     * @var null|false|callable
+     */
+    protected $httpExceptionHandler = null;
+
+    /**
      * 设置属性默认值
      * @return void
      */
@@ -89,6 +100,7 @@ class EventInitialize extends SplBean
         $this->registerI18n();
         $this->registerHttpOnRequest();
         $this->registerAfterRequest();
+        $this->registerHttpExceptionHandler();
     }
 
     /**
@@ -359,5 +371,58 @@ class EventInitialize extends SplBean
                 }
             }
         );
+    }
+
+    /**
+     * 注册Http全局异常处理器，替换框架默认处理器，避免异常信息与堆栈泄露给客户端
+     * 项目在 run() 之后再设置 SysConst::HTTP_EXCEPTION_HANDLER 会覆盖这里的注册
+     * @return void
+     */
+    protected function registerHttpExceptionHandler()
+    {
+        if ($this->httpExceptionHandler === false) {
+            return;
+        }
+        // 项目已自行注册的不覆盖
+        if (is_callable(Di::getInstance()->get(SysConst::HTTP_EXCEPTION_HANDLER))) {
+            return;
+        }
+        $handler = is_callable($this->httpExceptionHandler)
+            ? $this->httpExceptionHandler
+            : [static::class, 'httpExceptionHandler'];
+        Di::getInstance()->set(SysConst::HTTP_EXCEPTION_HANDLER, $handler);
+    }
+
+    /**
+     * 内置Http全局异常处理器：完整异常只写日志与告警，客户端只收到不含堆栈的统一JSON
+     * @param \Throwable $throwable
+     * @param Request $request
+     * @param Response $response
+     * @return void
+     */
+    public static function httpExceptionHandler(\Throwable $throwable, Request $request, Response $response)
+    {
+        try {
+            Trigger::getInstance()->throwable($throwable);
+        } catch (\Throwable $e) {
+            // 告警失败不能影响响应输出
+        }
+
+        if ($response->isEndResponse()) {
+            return;
+        }
+
+        $code = (int)$throwable->getCode();
+        $data = [
+            'code' => $code > 0 ? $code : Code::CODE_INTERNAL_SERVER_ERROR,
+            'result' => null,
+            'msg' => exception_message($throwable),
+        ];
+        // 丢弃已写入的部分响应（如 afterRequest 阶段出错时已有正常响应内容），避免与错误信息拼接
+        $response->withBody(new Stream(''));
+        $response->write(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $response->withHeader('Content-type', 'application/json;charset=utf-8');
+        // 与框架默认处理器一致返回500，第三方回调（支付通知等）可据此重试
+        $response->withStatus(Code::CODE_INTERNAL_SERVER_ERROR);
     }
 }
