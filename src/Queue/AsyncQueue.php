@@ -15,7 +15,7 @@ use Swoole\Timer;
  * 消费进程 use ConsumerTrait 并实现 handle()
  *
  * 队列按分片规则读写：写走 redis_list_push() 随机落到 NAME 或 NAME.N，读遍历 redis_list_keys()
- * 其余 key 都是 async:{NAME}:xxx（见 key()）
+ * 其余 key 都是 {NAME}:xxx（见 key()），用冒号与队列分片的 NAME.N 区分开；NAME 不要与项目里其他 key 的前缀重名
  *
  * 监控指标：
  *  - 实时（snapshot()）：积压条数 len、最早一条已等秒数 wait、存活的消费进程数 senders
@@ -447,7 +447,7 @@ abstract class AsyncQueue
      */
     public static function key(string $name): string
     {
-        return 'async:' . static::NAME . ":$name";
+        return static::NAME . ":$name";
     }
 
     /**
