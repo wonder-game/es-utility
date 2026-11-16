@@ -1858,6 +1858,26 @@ if ( ! function_exists('trace_limit')) {
     }
 }
 
+if ( ! function_exists('curl_hook_flag')) {
+    /**
+     * 该用哪个 curl 协程 Hook 标志，供 Runtime::enableCoroutine() 使用
+     * 只开 curl：项目里的 Redis、MySQL、EasySwoole HttpClient 都是 Swoole 协程客户端，不依赖 TCP/SSL Hook；
+     * 用 curl 的是腾讯云、阿里云 SDK（Guzzle）
+     * @param bool $fallback 没有 curl-native 时是否退回 SWOOLE_HOOK_CURL
+     *   消费进程可以退：同步请求够用，但退回后不支持 curl_multi，不要用 Guzzle 的异步请求（sendAsync、Pool 等）；
+     *   HTTP worker 不退：并发高，退回后遇到 curl_multi 会出问题
+     * @return int 没有可用的标志时返回 0
+     */
+    function curl_hook_flag(bool $fallback = true): int
+    {
+        // 没编译 curl-native 时 NATIVE_CURL 常量也可能有、但不起作用，要按类判断
+        if (defined('SWOOLE_HOOK_NATIVE_CURL') && class_exists(\Swoole\Coroutine\Curl\Exception::class)) {
+            return SWOOLE_HOOK_NATIVE_CURL;
+        }
+        return ($fallback && defined('SWOOLE_HOOK_CURL')) ? SWOOLE_HOOK_CURL : 0;
+    }
+}
+
 if ( ! function_exists('go_safe')) {
     /**
      * 等同 go()，但兜住闭包里的所有异常
