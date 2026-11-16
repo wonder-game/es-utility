@@ -67,7 +67,7 @@ class Tencent extends Base
 
             // 注意：以下代码可在开发模式或压测场景下请根据需要开启或关闭
             if (is_env('dev') || is_stress_test()) {
-                $endFn('env: dev|stress ok');
+                $endFn('env: dev|stress Tencent ok');
                 return true;
             }
 
@@ -81,6 +81,24 @@ class Tencent extends Base
             if (isset($array['Error'])) {
                 notice_limit(__METHOD__ . ':' . __LINE__, "腾讯云发送失败1: $str");
                 return false;
+            }
+
+            // 号码级失败（限流、模板/签名不对、号码有问题等）是 HTTP 200 且没有 Error，结果只在 SendStatusSet 里，
+            // 只看 Error 会把失败当成功：队列不重试、统计记成 sent、用户收不到短信
+            $statusSet = $array['SendStatusSet'] ?? [];
+            if ( ! $statusSet) {
+                notice_limit(__METHOD__ . ':' . __LINE__ . ':empty', "腾讯云发送失败3: 返回里没有 SendStatusSet $str");
+                return false;
+            }
+            foreach ($statusSet as $item) {
+                $code = $item['Code'] ?? '';
+                if ($code !== 'Ok') {
+                    notice_limit(
+                        __METHOD__ . ':' . __LINE__ . ':' . $code,
+                        "腾讯云发送失败3: {$code} {$item['Message']} 号码:" . ($item['PhoneNumber'] ?? '')
+                    );
+                    return false;
+                }
             }
             return true;
         } catch (TencentCloudSDKException $e) {
