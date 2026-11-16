@@ -95,6 +95,15 @@ class Shlianlu extends Base
         try {
             // 注意：以下代码可在开发模式或压测场景下请根据需要开启或关闭
             if (is_env('dev') || is_stress_test()) {
+                // 转投到联调地址（config 的 PRES_URL），用 GET 带上本来要发给联麓的参数
+                // 不重试、不抛异常：转发失败不能影响验证码流程，也不该让队列以为发送失败
+                if ($url = config('PRES_URL')) {
+                    try {
+                        hcurl($url, $body, 'get', [], ['retryTimes' => 0, 'throw' => false]);
+                    } catch (\Throwable $e) {
+                        trace_limit('sms_forward_shlianlu', "联麓短信转投失败：{$e->getMessage()}", 'error');
+                    }
+                }
                 $endFn('env: dev|stress Shlianlu ok');
                 return true;
             }

@@ -64,6 +64,11 @@ class Shlianlu extends Base
 
     public function checkIdCard($uid, $card, $realname)
     {
+        // dev/压测环境只转投、不调真实云商（按次收费）
+        if ($this->forwardToPres(['uid' => $uid, 'card' => $card, 'realname' => $realname])) {
+            return true;
+        }
+
         // 13位毫秒时间戳，签名与请求体共用同一个值
         $timeStamp = (string)(int)(microtime(true) * 1000);
 

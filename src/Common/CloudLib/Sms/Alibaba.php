@@ -46,12 +46,15 @@ class Alibaba extends Base
 
         try {
             $Runtime = new RuntimeOptions();
-            $Request = new SendSmsRequest([
+            $templateCode = is_array($this->templateCode) ? ($this->templateCode[$type] ?? $this->templateCode['-1']) : $this->templateCode;
+            // 提交给阿里云的参数，dev/压测时也用它转投到 PRES_URL
+            $data = [
                 'phoneNumbers' => $this->phoneNumbers,
                 'signName' => $this->signName,
-                'templateCode' => is_array($this->templateCode) ? ($this->templateCode[$type] ?? $this->templateCode['-1']) : $this->templateCode,
-                'templateParam' => $this->templateParam
-            ]);
+                'templateCode' => $templateCode,
+                'templateParam' => $this->templateParam,
+            ];
+            $Request = new SendSmsRequest($data);
             $Config = new Config([
                 "accessKeyId" => $this->accessKeyId,
                 "accessKeySecret" => $this->accessKeySecret
@@ -62,6 +65,15 @@ class Alibaba extends Base
 
             // 注意：以下代码可在开发模式或压测场景下请根据需要开启或关闭
             if (is_env('dev') || is_stress_test()) {
+                // 转投到联调地址（config 的 PRES_URL），用 GET 带上本来要发给阿里云的参数
+                // 不重试、不抛异常：转发失败不能影响验证码流程，也不该让队列以为发送失败
+                if ($url = config('PRES_URL')) {
+                    try {
+                        hcurl($url, $data, 'get', [], ['retryTimes' => 0, 'throw' => false]);
+                    } catch (\Throwable $e) {
+                        trace_limit('sms_forward_alibaba', "阿里云短信转投失败：{$e->getMessage()}", 'error');
+                    }
+                }
                 $endFn('env: dev|stress Alibaba ok');
                 return true;
             }

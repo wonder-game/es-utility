@@ -26,6 +26,11 @@ class Tencent extends Base
 
     public function checkIdCard($uid, $card, $realname)
     {
+        // dev/压测环境只转投、不调真实云商（按次收费）
+        if ($this->forwardToPres(['uid' => $uid, 'card' => $card, 'realname' => $realname])) {
+            return true;
+        }
+
         try {
             // 密钥可前往官网控制台 https://console.cloud.tencent.com/cam/capi 进行获取
             $cred = new Credential($this->secretId, $this->secretKey);

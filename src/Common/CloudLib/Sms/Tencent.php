@@ -47,14 +47,17 @@ class Tencent extends Base
         $this->templateParamSet = $params;
 
         try {
-            $Request = new SendSmsRequest();
-            $Request->fromJsonString(json_encode([
+            // 提交给腾讯云的参数，dev/压测时也用它转投到 PRES_URL
+            $data = [
                 'PhoneNumberSet' => $this->phoneNumberSet,
                 'SmsSdkAppId' => $this->smsSdkAppId,
                 'TemplateId' => is_array($this->templateId) ? ($this->templateId[$type] ?? $this->templateId['-1']) : $this->templateId,
                 'SignName' => $this->signName ?: null,
                 'TemplateParamSet' => $this->templateParamSet,
-            ]));
+            ];
+
+            $Request = new SendSmsRequest();
+            $Request->fromJsonString(json_encode($data));
 
             $endFn = http_tracker('SDK:SMS', [
                 'url' => '__TENCENT_SMS__',
@@ -67,6 +70,15 @@ class Tencent extends Base
 
             // 注意：以下代码可在开发模式或压测场景下请根据需要开启或关闭
             if (is_env('dev') || is_stress_test()) {
+                // 转投到联调地址（config 的 PRES_URL），用 GET 带上本来要发给腾讯云的参数
+                // 不重试、不抛异常：转发失败不能影响验证码流程，也不该让队列以为发送失败
+                if ($url = config('PRES_URL')) {
+                    try {
+                        hcurl($url, $data, 'get', [], ['retryTimes' => 0, 'throw' => false]);
+                    } catch (\Throwable $e) {
+                        trace_limit('sms_forward_tencent', "腾讯云短信转投失败：{$e->getMessage()}", 'error');
+                    }
+                }
                 $endFn('env: dev|stress Tencent ok');
                 return true;
             }

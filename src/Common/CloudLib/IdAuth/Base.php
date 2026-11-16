@@ -45,6 +45,31 @@ abstract class Base implements IdAuthInterface
         return $this->_result;
     }
 
+    /**
+     * dev/压测环境把实名参数转投到联调地址（config 的 PRES_URL），不再调真实云商（按次收费）
+     * 用 GET 提交，参数同实际要发给云商的一致，另加 driver 标识是哪一家
+     * 转投失败只记日志，不影响流程：这些环境里本来就不做真实校验
+     * @param array $params
+     * @return bool true 表示已处理（调用方直接返回通过），false 表示继续走真实云商
+     */
+    protected function forwardToPres(array $params): bool
+    {
+        if ( ! is_env('dev') && ! is_stress_test()) {
+            return false;
+        }
+        // 没配联调地址时保持原行为，避免 dev 环境下真名校验被静默跳过
+        $url = config('PRES_URL');
+        if ( ! $url) {
+            return false;
+        }
+        try {
+            hcurl($url, ['driver' => static::class] + $params, 'get', [], ['retryTimes' => 0, 'throw' => false]);
+        } catch (\Throwable $e) {
+            trace_limit('idauth_forward_' . static::class, "实名转投失败：" . $e->getMessage(), 'error');
+        }
+        return true;
+    }
+
     protected function setConfig()
     {
         /*
