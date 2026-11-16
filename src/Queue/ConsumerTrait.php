@@ -90,15 +90,19 @@ trait ConsumerTrait
      */
     public function run($arg)
     {
-        // NATIVE_CURL 常量在不同 Swoole 版本、编译选项下不一定有，PHP 8 引用未定义常量会直接报错、进程反复崩溃重启
         $flags = SWOOLE_HOOK_TCP | SWOOLE_HOOK_SSL | SWOOLE_HOOK_TLS;
-        if (defined('SWOOLE_HOOK_NATIVE_CURL')) {
+        // 优先用 curl-native（编译时 --enable-swoole-curl，支持 curl_multi）
+        // 没编译 curl-native 时 NATIVE_CURL 常量也可能有、但不起作用，要按类判断；PHP 8 引用未定义常量会直接报错，常量也要先判断
+        // 退回 SWOOLE_HOOK_CURL：由 Swoole 协程客户端模拟 curl_exec，腾讯云、阿里云 SDK 的 Guzzle 同步请求够用；
+        // 不支持 curl_multi，消费进程里不要用 Guzzle 的异步请求（sendAsync、Pool 等）
+        if (defined('SWOOLE_HOOK_NATIVE_CURL') && class_exists(\Swoole\Coroutine\Curl\Exception::class)) {
             $flags |= SWOOLE_HOOK_NATIVE_CURL;
+        } elseif (defined('SWOOLE_HOOK_CURL')) {
+            $flags |= SWOOLE_HOOK_CURL;
+        } else {
+            trace('Swoole 未编译 curl-native，也没有 SWOOLE_HOOK_CURL（php --ri swoole 看 curl-native），走 curl 的 SDK 会阻塞消费进程', 'error');
         }
         Runtime::enableCoroutine($flags);
-        if ( ! defined('SWOOLE_HOOK_NATIVE_CURL') || ! class_exists(\Swoole\Coroutine\Curl\Exception::class)) {
-            trace('Swoole 编译时未开启 curl-native（php --ri swoole 看 curl-native），走 curl 的 SDK 会阻塞消费进程', 'error');
-        }
 
         /* @var AbstractProcess $this */
         $concurrency = intval($this->getArg()['concurrency'] ?? 0);
