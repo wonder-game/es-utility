@@ -182,20 +182,44 @@ trait Strings
     public function bloomDel()
     {
         return RedisPool::invoke(function (Redis $redis) {
-            $key = $this->_getBloomKey();
-            return $redis->del($key);
+            return $this->bloomDelByRedis($redis);
         }, $this->redisPoolName);
+    }
+
+    /**
+     * 在同一条连接上删除布隆集合（供已持有连接的调用方复用，避免嵌套借连接）
+     * @param Redis $redis
+     * @return mixed
+     */
+    protected function bloomDelByRedis(Redis $redis)
+    {
+        $key = $this->_getBloomKey();
+        return $redis->del($key);
     }
 
     public function bloomIsMember($value)
     {
         return RedisPool::invoke(function (Redis $redis) use ($value) {
-            $key = $this->_getBloomKey();
-            if ( ! $redis->exists($key)) {
-                $this->bloomSet();
-            }
-            return $redis->sIsMember($key, $value);
+            return $this->bloomIsMemberByRedis($redis, $value);
         }, $this->redisPoolName);
+    }
+
+    /**
+     * 在同一条连接上判断布隆集合成员（供已持有连接的调用方复用，避免嵌套借连接）
+     * @param Redis $redis
+     * @param mixed $value
+     * @return bool
+     */
+    protected function bloomIsMemberByRedis(Redis $redis, $value)
+    {
+        $key = $this->_getBloomKey();
+        if ( ! $redis->exists($key)) {
+            // 集合不存在时从库里重建，同样复用当前连接
+            $rows = $this->_getBloomData();
+            $rows = ($rows && is_array($rows)) ? $rows : [];
+            $redis->sAdd($key, ...$rows);
+        }
+        return $redis->sIsMember($key, $value);
     }
 
     /**
@@ -207,73 +231,103 @@ trait Strings
     public function cacheSet($id, $data = [], $bloom = false)
     {
         return RedisPool::invoke(function (Redis $redis) use ($id, $data, $bloom) {
-            $key = $this->getCacheKey($id);
-
-            if (is_array($id)) {
-                $pk = $this->_getPk();
-                if (is_array($data) && isset($data[$pk])) {
-                    $this->cacheSet($data[$pk], $data);
-                    $data = $this->primarySb . $data[$pk];
-                }
-            }
-
-            is_array($data) && $data = json_encode($data, JSON_UNESCAPED_UNICODE);
-
-            $bloom && $this->bloom && $this->bloomDel();
-
-            mt_srand();
-            $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
-            return $redis->setEx($key, $expire, $data);
+            return $this->cacheSetByRedis($redis, $id, $data, $bloom);
         }, $this->redisPoolName);
+    }
+
+    /**
+     * 在同一条连接上写缓存
+     * 从 cacheSet/cacheGet 内部调用时必须走这里：原来嵌套调用会再向连接池借一条连接，
+     * 单请求占 2 条，压测时池子被瞬间取空（initObject fail / pool is empty）
+     * @param Redis $redis 已持有的连接
+     * @param string|array $id
+     * @param array|string $data
+     * @param bool $bloom 删布隆集合
+     * @return mixed|null
+     */
+    protected function cacheSetByRedis(Redis $redis, $id, $data = [], $bloom = false)
+    {
+        $key = $this->getCacheKey($id);
+
+        if (is_array($id)) {
+            $pk = $this->_getPk();
+            if (is_array($data) && isset($data[$pk])) {
+                // 复用同一条连接，不再嵌套借连接
+                $this->cacheSetByRedis($redis, $data[$pk], $data);
+                $data = $this->primarySb . $data[$pk];
+            }
+        }
+
+        is_array($data) && $data = json_encode($data, JSON_UNESCAPED_UNICODE);
+
+        $bloom && $this->bloom && $this->bloomDelByRedis($redis);
+
+        mt_srand();
+        $expire = mt_rand($this->expire - $this->expireOffset, $this->expire + $this->expireOffset);
+        return $redis->setEx($key, $expire, $data);
     }
 
     public function cacheGet($id, $mergeExt = null)
     {
         return RedisPool::invoke(function (Redis $redis) use ($id, $mergeExt) {
+            return $this->cacheGetByRedis($redis, $id, $mergeExt);
+        }, $this->redisPoolName);
+    }
 
-            if ($this->bloom) {
-                $bloomKey = $id;
-                if (is_array($bloomKey)) {
-                    if (empty($bloomKey[$this->bloomField])) {
-                        return false;
-                    }
-                    $bloomKey = $bloomKey[$this->bloomField];
-                }
-                $isMember = $this->bloomIsMember($bloomKey);
-                if ( ! $isMember) {
+    /**
+     * 在同一条连接上读缓存
+     * 从 cacheGet 内部调用时必须走这里：原来嵌套调用会再向连接池借一条连接，
+     * 单请求占 2 条，压测时池子被瞬间取空（initObject fail / pool is empty）
+     * @param Redis $redis 已持有的连接
+     * @param string|array $id
+     * @param bool|null $mergeExt
+     * @return array|bool|mixed|null
+     */
+    protected function cacheGetByRedis(Redis $redis, $id, $mergeExt = null)
+    {
+        if ($this->bloom) {
+            $bloomKey = $id;
+            if (is_array($bloomKey)) {
+                if (empty($bloomKey[$this->bloomField])) {
                     return false;
                 }
+                $bloomKey = $bloomKey[$this->bloomField];
             }
-
-            $key = $this->getCacheKey($id);
-            $data = $redis->get($key);
-
-            // 防穿透标识
-            if ($data === $this->penetrationSb) {
+            $isMember = $this->bloomIsMemberByRedis($redis, $bloomKey);
+            if ( ! $isMember) {
                 return false;
             }
+        }
 
-            // 存储的是主键,则使用主键再次获取
-            if (is_string($data) && strpos($data, $this->primarySb) === 0) {
-                // 再次获取时无需校验了
-                $bloom = $this->bloom;
-                $this->bloom = false;
-                $data = $this->cacheGet(explode(':', $data)[1]);
-                $this->bloom = $bloom;
-            }
-            // 没有数据，从数据表获取
-            if (is_null($data) || $data === false) {
-                $data = $this->_getByUnique($id);
-                if ( ! $data && $this->penetrate) {
-                    $data = $this->penetrationSb;
-                }
-                $data && $this->cacheSet($id, $data);
-            }
+        $key = $this->getCacheKey($id);
+        $data = $redis->get($key);
 
-            is_string($data) && $data = json_decode_ext($data);
-            (is_null($mergeExt) ? $this->mergeExt : $mergeExt) && $data = $this->_mergeExt($data);
-            return $data === $this->penetrationSb ? false : $data;
-        }, $this->redisPoolName);
+        // 防穿透标识
+        if ($data === $this->penetrationSb) {
+            return false;
+        }
+
+        // 存储的是主键,则使用主键再次获取
+        if (is_string($data) && strpos($data, $this->primarySb) === 0) {
+            // 再次获取时无需校验了
+            $bloom = $this->bloom;
+            $this->bloom = false;
+            // 复用同一条连接，不再嵌套借连接
+            $data = $this->cacheGetByRedis($redis, explode(':', $data)[1]);
+            $this->bloom = $bloom;
+        }
+        // 没有数据，从数据表获取
+        if (is_null($data) || $data === false) {
+            $data = $this->_getByUnique($id);
+            if ( ! $data && $this->penetrate) {
+                $data = $this->penetrationSb;
+            }
+            $data && $this->cacheSetByRedis($redis, $id, $data);
+        }
+
+        is_string($data) && $data = json_decode_ext($data);
+        (is_null($mergeExt) ? $this->mergeExt : $mergeExt) && $data = $this->_mergeExt($data);
+        return $data === $this->penetrationSb ? false : $data;
     }
 
     public function cacheDel($id)
@@ -282,7 +336,8 @@ trait Strings
             $key = $this->getCacheKey($id);
             $status = $redis->del($key);
 
-            $this->bloom && $this->bloomDel();
+            // 复用同一条连接，不再嵌套借连接
+            $this->bloom && $this->bloomDelByRedis($redis);
 
             return $status;
         }, $this->redisPoolName);
