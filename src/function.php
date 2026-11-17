@@ -546,6 +546,16 @@ if ( ! function_exists('verify_token')) {
 if ( ! function_exists('ip')) {
     /**
      * 获取http客户端ip
+     * 取值优先级：X-Real-IP > X-Forwarded-For 第一个有效值 > remote_addr
+     * 前提：请求经过 nginx 等代理，代理会把 X-Real-IP 覆盖为真实客户端 IP；
+     * 若 Swoole 端口直接暴露公网，客户端可自行伪造这两个头，必须用安全组限制只有代理能访问
+     *
+     * 建议采用  域名->负载->后端服，然后在后端服的nginx.conf里写上
+     * # 腾讯CLB可信回源网段  七层回源业务网段100.127.0.0/16  ⊂ 健康检查网段 100.64.0.0/10
+     * set_real_ip_from 100.64.0.0/10;
+     * real_ip_header X-Forwarded-For;
+     * real_ip_recursive on;
+     *
      * @param null $Request
      * @return false|string
      */
@@ -559,24 +569,21 @@ if ( ! function_exists('ip')) {
             }
         }
 
-        $ip = ($xForwardedFor = $Request->getHeaderLine('x-forwarded-for')) ? $xForwardedFor : $Request->getHeaderLine('x-real-ip');
-
-        if (empty($ip)) {
-            $servers = $Request->getServerParams();
-            if ( ! empty($servers['remote_addr'])) {
-                $ip = $servers['remote_addr'];
-            }
+        // 优先 X-Real-IP：nginx 用 proxy_set_header X-Real-IP $remote_addr 覆盖，是单一可信值
+        $realIp = trim($Request->getHeaderLine('x-real-ip'));
+        if ($realIp !== '' && strcasecmp($realIp, 'unknown') !== 0) {
+            return $realIp;
         }
 
-        $arr = explode(';', $ip);
-        foreach ($arr as $item) {
-            if ($item = trim($item)) {
-                $itemArr = explode(',', $item);
-                foreach ($itemArr as $value) {
-                    if (($value = trim($value)) && ! in_array($value, ['unknown'])) {
-                        return $value;
-                    }
-                }
+        // 值为空或 unknown 视为无效头，继续回落到下一来源
+
+        // X-Forwarded-For 在代理链多时可能有多段，且若配置成 $proxy_add_x_forwarded_for，最左段是客户端可伪造的
+        $xff = trim($Request->getHeaderLine('x-forwarded-for'));
+        if ($xff !== '') {
+            $ipArr = explode(',', $xff);
+            $candidate = trim(array_pop($ipArr));
+            if ($candidate !== '' && strcasecmp($candidate, 'unknown') !== 0) {
+                return $candidate;
             }
         }
 
@@ -763,7 +770,6 @@ if ( ! function_exists('array_to_std')) {
         return $std;
     }
 }
-
 
 
 if ( ! function_exists('geo')) {
@@ -1313,22 +1319,22 @@ if ( ! function_exists('request_lan_api')) {
         $method = strtoupper($method);
         /**
          * 配置的结构可参考如下： ip为服务器的内网IP（建议填固定的服务器，不受减服影响的那种），多组可实现类似负载的效果
-         {
-            "produce": {
-                 // 1. array：多个ip或域名，随机抽一个请求
-                 // 2. string: 直接请求
-                 // 3. 协议可带可不带，不带则默认http
-                 "ip": [
-                     "172.16.32.16",
-                     "172.16.32.17"
-                 ],
-                "domain": "inland-pay.xxx.xxx"
-             },
-             "test": {
-                 "ip": 'https://xxxx.xxx',
-                "domain": "test-inland-pay.xxx.xxx"
-             }
-         }
+         * {
+         * "produce": {
+         * // 1. array：多个ip或域名，随机抽一个请求
+         * // 2. string: 直接请求
+         * // 3. 协议可带可不带，不带则默认http
+         * "ip": [
+         * "172.16.32.16",
+         * "172.16.32.17"
+         * ],
+         * "domain": "inland-pay.xxx.xxx"
+         * },
+         * "test": {
+         * "ip": 'https://xxxx.xxx',
+         * "domain": "test-inland-pay.xxx.xxx"
+         * }
+         * }
          */
         $lan = sysinfo($lan_key . '_lan');
         $lan = $lan[get_mode()] ?? config(strtoupper($lan_key . '_lan'));
