@@ -1670,3 +1670,177 @@ if ( ! function_exists('is_stress_test')) {
         return defined('STRESS_TEST') && STRESS_TEST;
     }
 }
+
+
+if ( ! function_exists('trace_limit')) {
+    /**
+     * 限频日志：同一 $key 在本进程内 $interval 秒内只写一次，期间被省略的条数附在下一条日志里
+     * 用于高频失败场景（依赖不可用、非法参数刷量），避免每个请求都加锁写盘
+     * @param string $key 限频标识
+     * @param string|array $log
+     * @param string $level
+     * @param string $category
+     * @param int $interval 秒
+     * @return void
+     */
+    function trace_limit(string $key, $log = '', $level = 'error', $category = 'debug', int $interval = 60)
+    {
+        static $last = [], $suppressed = [];
+        $now = time();
+        if (isset($last[$key]) && $now - $last[$key] < $interval) {
+            $suppressed[$key] = ($suppressed[$key] ?? 0) + 1;
+            return;
+        }
+        $last[$key] = $now;
+        if ( ! empty($suppressed[$key])) {
+            is_scalar($log) or $log = json_encode($log, JSON_UNESCAPED_UNICODE);
+            $log .= "（上次记录后同类日志另有 {$suppressed[$key]} 条已省略）";
+            $suppressed[$key] = 0;
+        }
+        trace($log, $level, $category);
+    }
+}
+
+if ( ! function_exists('curl_hook_flag')) {
+    /**
+     * 该用哪个 curl 协程 Hook 标志，供 Runtime::enableCoroutine() 使用
+     * 只开 curl：项目里的 Redis、MySQL、EasySwoole HttpClient 都是 Swoole 协程客户端，不依赖 TCP/SSL Hook；
+     * 用 curl 的是腾讯云、阿里云 SDK（Guzzle）
+     * @param bool $fallback 没有 curl-native 时是否退回 SWOOLE_HOOK_CURL
+     *   消费进程可以退：同步请求够用，但退回后不支持 curl_multi，不要用 Guzzle 的异步请求（sendAsync、Pool 等）；
+     *   HTTP worker 不退：并发高，退回后遇到 curl_multi 会出问题
+     * @return int 没有可用的标志时返回 0
+     */
+    function curl_hook_flag(bool $fallback = true): int
+    {
+        // 没编译 curl-native 时 NATIVE_CURL 常量也可能有、但不起作用，要按类判断
+        if (defined('SWOOLE_HOOK_NATIVE_CURL') && class_exists(\Swoole\Coroutine\Curl\Exception::class)) {
+            return SWOOLE_HOOK_NATIVE_CURL;
+        }
+        return ($fallback && defined('SWOOLE_HOOK_CURL')) ? SWOOLE_HOOK_CURL : 0;
+    }
+}
+
+if ( ! function_exists('go_safe')) {
+    /**
+     * 等同 go()，但兜住闭包里的所有异常
+     * Swoole 4.8 下协程里未捕获的异常会让整个 worker 退出（容器实测），同进程正在处理的请求一起丢失
+     * 同一位置的异常 10 秒内只记一次日志
+     * @param callable $fn
+     * @return int|false 协程 ID
+     */
+    function go_safe(callable $fn)
+    {
+        return go(function () use ($fn) {
+            try {
+                $fn();
+            } catch (\Throwable $e) {
+                trace_limit('go_safe_' . md5($e->getFile() . $e->getLine()), "协程异常：{$e->getMessage()} at {$e->getFile()}:{$e->getLine()}", 'error', 'debug', 10);
+            }
+        });
+    }
+}
+
+if ( ! function_exists('exception_is_sensitive')) {
+    /**
+     * 判断异常文案是否可能包含敏感信息（服务器路径、内网地址、库表结构、连接信息、堆栈等）
+     * 命中任一规则即视为敏感，不能原样返回给客户端
+     * 项目可通过配置 EXCEPTION_SENSITIVE.class（类名前缀）、EXCEPTION_SENSITIVE.pattern（正则）追加规则
+     * @param Throwable $throwable
+     * @return bool
+     */
+    function exception_is_sensitive(\Throwable $throwable): bool
+    {
+        // PHP 引擎错误（TypeError、ParseError、ArgumentCountError 等）的文案通常带文件绝对路径和行号
+        if ($throwable instanceof \Error) {
+            return true;
+        }
+
+        // 框架与扩展层的异常（MySQL、Redis、连接池、Swoole、HTTP 客户端等），文案常带地址、库表或 SQL 细节
+        $classes = array_merge(
+            ['EasySwoole\\', 'Swoole\\', 'PDO', 'mysqli', 'Redis', 'GuzzleHttp\\'],
+            (array)config('EXCEPTION_SENSITIVE.class')
+        );
+        $className = ltrim(get_class($throwable), '\\');
+        foreach ($classes as $prefix) {
+            if ($prefix && stripos($className, $prefix) === 0) {
+                return true;
+            }
+        }
+
+        $message = $throwable->getMessage();
+        if (defined('EASYSWOOLE_ROOT') && strpos($message, EASYSWOOLE_ROOT) !== false) {
+            return true;
+        }
+        $patterns = array_merge(
+            [
+                // 文件路径
+                '/\.php\b/i',
+                // IPv4 地址
+                '/\b\d{1,3}(\.\d{1,3}){3}\b/',
+                // 数据库错误
+                '/SQLSTATE|SQL syntax|doesn\'t exist|Unknown column|Access denied|Duplicate entry|Deadlock|Lock wait timeout/i',
+                // 存储组件名称，通常意味着连接或执行失败的底层信息
+                '/\b(mysql|mysqli|redis|clickhouse|mongodb|elasticsearch)\b/i',
+                // 堆栈
+                '/Stack trace|#\d+ \S+\(\d+\)/',
+            ],
+            (array)config('EXCEPTION_SENSITIVE.pattern')
+        );
+        foreach ($patterns as $pattern) {
+            if ($pattern && preg_match($pattern, $message)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+if ( ! function_exists('exception_default_message')) {
+    /**
+     * 系统异常时返回给客户端的通用文案
+     * @return string
+     */
+    function exception_default_message(): string
+    {
+        try {
+            $message = lang(\WonderGame\EsUtility\Common\Languages\Dictionary::BASECONTROLLERTRAIT_1);
+        } catch (\Throwable $e) {
+            // 未注册语言包或缺少该常量时 translate 会抛异常，不能让兜底逻辑本身再出错
+            $message = '';
+        }
+        if ( ! is_string($message) || $message === '' || $message === \WonderGame\EsUtility\Common\Languages\Dictionary::BASECONTROLLERTRAIT_1) {
+            $message = Code::getReasonPhrase(Code::CODE_INTERNAL_SERVER_ERROR);
+        }
+        return $message;
+    }
+}
+
+if ( ! function_exists('exception_message')) {
+    /**
+     * 获取可以返回给客户端的异常文案，任何情况下都不包含堆栈
+     *   1. 业务异常（HttpParamException、WarnException）原样返回
+     *   2. 配置 SHOW_EXCEPTION_MSG 为 true 时原样返回；未配置时默认非 produce 环境原样返回
+     *   3. $allowPlain 为 true 时，非敏感的普通异常原样返回（后台常用 \Exception 传递提示文案）
+     *   4. 其余返回通用文案
+     * @param Throwable $throwable
+     * @param bool $allowPlain
+     * @return string
+     */
+    function exception_message(\Throwable $throwable, bool $allowPlain = false): string
+    {
+        $message = $throwable->getMessage();
+        if ($throwable instanceof HttpParamException || $throwable instanceof \WonderGame\EsUtility\Common\Exception\WarnException) {
+            return $message;
+        }
+
+        $show = config('SHOW_EXCEPTION_MSG');
+        if (is_null($show)) {
+            $show = ! is_env('produce');
+        }
+        if ($show || ($allowPlain && ! exception_is_sensitive($throwable))) {
+            return $message;
+        }
+        return exception_default_message();
+    }
+}
