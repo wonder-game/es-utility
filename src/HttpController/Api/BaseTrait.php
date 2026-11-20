@@ -27,7 +27,9 @@ trait BaseTrait
 
     protected function _checkMd5Sign()
     {
+        /* @var \EasySwoole\Http\AbstractInterface\Controller $this */
         $this->rsa = $this->input;
-        return sign($this->input, $this->input['sign']);
+        // 验签取原始参数，不用 $this->input（可能被 httpOnRequestFunc 改写过），见 request_raw_params
+        return lan_sign_verify(request_raw_params($this->request()));
     }
 }

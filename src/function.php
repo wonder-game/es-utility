@@ -991,6 +991,77 @@ if ( ! function_exists('sign')) {
 }
 
 
+if ( ! function_exists('lan_sign')) {
+    /**
+     * 内网 API 的 md5 签名（request_lan_api、Crontab\Driver\Http 发请求时用）
+     * 按传输后的样子签名：先 http_build_query 再 parse_str，值全部转成字符串、null 去掉，
+     * 这样服务端不论收到的是 GET、表单还是 JSON，用 lan_sign_verify 都能对上
+     * @param array $params 要发出去的参数，不含 sign
+     * @param string $key 指定密钥，空则取 config('ENCRYPT.apikey')
+     * @return string
+     */
+    function lan_sign(array $params, $key = ''): string
+    {
+        parse_str(http_build_query($params), $norm);
+        return sign($norm, null, $key);
+    }
+}
+
+
+if ( ! function_exists('lan_sign_verify')) {
+    /**
+     * 内网 API 的 md5 验签，与 lan_sign 配对
+     * 同时兼容旧规则 md5(encry . time . apikey)，调用方还没升级时也能通过
+     * @param array|null $params 调用方传来的原始参数（含 sign），不传则取当前请求的 request_raw_params()
+     * @param string $key 指定密钥，空则取 config('ENCRYPT.apikey')
+     * @return bool
+     */
+    function lan_sign_verify(?array $params = null, $key = ''): bool
+    {
+        // 不用控制器的 $this->input：可能已被 httpOnRequestFunc 改写过，见 request_raw_params
+        $params = $params ?? request_raw_params();
+        $sign = $params['sign'] ?? '';
+        // sign 本身不参与签名
+        unset($params['sign']);
+        if ( ! is_string($sign) || $sign === '') {
+            return false;
+        }
+        if (hash_equals(lan_sign($params, $key), $sign)) {
+            return true;
+        }
+
+        // 旧规则：只签了 encry 和 time，业务参数被改了也校验不出来
+        // TODO 调用方全部升级到 lan_sign 后删掉
+        $old = md5(($params['encry'] ?? '') . ($params['time'] ?? '') . ($key ?: config('ENCRYPT.apikey')));
+        return hash_equals($old, $sign);
+    }
+}
+
+
+if ( ! function_exists('request_raw_params')) {
+    /**
+     * 调用方实际传来的参数（GET + 表单或 JSON），合并规则与 BaseControllerTrait::requestParams 相同
+     * 验签不能用控制器的 $this->input：各项目可能在 httpOnRequestFunc 里改写 Request 的参数
+     * （如 LamUnit::utilityParam 会强制写入 ip、补 versioncode），这里读 Swoole 原始请求，不受这些改写影响
+     * @param Request|null $request 空则取当前协程的请求
+     * @return array 不在 HTTP 请求里时返回空数组
+     */
+    function request_raw_params(?Request $request = null): array
+    {
+        $request = $request ?: CtxRequest::getInstance()->request;
+        $swoole = $request ? $request->getSwooleRequest() : null;
+        if ( ! $swoole) {
+            return [];
+        }
+        $post = $swoole->post;
+        if (empty($post) && ($raw = $swoole->rawContent())) {
+            $post = json_decode($raw, true);
+        }
+        return array_merge($swoole->get ?: [], is_array($post) ? $post : []);
+    }
+}
+
+
 if ( ! function_exists('report_redis_key')) {
     /**
      * 返回上报队列里的redis-key
@@ -1213,7 +1284,8 @@ if ( ! function_exists('request_lan_api')) {
                         'encry' => 'md5',
                         'time' => time(),
                     ];
-                $params['sign'] = md5($params['encry'] . $params['time'] . config('ENCRYPT.apikey'));
+                // 验签见 lan_sign_verify
+                $params['sign'] = lan_sign($params);
                 break;
 
             default:

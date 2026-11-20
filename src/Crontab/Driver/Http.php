@@ -36,7 +36,8 @@ class Http implements Interfaces
 
             case 'md5':
                 $data['time'] = time();
-                $data['sign'] = sign($data);
+                // 验签见 lan_sign_verify
+                $data['sign'] = lan_sign($data);
                 return $data;
 
             default:
